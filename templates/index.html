@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能摆盘规划系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <!-- 标题栏 -->
+    <div class="header">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
+        </div>
+        <div class="title">智能摆盘规划系统</div>
+        <div class="version">V2.0</div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="main-container">
+        <!-- 左侧菜单栏 -->
+        <div class="sidebar">
+            <button id="robot-settings-btn" class="active">
+                <img src="{{ url_for('static', filename='icons/robot.svg') }}" alt="机器人设置" class="icon">
+                <span>机器人设置</span>
+            </button>
+            <button id="smart-planning-btn">
+                <img src="{{ url_for('static', filename='icons/planning.svg') }}" alt="智能规划" class="icon">
+                <span>智能规划</span>
+            </button>
+            <button id="data-list-btn">
+                <img src="{{ url_for('static', filename='icons/list.svg') }}" alt="数据清单" class="icon">
+                <span>数据清单</span>
+            </button>
+        </div>
+
+        <!-- 右侧内容区域 -->
+        <div class="content">
+            <!-- 机器人设置 -->
+            <div id="robot-settings-content" class="content-section active">
+                <h2>机器人设置</h2>
+                <div class="robot-connection">
+                    <label for="robot_ip">机器人IP地址:</label>
+                    <input type="text" id="robot_ip" name="robot_ip" placeholder="输入机器人IP地址">
+                    <button id="robot_connect_button">连接</button>
+                </div>
+                <div id="robot_status" style="display: none; margin-top: 10px; font-size: 14px;">
+                    <div>连接状态: <span id="robot_ip_display"></span></div>
+                    <div>型号: <span id="robot_model"></span></div>
+                    <div>控制柜版本: <span id="controller_version"></span></div>
+                </div>
+                <!-- 新增的输入框和按钮 -->
+                <div id="program_input" style="display: none; margin-top: 20px;">
+                    <div class="robot-connection">
+                        <label for="program_name">程序名称:</label>
+                        <input type="text" id="program_name" name="program_name" placeholder="输入程序名称" value="plan">
+                        <button id="read_p_data_button">读取P点数据</button>
+                    </div>
+                </div>
+                <!-- 新增的表格容器，用于显示P点数据 -->
+                <div id="p_data_table_container" style="display: none; margin-top: 20px;">
+                    <h3>P点数据</h3>
+                    <table id="p_data_table" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">序号</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">X</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Y</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Z</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">C</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">UF</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">TF</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- P点数据将动态填充到这里 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 智能规划 -->
+            <div id="smart-planning-content" class="content-section">
+                <div class="smart-planning-content">
+                    <!-- 参数设置 -->
+                    <div class="input-container">
+                        <h2>参数设置</h2>
+                        <form id="inputForm">
+                            <!-- 料框设置板块 -->
+                            <div class="input-section">
+                                <h3>料框设置</h3>
+                                <div>
+                                    <label for="frame_length">边框长度:</label>
+                                    <input type="number" id="frame_length" name="frame_length" step="0.1" required>
+                                </div>
+                                <div>
+                                    <label for="frame_width">边框宽度:</label>
+                                    <input type="number" id="frame_width" name="frame_width" step="0.1" required>
+                                </div>
+                                <div>
+                                    <label for="frame_depth">边框深度:</label>
+                                    <input type="number" id="frame_depth" name="frame_depth" step="0.1">
+                                </div>
+                            </div>
+
+                            <!-- 工件设置板块 -->
+                            <div class="input-section">
+                                <h3>工件设置</h3>
+                                <div>
+                                    <label for="shape_type">图形类型:</label>
+                                    <select id="shape_type" name="shape_type">
+                                        <option value="circle">圆形</option>
+                                        <option value="rectangle">长方形</option>
+                                        <option value="polygon">多边形</option>
+                                        <option value="triangle">三角形</option>
+                                    </select>
+                                </div>
+                                <!-- 圆形输入 -->
+                                <div id="circle_input" class="shape-input">
+                                    <div>
+                                        <label for="circle_diameter">圆形直径:</label>
+                                        <input type="number" id="circle_diameter" name="circle_diameter" step="0.1">
+                                    </div>
+                                </div>
+                                <!-- 长方形输入 -->
+                                <div id="rectangle_input" class="shape-input">
+                                    <div>
+                                        <label for="rectangle_length">长方形长度:</label>
+                                        <input type="number" id="rectangle_length" name="rectangle_length" step="0.1">
+                                    </div>
+                                    <div>
+                                        <label for="rectangle_width">长方形宽度:</label>
+                                        <input type="number" id="rectangle_width" name="rectangle_width" step="0.1">
+                                    </div>
+                                </div>
+                                <!-- 多边形输入 -->
+                                <div id="polygon_input" class="shape-input">
+                                    <div>
+                                        <label for="polygon_sides">多边形边数 (5-8):</label>
+                                        <input type="number" id="polygon_sides" name="polygon_sides" min="5" max="8" step="1">
+                                    </div>
+                                    <div>
+                                        <label for="polygon_side_length">多边形边长:</label>
+                                        <input type="number" id="polygon_side_length" name="polygon_side_length" step="0.1">
+                                    </div>
+                                </div>
+                                <!-- 三角形输入 -->
+                                <div id="triangle_input" class="shape-input">
+                                    <div>
+                                        <label for="triangle_type">三角形类型:</label>
+                                        <select id="triangle_type" name="triangle_type">
+                                            <option value="equilateral">等边三角形</option>
+                                            <option value="isosceles">等腰三角形</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="triangle_side_length">三角形边长:</label>
+                                        <input type="number" id="triangle_side_length" name="triangle_side_length" step="0.1">
+                                    </div>
+                                    <div id="triangle_base_length_input" style="display: none;">
+                                        <label for="triangle_base_length">三角形底边长:</label>
+                                        <input type="number" id="triangle_base_length" name="triangle_base_length" step="0.1">
+                                    </div>
+                                    <div>
+                                        <label for="triangle_orientation">三角形朝向:</label>
+                                        <select id="triangle_orientation" name="triangle_orientation">
+                                            <option value="up">朝上</option>
+                                            <option value="down">朝下</option>
+                                            <option value="left">朝左</option>
+                                            <option value="right">朝右</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <!-- 图形高度 -->
+                                <div>
+                                    <label for="shape_height">图形高度:</label>
+                                    <input type="number" id="shape_height" name="shape_height" step="0.1">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- 摆放设置板块 -->
+                    <div class="input-container">
+                        <h2>摆放设置</h2>
+                        <form id="inputForm2">
+                            <div class="input-section">
+                                <h3>摆放设置</h3>
+                                <div>
+                                    <label for="horizontal_spacing">横向间距:</label>
+                                    <input type="number" id="horizontal_spacing" name="horizontal_spacing" step="0.1" required>
+                                </div>
+                                <div>
+                                    <label for="vertical_spacing">纵向间距:</label>
+                                    <input type="number" id="vertical_spacing" name="vertical_spacing" step="0.1" required>
+                                </div>
+                                <div>
+                                    <label for="border_distance">边框距离:</label>
+                                    <input type="number" id="border_distance" name="border_distance" step="0.1" required>
+                                </div>
+                                <div>
+                                    <label for="material_thickness">包材厚度:</label>
+                                    <input type="number" id="material_thickness" name="material_thickness" step="0.1">
+                                </div>
+                                <div>
+                                    <label for="placement_layers">摆放层数:</label>
+                                    <input type="number" id="placement_layers" name="placement_layers" step="1">
+                                </div>
+                                <div>
+                                    <label for="layout_type">排布方式:</label>
+                                    <select id="layout_type" name="layout_type">
+                                        <option value="array">阵列式</option>
+                                        <option value="honeycomb">蜂窝式</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- 提交按钮 -->
+                            <button type="submit">计算</button>
+                        </form>
+                    </div>
+
+                    <!-- 规划结果预览 -->
+                    <div class="preview-container">
+                        <h2>规划结果预览</h2>
+                        <div class="preview-image-container">
+                            <img id="plot" src="" alt="图形填充结果" style="display: none;">
+                        </div>
+                        <div id="shape-count" style="display: none; margin-top: 20px; font-size: 18px; color: #333;">
+                            可填充的图形数量：<span id="shape-count-value">0</span>
+                        </div>
+
+                        <!-- 新增的输入框和按钮 -->
+                        <div id="write-p-data-section" style="display: none; margin-top: 20px;">
+                            <div class="robot-connection">
+                                <div>
+                                    <label for="write_program_name">程序名称:</label>
+                                    <input type="text" id="write_program_name" name="write_program_name" placeholder="输入程序名称" value="plan">
+                                </div>
+                                <div>
+                                    <label for="pr_register_id">Z&C参考寄存器:</label>
+                                    <input type="number" id="pr_register_id" name="pr_register_id" placeholder="输入PR寄存器ID">
+                                </div>
+                                <div>
+                                    <label for="uf_value">UF值:</label>
+                                    <select id="uf_value" name="uf_value">
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                        <option value="6">6</option>
+                                        <option value="7">7</option>
+                                        <option value="8">8</option>
+                                        <option value="9">9</option>
+                                        <option value="10">10</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="tool_count">工具数量:</label>
+                                    <select id="tool_count" name="tool_count">
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                        <option value="6">6</option>
+                                        <option value="7">7</option>
+                                        <option value="8">8</option>
+                                        <option value="9">9</option>
+                                        <option value="10">10</option>
+                                    </select>
+                                </div>
+                                <!-- 新增一个类名 long-button -->
+                                <div class="long-button">
+                                    <button id="write_p_data_button">写入P点</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据清单 -->
+            <div id="data-list-content" class="content-section">
+                <div class="data-list-container">
+                    <h2>数据清单</h2>
+                    <!-- 数据清单内容将动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

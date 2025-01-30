@@ -1,0 +1,893 @@
+from flask import Flask, render_template, request, send_file, jsonify
+import matplotlib
+matplotlib.use('Agg')  # 设置为非交互式后端
+import matplotlib.pyplot as plt
+from matplotlib.patches import Circle, Rectangle, Polygon
+import io
+import math
+import json
+from Agilebot.IR.A.arm import Arm
+from Agilebot.IR.A.status_code import StatusCodeEnum
+from Agilebot.IR.A.sdk_classes import Register
+app = Flask(__name__)
+robot_arm = None
+def calculate_bounding_box(vertices):
+    """计算给定顶点的最小外接矩形"""
+    x_cords = [v[0] for v in vertices]
+    y_cords = [v[1] for v in vertices]
+    min_x, max_x = min(x_cords), max(x_cords)
+    min_y, max_y = min(y_cords), max(y_cords)
+    return min_x, min_y, max_x - min_x, max_y - min_y
+
+def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width, horizontal_spacing, vertical_spacing, border_distance,
+                            is_circle=False, is_rectangle=False, polygon_sides=None, is_triangle=False, triangle_type=None, triangle_orientation=None, is_honeycomb=False):
+    """计算给定框内可填充的指定形状的中心位置及数量"""
+    try:
+        if is_circle:
+            diameter = shape_length
+            effective_row_length = frame_length - 2 * border_distance
+            effective_column_width = frame_width - 2 * border_distance
+
+            if is_honeycomb:
+                # 蜂窝式排布
+                circles_per_row = math.floor((effective_row_length - diameter) / (diameter + horizontal_spacing))
+                if effective_row_length - (circles_per_row * (diameter + horizontal_spacing) + diameter) >= 0:
+                    circles_per_row += 1
+
+                circles_per_column = math.floor(
+                    (effective_column_width - diameter) / (diameter * math.sqrt(3) / 2 + vertical_spacing))
+                if effective_column_width - (
+                        circles_per_column * (diameter * math.sqrt(3) / 2 + vertical_spacing) + diameter) >= 0:
+                    circles_per_column += 1
+
+                total_shapes = 0
+                shape_centers = []
+
+                for row in range(circles_per_column):
+                    for col in range(circles_per_row):
+                        x_center = round(border_distance + diameter / 2 + col * (diameter + horizontal_spacing), 2)
+                        y_center = round(
+                            border_distance + diameter / 2 + row * (diameter * math.sqrt(3) / 2 + vertical_spacing), 2)
+                        if row % 2 == 1:
+                            x_center = round(x_center + (diameter + horizontal_spacing) / 2, 2)
+
+                        # 检查是否超出边框
+                        if x_center + diameter / 2 <= frame_length - border_distance and y_center + diameter / 2 <= frame_width - border_distance:
+                            shape_centers.append((x_center, y_center))
+                            total_shapes += 1
+            else:
+                # 阵列式排布
+                # 计算每行能放置的圆形数量（考虑横向间距及最后一行可能的特殊排列）
+                circles_per_row = math.floor((effective_row_length - diameter) / (diameter + horizontal_spacing))
+                if effective_row_length - (circles_per_row * (diameter + horizontal_spacing) + diameter) >= 0:
+                    circles_per_row += 1
+
+                # 计算每列能放置的圆形数量（考虑纵向间距及最后一列可能的特殊排列）
+                circles_per_column = math.floor((effective_column_width - diameter) / (diameter + vertical_spacing))
+                if effective_column_width - (circles_per_column * (diameter + vertical_spacing) + diameter) >= 0:
+                    circles_per_column += 1
+
+                total_shapes = circles_per_row * circles_per_column
+
+                shape_centers = []
+
+                for row in range(circles_per_column):
+                    for col in range(circles_per_row):
+                        x_center = round(border_distance + diameter / 2 + col * (diameter + horizontal_spacing), 2)
+                        y_center = round(border_distance + diameter / 2 + row * (diameter + vertical_spacing), 2)
+                        shape_centers.append((x_center, y_center))
+
+        elif is_rectangle:
+            effective_row_length = frame_length - 2 * border_distance
+            effective_column_width = frame_width - 2 * border_distance
+
+            if is_honeycomb:
+                # 蜂窝式排布
+                rectangles_per_row = math.floor(
+                    (effective_row_length - shape_length) / (shape_length + horizontal_spacing))
+                if effective_row_length - (
+                        rectangles_per_row * (shape_length + horizontal_spacing) + shape_length) >= 0:
+                    rectangles_per_row += 1
+
+                rectangles_per_column = math.floor(
+                    (effective_column_width - shape_width) / (shape_width * math.sqrt(3) / 2 + vertical_spacing))
+                if effective_column_width - (
+                        rectangles_per_column * (shape_width * math.sqrt(3) / 2 + vertical_spacing) + shape_width) >= 0:
+                    rectangles_per_column += 1
+
+                total_shapes = 0
+                shape_centers = []
+
+                for row in range(rectangles_per_column):
+                    for col in range(rectangles_per_row):
+                        x_center = round(border_distance + shape_length / 2 + col * (shape_length + horizontal_spacing),
+                                         2)
+                        y_center = round(border_distance + shape_width / 2 + row * (
+                                    shape_width * math.sqrt(3) / 2 + vertical_spacing), 2)
+                        if row % 2 == 1:
+                            x_center = round(x_center + (shape_length + horizontal_spacing) / 2, 2)
+
+                        # 检查是否超出边框
+                        if x_center + shape_length / 2 <= frame_length - border_distance and y_center + shape_width / 2 <= frame_width - border_distance:
+                            shape_centers.append((x_center, y_center))
+                            total_shapes += 1
+            else:
+                # 阵列式排布
+                rectangles_per_row = math.floor(
+                    (effective_row_length - shape_length) / (shape_length + horizontal_spacing))
+                if effective_row_length - (
+                        rectangles_per_row * (shape_length + horizontal_spacing) + shape_length) >= 0:
+                    rectangles_per_row += 1
+
+                rectangles_per_column = math.floor(
+                    (effective_column_width - shape_width) / (shape_width + vertical_spacing))
+                if effective_column_width - (
+                        rectangles_per_column * (shape_width + vertical_spacing) + shape_width) >= 0:
+                    rectangles_per_column += 1
+
+                total_shapes = rectangles_per_row * rectangles_per_column
+
+                shape_centers = []
+
+                for row in range(rectangles_per_column):
+                    for col in range(rectangles_per_row):
+                        x_center = round(border_distance + shape_length / 2 + col * (shape_length + horizontal_spacing),
+                                         2)
+                        y_center = round(border_distance + shape_width / 2 + row * (shape_width + vertical_spacing), 2)
+                        shape_centers.append((x_center, y_center))
+
+        elif polygon_sides is not None and 4 < polygon_sides <= 8:
+            # 假设多边形为正多边形，以边长表示形状大小
+            circumradius = shape_length / (2 * math.sin(math.pi / polygon_sides))
+
+            # 计算一个示例多边形的顶点
+            example_center = (0, 0)
+            vertices = []
+            for i in range(polygon_sides):
+                x = example_center[0] + circumradius * math.cos(i * math.pi * 2 / polygon_sides)
+                y = example_center[1] + circumradius * math.sin(i * math.pi * 2 / polygon_sides)
+                vertices.append((x, y))
+
+            # 计算最小外接矩形
+            min_x, min_y, bounding_box_length, bounding_box_width = calculate_bounding_box(vertices)
+
+            effective_row_length = frame_length - 2 * border_distance
+            effective_column_width = frame_width - 2 * border_distance
+
+            if is_honeycomb:
+                # 蜂窝式排布
+                polygons_per_row = math.floor(
+                    (effective_row_length - bounding_box_length) / (bounding_box_length + horizontal_spacing))
+                if effective_row_length - (
+                        polygons_per_row * (bounding_box_length + horizontal_spacing) + bounding_box_length) >= 0:
+                    polygons_per_row += 1
+
+                polygons_per_column = math.floor((effective_column_width - bounding_box_width) / (
+                            bounding_box_width * math.sqrt(3) / 2 + vertical_spacing))
+                if effective_column_width - (polygons_per_column * (
+                        bounding_box_width * math.sqrt(3) / 2 + vertical_spacing) + bounding_box_width) >= 0:
+                    polygons_per_column += 1
+
+                total_shapes = 0
+                shape_centers = []
+
+                for row in range(polygons_per_column):
+                    for col in range(polygons_per_row):
+                        x_center = round(border_distance + bounding_box_length / 2 + col * (
+                                    bounding_box_length + horizontal_spacing), 2)
+                        y_center = round(border_distance + bounding_box_width / 2 + row * (
+                                    bounding_box_width * math.sqrt(3) / 2 + vertical_spacing), 2)
+                        if row % 2 == 1:
+                            x_center = round(x_center + (bounding_box_length + horizontal_spacing) / 2, 2)
+
+                        # 检查是否超出边框
+                        if x_center + bounding_box_length / 2 <= frame_length - border_distance and y_center + bounding_box_width / 2 <= frame_width - border_distance:
+                            shape_centers.append((x_center, y_center))
+                            total_shapes += 1
+            else:
+                # 阵列式排布
+                polygons_per_row = math.floor(
+                    (effective_row_length - bounding_box_length) / (bounding_box_length + horizontal_spacing))
+                if effective_row_length - (
+                        polygons_per_row * (bounding_box_length + horizontal_spacing) + bounding_box_length) >= 0:
+                    polygons_per_row += 1
+
+                polygons_per_column = math.floor(
+                    (effective_column_width - bounding_box_width) / (bounding_box_width + vertical_spacing))
+                if effective_column_width - (
+                        polygons_per_column * (bounding_box_width + vertical_spacing) + bounding_box_width) >= 0:
+                    polygons_per_column += 1
+
+                total_shapes = polygons_per_row * polygons_per_column
+
+                shape_centers = []
+
+                for row in range(polygons_per_column):
+                    for col in range(polygons_per_row):
+                        x_center = round(border_distance + bounding_box_length / 2 + col * (
+                                    bounding_box_length + horizontal_spacing), 2)
+                        y_center = round(
+                            border_distance + bounding_box_width / 2 + row * (bounding_box_width + vertical_spacing), 2)
+                        shape_centers.append((x_center, y_center))
+
+        elif is_triangle:
+
+            effective_row_length = frame_length - 2 * border_distance
+
+            effective_column_width = frame_width - 2 * border_distance
+
+            # 计算等腰三角形的高
+
+            if triangle_type == 'isosceles':
+
+                height = math.sqrt(shape_length ** 2 - (shape_width / 2) ** 2)
+
+            elif triangle_type == 'equilateral':
+
+                height = math.sqrt(3) / 2 * shape_length
+
+            else:
+
+                raise ValueError("无效的三角形类型")
+
+            # 计算一个示例三角形的顶点
+
+            example_center = (0, 0)
+
+            if triangle_type == "equilateral":
+
+                if triangle_orientation == "up":
+
+                    vertices = [
+
+                        (example_center[0], example_center[1] + height / 3),
+
+                        (example_center[0] - shape_length / 2, example_center[1] - height / 3),
+
+                        (example_center[0] + shape_length / 2, example_center[1] - height / 3)
+
+                    ]
+
+                elif triangle_orientation == "down":
+
+                    vertices = [
+
+                        (example_center[0], example_center[1] - height / 3),
+
+                        (example_center[0] - shape_length / 2, example_center[1] + height / 3),
+
+                        (example_center[0] + shape_length / 2, example_center[1] + height / 3)
+
+                    ]
+
+                elif triangle_orientation == "left":
+
+                    vertices = [
+
+                        (example_center[0] - height / 3, example_center[1]),
+
+                        (example_center[0] + height / 3, example_center[1] - shape_length / 2),
+
+                        (example_center[0] + height / 3, example_center[1] + shape_length / 2)
+
+                    ]
+
+                elif triangle_orientation == "right":
+
+                    vertices = [
+
+                        (example_center[0] + height / 3, example_center[1]),
+
+                        (example_center[0] - height / 3, example_center[1] - shape_length / 2),
+
+                        (example_center[0] - height / 3, example_center[1] + shape_length / 2)
+
+                    ]
+
+                else:
+
+                    raise ValueError("无效的三角形朝向")
+
+            elif triangle_type == "isosceles":
+
+                if triangle_orientation == "up":
+
+                    vertices = [
+
+                        (example_center[0], example_center[1] + height / 2),
+
+                        (example_center[0] - shape_width / 2, example_center[1] - height / 2),
+
+                        (example_center[0] + shape_width / 2, example_center[1] - height / 2)
+
+                    ]
+
+                elif triangle_orientation == "down":
+
+                    vertices = [
+
+                        (example_center[0], example_center[1] - height / 2),
+
+                        (example_center[0] - shape_width / 2, example_center[1] + height / 2),
+
+                        (example_center[0] + shape_width / 2, example_center[1] + height / 2)
+
+                    ]
+
+                elif triangle_orientation == "left":
+
+                    vertices = [
+
+                        (example_center[0] - height / 2, example_center[1]),
+
+                        (example_center[0] + height / 2, example_center[1] - shape_width / 2),
+
+                        (example_center[0] + height / 2, example_center[1] + shape_width / 2)
+
+                    ]
+
+                elif triangle_orientation == "right":
+
+                    vertices = [
+
+                        (example_center[0] + height / 2, example_center[1]),
+
+                        (example_center[0] - height / 2, example_center[1] - shape_width / 2),
+
+                        (example_center[0] - height / 2, example_center[1] + shape_width / 2)
+
+                    ]
+
+                else:
+
+                    raise ValueError("无效的三角形朝向")
+
+            # 计算最小外接矩形
+
+            min_x, min_y, bounding_box_length, bounding_box_width = calculate_bounding_box(vertices)
+
+            if is_honeycomb:
+
+                # 蜂窝式排布
+
+                triangles_per_row = math.floor(
+                    (effective_row_length - bounding_box_length) / (bounding_box_length + horizontal_spacing))
+
+                if effective_row_length - (
+                        triangles_per_row * (bounding_box_length + horizontal_spacing) + bounding_box_length) >= 0:
+                    triangles_per_row += 1
+
+                triangles_per_column = math.floor((effective_column_width - bounding_box_width) / (height + vertical_spacing))
+
+                if effective_column_width - (triangles_per_column * (height + vertical_spacing) + bounding_box_width) >= 0:
+                    triangles_per_column += 1
+
+                total_shapes = 0
+
+                shape_centers = []
+
+                for row in range(triangles_per_column):
+
+                    for col in range(triangles_per_row):
+
+                        x_center = round(
+                            border_distance + bounding_box_length / 2 + col * (bounding_box_length + horizontal_spacing), 2)
+
+                        y_center = round(border_distance + bounding_box_width / 2 + row * (height + vertical_spacing), 2)
+
+                        if row % 2 == 1:
+                            x_center = round(x_center + (bounding_box_length + horizontal_spacing) / 2, 2)
+
+                        # 检查是否超出边框
+
+                        if x_center + bounding_box_length / 2 <= frame_length - border_distance and y_center + bounding_box_width / 2 <= frame_width - border_distance:
+                            # 只返回坐标信息 (x, y)
+
+                            shape_centers.append((x_center, y_center))
+
+                            total_shapes += 1
+
+
+            else:
+
+                # 阵列式排布
+
+                triangles_per_row = math.floor(
+                    (effective_row_length - bounding_box_length) / (bounding_box_length + horizontal_spacing))
+
+                if effective_row_length - (
+                        triangles_per_row * (bounding_box_length + horizontal_spacing) + bounding_box_length) >= 0:
+                    triangles_per_row += 1
+
+                triangles_per_column = math.floor(
+                    (effective_column_width - bounding_box_width) / (bounding_box_width + vertical_spacing))
+
+                if effective_column_width - (
+                        triangles_per_column * (bounding_box_width + vertical_spacing) + bounding_box_width) >= 0:
+                    triangles_per_column += 1
+
+                total_shapes = triangles_per_row * triangles_per_column
+
+                shape_centers = []
+
+                for row in range(triangles_per_column):
+
+                    for col in range(triangles_per_row):
+                        x_center = round(
+                            border_distance + bounding_box_length / 2 + col * (bounding_box_length + horizontal_spacing), 2)
+
+                        y_center = round(border_distance + bounding_box_width / 2 + row * (bounding_box_width + vertical_spacing),
+                                         2)
+
+                        # 只返回坐标信息 (x, y)
+
+                        shape_centers.append((x_center, y_center))
+
+                        total_shapes += 1
+
+
+        return total_shapes, shape_centers
+
+    except Exception as e:
+        raise ValueError(f"无法计算填充数量，错误信息：{e}")
+
+@app.route('/')
+def index():
+    """渲染前端页面"""
+    return render_template('index.html')
+
+@app.route('/calculate', methods=['POST'])
+def calculate():
+    """接收前端请求，计算并返回结果"""
+    data = request.json
+    try:
+        # 检查必需字段是否存在
+        required_fields = [
+            'frame_length', 'frame_width', 'shape_length', 'horizontal_spacing',
+            'vertical_spacing', 'border_distance', 'shape_type', 'layout_type'
+        ]
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'缺少必需字段: {field}'}), 400
+
+        frame_length = float(data['frame_length'])
+        frame_width = float(data['frame_width'])
+        shape_length = float(data['shape_length'])
+        horizontal_spacing = float(data['horizontal_spacing'])
+        vertical_spacing = float(data['vertical_spacing'])
+        border_distance = float(data['border_distance'])
+        shape_type = data['shape_type']
+        layout_type = data['layout_type']
+        polygon_sides = int(data['polygon_sides']) if shape_type == 'polygon' else None
+        triangle_type = data['triangle_type'] if shape_type == 'triangle' else None
+        triangle_orientation = data['triangle_orientation'] if shape_type == 'triangle' else None
+
+        # 处理 shape_width
+        shape_width = data.get('shape_width', '')  # 获取 shape_width，默认为空字符串
+        if shape_width == '':
+            if shape_type == 'triangle' and triangle_type == 'equilateral':
+                shape_width = shape_length  # 等边三角形的底边长等于边长
+            else:
+                return jsonify({'error': 'shape_width 不能为空'}), 400
+        else:
+            shape_width = float(shape_width)
+
+        # 计算图形填充
+        total_shapes, shape_centers = calculate_shape_centers(
+            frame_length, frame_width, shape_length, shape_width,
+            horizontal_spacing, vertical_spacing, border_distance,
+            is_circle=shape_type == 'circle',
+            is_rectangle=shape_type == 'rectangle',
+            polygon_sides=polygon_sides,
+            is_triangle=shape_type == 'triangle',
+            triangle_type=triangle_type,
+            triangle_orientation=triangle_orientation,
+            is_honeycomb=layout_type == 'honeycomb'
+        )
+
+        # 使用 matplotlib 绘制图形
+        fig, ax = plt.subplots()
+        ax.set_xlim([0, frame_length])
+        ax.set_ylim([0, frame_width])
+        ax.plot([0, frame_length, frame_length, 0, 0], [0, 0, frame_width, frame_width, 0], 'k-')
+
+        if shape_type == 'circle':
+            for center in shape_centers:
+                circle = Circle(center, shape_length / 2, fill=True)
+                ax.add_patch(circle)
+        elif shape_type == 'rectangle':
+            for center in shape_centers:
+                rectangle = Rectangle((center[0] - shape_length / 2, center[1] - shape_width / 2), shape_length, shape_width, fill=True)
+                ax.add_patch(rectangle)
+        elif shape_type == 'polygon':
+            circumradius = shape_length / (2 * math.sin(math.pi / polygon_sides))
+            for center in shape_centers:
+                vertices = []
+                for i in range(polygon_sides):
+                    x = center[0] + circumradius * math.cos(i * math.pi * 2 / polygon_sides)
+                    y = center[1] + circumradius * math.sin(i * math.pi * 2 / polygon_sides)
+                    vertices.append((x, y))
+                polygon = Polygon(vertices, fill=True)
+                ax.add_patch(polygon)
+
+                # 计算最小外接矩形
+                min_x, min_y, bounding_box_length, bounding_box_width = calculate_bounding_box(vertices)
+
+                # 绘制外接矩形轮廓
+                bounding_box = Rectangle((center[0] - bounding_box_length / 2, center[1] - bounding_box_width / 2),
+                                         bounding_box_length, bounding_box_width, fill=False, edgecolor='red',
+                                         linestyle='--')
+                ax.add_patch(bounding_box)
+
+        elif shape_type == 'triangle':
+            for center in shape_centers:
+                x_center, y_center = center
+                if triangle_type == "equilateral":
+                    height = math.sqrt(3) / 2 * shape_length
+                    if triangle_orientation == "up":
+                        vertices = [
+                            (x_center, y_center + height / 3),
+                            (x_center - shape_length / 2, y_center - height / 3),
+                            (x_center + shape_length / 2, y_center - height / 3)
+                        ]
+                    elif triangle_orientation == "down":
+                        vertices = [
+                            (x_center, y_center - height / 3),
+                            (x_center - shape_length / 2, y_center + height / 3),
+                            (x_center + shape_length / 2, y_center + height / 3)
+                        ]
+                    elif triangle_orientation == "left":
+                        vertices = [
+                            (x_center - height / 3, y_center),
+                            (x_center + height / 3, y_center - shape_length / 2),
+                            (x_center + height / 3, y_center + shape_length / 2)
+                        ]
+                    elif triangle_orientation == "right":
+                        vertices = [
+                            (x_center + height / 3, y_center),
+                            (x_center - height / 3, y_center - shape_length / 2),
+                            (x_center - height / 3, y_center + shape_length / 2)
+                        ]
+                    else:
+                        raise ValueError("无效的三角形朝向")
+                elif triangle_type == "isosceles":
+                    height = math.sqrt(shape_length ** 2 - (shape_width / 2) ** 2)
+                    if triangle_orientation == "up":
+                        vertices = [
+                            (x_center, y_center + height / 2),
+                            (x_center - shape_width / 2, y_center - height / 2),
+                            (x_center + shape_width / 2, y_center - height / 2)
+                        ]
+                    elif triangle_orientation == "down":
+                        vertices = [
+                            (x_center, y_center - height / 2),
+                            (x_center - shape_width / 2, y_center + height / 2),
+                            (x_center + shape_width / 2, y_center + height / 2)
+                        ]
+                    elif triangle_orientation == "left":
+                        vertices = [
+                            (x_center - height / 2, y_center),
+                            (x_center + height / 2, y_center - shape_width / 2),
+                            (x_center + height / 2, y_center + shape_width / 2)
+                        ]
+                    elif triangle_orientation == "right":
+                        vertices = [
+                            (x_center + height / 2, y_center),
+                            (x_center - height / 2, y_center - shape_width / 2),
+                            (x_center - height / 2, y_center + shape_width / 2)
+                        ]
+                    else:
+                        raise ValueError("无效的三角形朝向")
+
+                triangle = Polygon(vertices, fill=True)
+                ax.add_patch(triangle)
+
+                # 计算最小外接矩形
+                min_x, min_y, bounding_box_length, bounding_box_width = calculate_bounding_box(vertices)
+
+                # 绘制外接矩形轮廓
+                bounding_box = Rectangle((center[0] - bounding_box_length / 2, center[1] - bounding_box_width / 2),
+                                         bounding_box_length, bounding_box_width, fill=False, edgecolor='red',
+                                         linestyle='--')
+                ax.add_patch(bounding_box)
+
+        # 将图像保存为字节流
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        plt.close()
+        buf.seek(0)
+
+        # 返回图像文件和填充图形数量
+        response = send_file(buf, mimetype='image/png')
+        response.headers['X-Total-Shapes'] = str(total_shapes)
+        response.headers['X-Shape-Centers'] = json.dumps(shape_centers)  # 将中心位置数据作为 JSON 字符串返回
+        return response
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/connect_robot', methods=['POST'])
+def connect_robot():
+    global robot_arm
+    data = request.json
+    robot_ip = data.get('robot_ip')
+
+    if not robot_ip:
+        return jsonify({'error': '缺少机器人IP地址'}), 400
+
+    try:
+        # 如果已经连接，先断开
+        if robot_arm is not None:
+            robot_arm.disconnect()
+            robot_arm = None
+
+        # 初始化 Arm 类并连接
+        robot_arm = Arm()
+        ret = robot_arm.connect(robot_ip)
+        if ret != StatusCodeEnum.OK:
+            # 根据状态码返回具体的错误信息
+            if ret == StatusCodeEnum.INVALID_IP_ADDRESS:
+                error_msg = '连接失败: IP 地址无效'
+            elif ret == StatusCodeEnum.CONNECTION_TIMEOUT:
+                error_msg = '连接失败: 连接超时'
+            elif ret == StatusCodeEnum.CONTROLLER_ERROR:
+                error_msg = '连接失败: 控制器错误，详情请联系开发人员'
+            else:
+                error_msg = f'连接失败: {ret.errmsg}'
+
+            # 清理连接状态
+            robot_arm = None
+            return jsonify({'error': error_msg}), 400
+
+        # 获取型号
+        ret, model_info = robot_arm.get_arm_model_info()
+        if ret != StatusCodeEnum.OK:
+            # 获取型号失败时，清理连接状态
+            robot_arm.disconnect()
+            robot_arm = None
+            return jsonify({'error': '获取型号失败: ' + ret.errmsg}), 400
+
+        # 获取控制柜版本
+        ret, version_info = robot_arm.get_version()
+        if ret != StatusCodeEnum.OK:
+            # 获取版本失败时，清理连接状态
+            robot_arm.disconnect()
+            robot_arm = None
+            return jsonify({'error': '获取控制柜版本失败: ' + ret.errmsg}), 400
+
+        # 返回型号和控制柜版本信息，保持连接状态
+        return jsonify({
+            'model_info': model_info,
+            'controller_version': version_info
+        }), 200
+
+    except Exception as e:
+        # 发生异常时，清理连接状态
+        if robot_arm is not None:
+            robot_arm.disconnect()
+            robot_arm = None
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/disconnect_robot', methods=['POST'])
+def disconnect_robot_route():
+    global robot_arm
+    if robot_arm is not None:
+        robot_arm.disconnect()
+        robot_arm = None
+        return jsonify({'message': '已断开连接'}), 200
+    else:
+        return jsonify({'error': '未连接机器人'}), 400
+
+
+@app.route('/get_p_data', methods=['POST'])
+def get_p_data():
+    global robot_arm
+    data = request.json
+    program_name = data.get('program_name')
+
+    if not program_name:
+        return jsonify({'error': '缺少程序名称'}), 400
+
+    if robot_arm is None:
+        return jsonify({'error': '未连接机器人'}), 400
+
+    try:
+        # 读取所有位姿
+        poses, ret = robot_arm.program_pose.read_all_poses(program_name)
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取P点数据失败'}), 400
+
+        # 将位姿数据转换为JSON格式
+        poses_data = []
+        for p in poses:
+            poses_data.append({
+                'id': p.id,
+                'name': p.name,
+                'poseData': {
+                    'cartData': {
+                        'baseCart': {
+                            'position': {
+                                'x': p.poseData.cartData.baseCart.position.x,
+                                'y': p.poseData.cartData.baseCart.position.y,
+                                'z': p.poseData.cartData.baseCart.position.z,
+                                'c': p.poseData.cartData.baseCart.position.c
+                            }
+                        },
+                        'uf': p.poseData.cartData.uf,  # 直接返回UF值
+                        'tf': p.poseData.cartData.tf   # 直接返回TF值
+                    }
+                }
+            })
+
+        return jsonify({'poses': poses_data}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/write_p_data', methods=['POST'])
+def write_p_data():
+    global robot_arm
+    data = request.json
+    program_name = data.get('program_name')
+    p_data = data.get('p_data')
+
+    if not program_name or not p_data:
+        return jsonify({'error': '缺少程序名称或P点数据'}), 400
+
+    if robot_arm is None:
+        return jsonify({'error': '未连接机器人'}), 400
+
+    try:
+        # 检查机器人状态
+        ret, state = robot_arm.get_robot_status()
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '获取机器人状态失败'}), 400
+
+        # 检查机器人是否处于空闲状态
+        if state.msg != "机器人空闲":
+            return jsonify({'error': '机器人当前不处于空闲状态，无法写入P点'}), 400
+
+        # 批量写入P点数据
+        for p in p_data:
+            pose_id = p['id']
+            x = float(p['x'])  # 确保X是浮点数
+            y = float(p['y'])  # 确保Y是浮点数
+            z = float(p['z'])  # 确保Z是浮点数
+            c = float(p['c'])  # 确保C是浮点数
+            uf = int(p.get('uf', 1))  # 确保UF是整数
+            tf = int(p.get('tf', 1))  # 确保TF是整数
+
+            # 读取当前P点的位姿数据
+            pose, ret = robot_arm.program_pose.read(program_name, pose_id)
+            if ret != StatusCodeEnum.OK:
+                return jsonify({'error': f'读取P点 {pose_id} 数据失败'}), 400
+
+            # 修改位姿数据的X、Y、Z、C坐标，并更新UF和TF值
+            pose.poseData.cartData.baseCart.position.x = x
+            pose.poseData.cartData.baseCart.position.y = y
+            pose.poseData.cartData.baseCart.position.z = z
+            pose.poseData.cartData.baseCart.position.c = c
+            pose.poseData.cartData.uf = uf  # 更新UF值
+            pose.poseData.cartData.tf = tf  # 更新TF值
+
+            # 将修改后的位姿数据写回
+            ret = robot_arm.program_pose.write(program_name, pose_id, pose)
+            if ret != StatusCodeEnum.OK:
+                return jsonify({'error': f'写入P点 {pose_id} 数据失败'}), 400
+
+        return jsonify({'message': 'P点数据写入成功'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/read_pr_register', methods=['POST'])
+def read_pr_register():
+    global robot_arm
+    data = request.json
+    pr_register_id = data.get('pr_register_id')
+
+    if pr_register_id is None:
+        return jsonify({'error': '缺少PR寄存器ID'}), 400
+
+    try:
+        pr_register_id = int(pr_register_id)  # 确保PR寄存器ID是整数
+    except ValueError:
+        return jsonify({'error': 'PR寄存器ID必须是整数'}), 400
+
+    if robot_arm is None:
+        return jsonify({'error': '未连接机器人'}), 400
+
+    try:
+        # 读取位姿寄存器
+        pose_register, ret = robot_arm.pose_register.read(pr_register_id)
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取PR寄存器失败'}), 400
+
+        # 返回Z和C的值
+        return jsonify({
+            'z': pose_register.poseRegisterData.cartData.position.z,
+            'c': pose_register.poseRegisterData.cartData.position.c
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+# 新增：写入R寄存器的路由
+@app.route('/write_r_registers', methods=['POST'])
+def write_r_registers():
+    data = request.json
+
+    # 获取前端传入的值
+    frame_depth = data.get('frame_depth')
+    shape_height = data.get('shape_height')
+    material_thickness = data.get('material_thickness')
+    placement_layers = data.get('placement_layers')
+    total_shapes = data.get('total_shapes')
+    tool_count = data.get('tool_count')
+
+    # 检查机器人是否已连接
+    if robot_arm is None:
+        return jsonify({'error': '未连接机器人'}), 400
+
+    try:
+        # 写入R6寄存器（边框深度）
+        register, ret = robot_arm.register.read(6)  # 先读取当前寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取R6寄存器失败'}), 400
+        register.value = float(frame_depth)  # 更新值
+        ret = robot_arm.register.write(6, register)  # 写回寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '写入R6寄存器失败'}), 400
+
+        # 写入R1寄存器（图形高度）
+        register, ret = robot_arm.register.read(1)  # 先读取当前寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取R1寄存器失败'}), 400
+        register.value = float(shape_height)  # 更新值
+        ret = robot_arm.register.write(1, register)  # 写回寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '写入R1寄存器失败'}), 400
+
+        # 写入R2寄存器（包材厚度）
+        register, ret = robot_arm.register.read(2)  # 先读取当前寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取R2寄存器失败'}), 400
+        register.value = float(material_thickness)  # 更新值
+        ret = robot_arm.register.write(2, register)  # 写回寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '写入R2寄存器失败'}), 400
+
+        # 写入R3寄存器（摆放层数）
+        register, ret = robot_arm.register.read(3)  # 先读取当前寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取R3寄存器失败'}), 400
+        register.value = int(placement_layers)  # 更新值
+        ret = robot_arm.register.write(3, register)  # 写回寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '写入R3寄存器失败'}), 400
+
+         # 写入R4寄存器（填充数量）
+        register, ret = robot_arm.register.read(4)  # 先读取当前寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取R4寄存器失败'}), 400
+        register.value = int(total_shapes)  # 更新值
+        ret = robot_arm.register.write(4, register)  # 写回寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '写入R4寄存器失败'}), 400
+
+        # 写入R5寄存器（工具数量）
+        register, ret = robot_arm.register.read(5)  # 先读取当前寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取R5寄存器失败'}), 400
+        register.value = int(tool_count)  # 更新值
+        ret = robot_arm.register.write(5, register)  # 写回寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '写入R5寄存器失败'}), 400
+
+        return jsonify({'message': 'R寄存器写入成功'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+if __name__ == '__main__':
+    app.run(debug=True)
