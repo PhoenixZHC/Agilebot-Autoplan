@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智能摆盘规划系统</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css')  }}">
 </head>
 <body>
     <!-- 标题栏 -->
     <div class="header">
         <div class="logo">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
+            <img src="{{ url_for('static', filename='logo.png')  }}" alt="Logo">
         </div>
         <div class="title">智能摆盘规划系统</div>
         <div class="version">V2.0</div>
@@ -21,15 +21,15 @@
         <!-- 左侧菜单栏 -->
         <div class="sidebar">
             <button id="robot-settings-btn" class="active">
-                <img src="{{ url_for('static', filename='icons/robot.svg') }}" alt="机器人设置" class="icon">
+                <img src="{{ url_for('static', filename='icons/robot.svg')  }}" alt="机器人设置" class="icon">
                 <span>机器人设置</span>
             </button>
             <button id="smart-planning-btn">
-                <img src="{{ url_for('static', filename='icons/planning.svg') }}" alt="智能规划" class="icon">
+                <img src="{{ url_for('static', filename='icons/planning.svg')  }}" alt="智能规划" class="icon">
                 <span>智能规划</span>
             </button>
             <button id="data-list-btn">
-                <img src="{{ url_for('static', filename='icons/list.svg') }}" alt="数据清单" class="icon">
+                <img src="{{ url_for('static', filename='icons/list.svg')  }}" alt="数据清单" class="icon">
                 <span>数据清单</span>
             </button>
         </div>
@@ -49,15 +49,51 @@
                     <div>型号: <span id="robot_model"></span></div>
                     <div>控制柜版本: <span id="controller_version"></span></div>
                 </div>
-                <!-- 新增的输入框和按钮 -->
+
+                <!-- 程序输入部分 -->
                 <div id="program_input" style="display: none; margin-top: 20px;">
                     <div class="robot-connection">
                         <label for="program_name">程序名称:</label>
                         <input type="text" id="program_name" name="program_name" placeholder="输入程序名称" value="plan">
                         <button id="read_p_data_button">读取P点数据</button>
+                        <div>
+                            <label for="pr_register_id">Z&C参考寄存器:</label>
+                            <input type="number" id="pr_register_id" name="pr_register_id" placeholder="输入PR寄存器ID">
+                        </div>
+                        <div>
+                            <label for="uf_value">UF值:</label>
+                            <select id="uf_value" name="uf_value">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="tool_count">工具数量:</label>
+                            <select id="tool_count" name="tool_count">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-                <!-- 新增的表格容器，用于显示P点数据 -->
+
+                <!-- P点数据表格 -->
                 <div id="p_data_table_container" style="display: none; margin-top: 20px;">
                     <h3>P点数据</h3>
                     <table id="p_data_table" style="width: 100%; border-collapse: collapse;">
@@ -230,47 +266,14 @@
                             可填充的图形数量：<span id="shape-count-value">0</span>
                         </div>
 
-                        <!-- 新增的输入框和按钮 -->
+                        <!-- 程序输入和写入按钮 -->
                         <div id="write-p-data-section" style="display: none; margin-top: 20px;">
                             <div class="robot-connection">
                                 <div>
                                     <label for="write_program_name">程序名称:</label>
                                     <input type="text" id="write_program_name" name="write_program_name" placeholder="输入程序名称" value="plan">
                                 </div>
-                                <div>
-                                    <label for="pr_register_id">Z&C参考寄存器:</label>
-                                    <input type="number" id="pr_register_id" name="pr_register_id" placeholder="输入PR寄存器ID">
-                                </div>
-                                <div>
-                                    <label for="uf_value">UF值:</label>
-                                    <select id="uf_value" name="uf_value">
-                                        <option value="1">1</option>
-                                        <option value="2">2</option>
-                                        <option value="3">3</option>
-                                        <option value="4">4</option>
-                                        <option value="5">5</option>
-                                        <option value="6">6</option>
-                                        <option value="7">7</option>
-                                        <option value="8">8</option>
-                                        <option value="9">9</option>
-                                        <option value="10">10</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label for="tool_count">工具数量:</label>
-                                    <select id="tool_count" name="tool_count">
-                                        <option value="1">1</option>
-                                        <option value="2">2</option>
-                                        <option value="3">3</option>
-                                        <option value="4">4</option>
-                                        <option value="5">5</option>
-                                        <option value="6">6</option>
-                                        <option value="7">7</option>
-                                        <option value="8">8</option>
-                                        <option value="9">9</option>
-                                        <option value="10">10</option>
-                                    </select>
-                                </div>
+
                                 <!-- 新增一个类名 long-button -->
                                 <div class="long-button">
                                     <button id="write_p_data_button">写入P点</button>
@@ -291,6 +294,6 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js')  }}"></script>
 </body>
 </html>
