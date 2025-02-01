@@ -1,3 +1,6 @@
+#打包命令
+#pyinstaller --onefile --add-data "templates;templates" --add-data "static;static" app.py
+
 from flask import Flask, render_template, request, send_file, jsonify
 import matplotlib
 matplotlib.use('Agg')  # 设置为非交互式后端
