@@ -9,6 +9,8 @@ import json
 from Agilebot.IR.A.arm import Arm
 from Agilebot.IR.A.status_code import StatusCodeEnum
 from Agilebot.IR.A.sdk_classes import Register
+from Agilebot.IR.A.sdk_types import CoordinateSystemType
+
 app = Flask(__name__)
 robot_arm = None
 def calculate_bounding_box(vertices):
@@ -885,6 +887,110 @@ def write_r_registers():
             return jsonify({'error': '写入R5寄存器失败'}), 400
 
         return jsonify({'message': 'R寄存器写入成功'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/get_tf_data', methods=['POST'])
+def get_tf_data():
+    global robot_arm
+    data = request.json
+    tf_id = data.get('tf_id')
+
+    if tf_id is None:
+        return jsonify({'error': '缺少TF ID'}), 400
+
+    if robot_arm is None:
+        return jsonify({'error': '未连接机器人'}), 400
+
+    try:
+        # 读取指定TF的值
+        tf, ret = robot_arm.coordinate_system.get(CoordinateSystemType.ToolFrame, tf_id)
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取TF数据失败'}), 400
+
+        print(
+            f"TF序号：{tf.coordinate_info.coordinate_id}\n"
+            f"TF名称：{tf.coordinate_info.name}\n"
+            f"X：{tf.position.x}\n"
+            f"Y：{tf.position.y}\n"
+            f"Z：{tf.position.z}\n"
+            f"A：{tf.orientation.r}\n"
+            f"B：{tf.orientation.p}\n"
+            f"C：{tf.orientation.y}\n"
+        )
+
+        # 返回TF数据
+        return jsonify({
+            'tf': {
+                'coordinate_info': {
+                    'coordinate_id': tf.coordinate_info.coordinate_id,
+                    'name': tf.coordinate_info.name,
+                    'group_id': tf.coordinate_info.group_id
+                },
+                'position': {
+                    'x': tf.position.x,
+                    'y': tf.position.y,
+                    'z': tf.position.z
+                },
+                'orientation': {
+                    'r': tf.orientation.r,
+                    'p': tf.orientation.p,
+                    'y': tf.orientation.y
+                }
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/update_tf_data', methods=['POST'])
+def update_tf_data():
+    global robot_arm
+    data = request.json
+    tf_updates = data.get('tf_updates')
+
+    if not tf_updates:
+        return jsonify({'error': '缺少TF更新数据'}), 400
+
+    if robot_arm is None:
+        return jsonify({'error': '未连接机器人'}), 400
+
+    try:
+        # 批量更新TF数据
+        for tf_update in tf_updates:
+            tf_id = tf_update['coordinate_info']['coordinate_id']
+            tf, ret = robot_arm.coordinate_system.get(CoordinateSystemType.ToolFrame, tf_id)
+            if ret != StatusCodeEnum.OK:
+                return jsonify({'error': f'读取TF {tf_id} 数据失败'}), 400
+
+            # 更新TF的值
+            tf.coordinate_info.name = tf_update['coordinate_info']['name']
+            tf.position.x = tf_update['position']['x']
+            tf.position.y = tf_update['position']['y']
+            tf.position.z = tf_update['position']['z']
+            tf.orientation.r = tf_update['orientation']['r']
+            tf.orientation.p = tf_update['orientation']['p']
+            tf.orientation.y = tf_update['orientation']['y']
+
+            # 调试输出，检查每个 TF 的更新内容
+            print(
+                f"TF序号：{tf.coordinate_info.coordinate_id}\n"
+                f"TF名称：{tf.coordinate_info.name}\n"
+                f"X：{tf.position.x}\n"
+                f"Y：{tf.position.y}\n"
+                f"Z：{tf.position.z}\n"
+                f"A：{tf.orientation.r}\n"
+                f"B：{tf.orientation.p}\n"
+                f"C：{tf.orientation.y}\n"
+            )
+
+            # 将修改后的TF数据写回
+            ret = robot_arm.coordinate_system.update(CoordinateSystemType.ToolFrame, tf)
+            if ret != StatusCodeEnum.OK:
+                return jsonify({'error': f'更新TF {tf_id} 数据失败'}), 400
+
+        return jsonify({'message': 'TF数据更新成功'}), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 400

@@ -598,10 +598,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     })
     .then(data => {
         console.log('P点数据写入成功');
-        const successMessage = document.createElement('div');
-        successMessage.textContent = 'P点数据写入成功';
-        successMessage.style.color = 'green';
-        document.body.appendChild(successMessage);
+        alert('P点数据写入成功');
     })
     .catch(error => {
         console.error('写入P点数据失败:', error.message);
@@ -609,7 +606,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     });
 });
 
-// 在“写入P点”按钮点击事件中，新增逻辑
+// 在“写入P点”按钮点击事件中，新增R逻辑
 document.getElementById('write_p_data_button').addEventListener('click', function () {
     // 获取新增输入框的值
     const frameDepth = document.getElementById('frame_depth').value;
@@ -655,5 +652,96 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .catch(error => {
         console.error('写入R寄存器失败:', error.message);
         alert('写入R寄存器失败: ' + error.message);
+    });
+});
+
+// 在“写入P点”按钮点击事件中，新增tf逻辑
+document.getElementById('write_p_data_button').addEventListener('click', function () {
+    const toolCount = parseInt(document.getElementById('tool_count').value, 10); // 获取工具数量
+    const toolSpacing = parseFloat(document.getElementById('tool_spacing').value); // 获取工具间距
+
+    if (isNaN(toolSpacing)) { // 检查工具间距是否为有效数字
+        alert('请输入有效的工具间距');
+        return;
+    }
+
+    // 如果工具数量为 1，直接返回，不需要修改 TF
+    if (toolCount === 1) {
+        return;
+    }
+
+    // 发送请求到后端读取TF1的值
+    fetch('/get_tf_data', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            tf_id: 1 // 读取TF1的值
+        }),
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || '读取TF1数据失败');
+            });
+        }
+        return response.json();
+    })
+.then(data => {
+    const tf1 = data.tf; // 获取TF1的值
+
+    // 复制TF1的值给其他TF，并根据工具间距调整Y值
+    const tfUpdates = [];
+    for (let i = 2; i <= toolCount; i++) {
+        const newTf = {
+            coordinate_info: {
+                coordinate_id: i, // 设置新的TF ID
+                name: tf1.coordinate_info.name, // 复制TF1的名称
+                group_id: tf1.coordinate_info.group_id // 复制TF1的组ID
+            },
+            position: {
+                x: tf1.position.x, // 复制TF1的X值
+                y: tf1.position.y + (i - 1) * toolSpacing, // 调整Y值
+                z: tf1.position.z // 复制TF1的Z值
+            },
+            orientation: {
+                r: tf1.orientation.r, // 复制TF1的A值
+                p: tf1.orientation.p, // 复制TF1的B值
+                y: tf1.orientation.y // 复制TF1的C值
+            }
+        };
+        tfUpdates.push(newTf);
+    }
+
+    // 调试输出，检查 tfUpdates 的内容
+    console.log('tfUpdates:', tfUpdates);
+
+    // 发送请求到后端更新TF
+    return fetch('/update_tf_data', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            tf_updates: tfUpdates
+        }),
+    });
+})
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || '更新TF数据失败');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('TF数据更新成功');
+        alert('TF数据更新成功');
+    })
+    .catch(error => {
+        console.error('更新TF数据失败:', error.message);
+        alert('更新TF数据失败: ' + error.message);
     });
 });
