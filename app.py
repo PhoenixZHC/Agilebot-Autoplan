@@ -13,6 +13,7 @@ from Agilebot.IR.A.arm import Arm
 from Agilebot.IR.A.status_code import StatusCodeEnum
 from Agilebot.IR.A.sdk_classes import Register
 from Agilebot.IR.A.sdk_types import CoordinateSystemType
+from Agilebot.IR.A.sdk_types import SignalType, SignalValue
 
 app = Flask(__name__)
 robot_arm = None
@@ -823,26 +824,21 @@ def write_r_registers():
     data = request.json
 
     # 获取前端传入的值
+    frame_length = data.get('frame_length')
+    frame_width = data.get('frame_width')
     frame_depth = data.get('frame_depth')
     shape_height = data.get('shape_height')
     material_thickness = data.get('material_thickness')
     placement_layers = data.get('placement_layers')
     total_shapes = data.get('total_shapes')
     tool_count = data.get('tool_count')
+    drop_Count = data.get('drop_Count')
 
     # 检查机器人是否已连接
     if robot_arm is None:
         return jsonify({'error': '未连接机器人'}), 400
 
     try:
-        # 写入R6寄存器（边框深度）
-        register, ret = robot_arm.register.read(6)  # 先读取当前寄存器
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '读取R6寄存器失败'}), 400
-        register.value = float(frame_depth)  # 更新值
-        ret = robot_arm.register.write(6, register)  # 写回寄存器
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '写入R6寄存器失败'}), 400
 
         # 写入R1寄存器（图形高度）
         register, ret = robot_arm.register.read(1)  # 先读取当前寄存器
@@ -888,6 +884,42 @@ def write_r_registers():
         ret = robot_arm.register.write(5, register)  # 写回寄存器
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '写入R5寄存器失败'}), 400
+
+        # 写入R6寄存器（边框深度）
+        register, ret = robot_arm.register.read(6)  # 先读取当前寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取R6寄存器失败'}), 400
+        register.value = float(frame_depth)  # 更新值
+        ret = robot_arm.register.write(6, register)  # 写回寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '写入R6寄存器失败'}), 400
+
+        # 写入R7寄存器（料框长度）
+        register, ret = robot_arm.register.read(7)  # 先读取当前寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取R7寄存器失败'}), 400
+        register.value = int(frame_length)  # 更新值
+        ret = robot_arm.register.write(7, register)  # 写回寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '写入R7寄存器失败'}), 400
+
+        # 写入R8寄存器（料框宽度）
+        register, ret = robot_arm.register.read(8)  # 先读取当前寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取R8寄存器失败'}), 400
+        register.value = int(frame_width)  # 更新值
+        ret = robot_arm.register.write(8, register)  # 写回寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '写入R8寄存器失败'}), 400
+
+        # 写入R9寄存器（前端下料数量）
+        register, ret = robot_arm.register.read(9)  # 先读取当前寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取R9寄存器失败'}), 400
+        register.value = int(drop_Count)  # 更新值
+        ret = robot_arm.register.write(9, register)  # 写回寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '写入R9寄存器失败'}), 400
 
         return jsonify({'message': 'R寄存器写入成功'}), 200
 
@@ -994,6 +1026,55 @@ def update_tf_data():
                 return jsonify({'error': f'更新TF {tf_id} 数据失败'}), 400
 
         return jsonify({'message': 'TF数据更新成功'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+@app.route('/read_do_state', methods=['POST'])
+def read_do_state():
+    global robot_arm
+    if robot_arm is None:
+        return jsonify({'error': '未连接机器人'}), 400
+
+    try:
+        # 读取 DO1 和 DO2 的状态
+        do1_value, ret = robot_arm.digital_signals.read(SignalType.DO, 1)
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取 DO1 失败'}), 400
+
+        do2_value, ret = robot_arm.digital_signals.read(SignalType.DO, 2)
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取 DO2 失败'}), 400
+
+        return jsonify({'do1': do1_value, 'do2': do2_value}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/toggle_do', methods=['POST'])
+def toggle_do():
+    global robot_arm
+    if robot_arm is None:
+        return jsonify({'error': '未连接机器人'}), 400
+
+    data = request.json
+    do_channel = data.get('do_channel')
+
+    if do_channel not in [1, 2]:
+        return jsonify({'error': '无效的 DO 通道'}), 400
+
+    try:
+        # 读取当前 DO 状态
+        current_value, ret = robot_arm.digital_signals.read(SignalType.DO, do_channel)
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': f'读取 DO{do_channel} 失败'}), 400
+
+        # 切换状态
+        new_value = SignalValue.OFF if current_value == SignalValue.ON else SignalValue.ON
+        ret = robot_arm.digital_signals.write(SignalType.DO, do_channel, new_value)
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': f'切换 DO{do_channel} 失败'}), 400
+
+        return jsonify({'message': f'DO{do_channel} 切换成功', 'new_value': new_value}), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 400

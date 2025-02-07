@@ -406,6 +406,7 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
             document.getElementById('program_input').style.display = 'block'; // 显示程序输入框
 
             console.log('机器人连接成功');
+            readDOState();
         })
         .catch(error => {
             console.error('连接失败:', error.message);
@@ -420,6 +421,96 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
         });
     }
 });
+
+// 定义读取 DO1 和 DO2 状态的函数
+function readDOState() {
+    fetch('/read_do_state', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || '读取 DO 状态失败');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        // 更新显示状态
+        document.getElementById('frame_lock_state').textContent = data.do1 === 1 ? 'ON' : 'OFF';
+        document.getElementById('laser_measure_state').textContent = data.do2 === 1 ? 'ON' : 'OFF';
+    })
+    .catch(error => {
+        console.error('读取 DO 状态失败:', error.message);
+        alert('读取 DO 状态失败: ' + error.message);
+    });
+}
+
+
+// 绑定按钮点击事件
+document.getElementById('toggle_frame_lock').addEventListener('click', toggleFrameLock);
+document.getElementById('toggle_laser_measure').addEventListener('click', toggleLaserMeasure);
+
+// 定义切换 DO1 状态的函数
+function toggleFrameLock() {
+    fetch('/toggle_do', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            do_channel: 1, // 切换 DO1
+        }),
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || '切换 DO1 失败');
+            });
+        }
+        return response.json();
+    })
+    .then(() => {
+        // 切换成功后重新读取状态
+        readDOState();
+    })
+    .catch(error => {
+        console.error('切换 DO1 失败:', error.message);
+        alert('切换 DO1 失败: ' + error.message);
+    });
+}
+
+// 定义切换 DO2 状态的函数
+function toggleLaserMeasure() {
+    fetch('/toggle_do', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            do_channel: 2, // 切换 DO2
+        }),
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || '切换 DO2 失败');
+            });
+        }
+        return response.json();
+    })
+    .then(() => {
+        // 切换成功后重新读取状态
+        readDOState();
+    })
+    .catch(error => {
+        console.error('切换 DO2 失败:', error.message);
+        alert('切换 DO2 失败: ' + error.message);
+    });
+}
 
 // 处理读取P点数据的按钮点击事件
 document.getElementById('read_p_data_button').addEventListener('click', function () {
@@ -609,12 +700,15 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
 // 在“写入P点”按钮点击事件中，新增R逻辑
 document.getElementById('write_p_data_button').addEventListener('click', function () {
     // 获取新增输入框的值
+    const frame_length = document.getElementById('frame_length').value;
+    const frame_width = document.getElementById('frame_width').value;
     const frameDepth = document.getElementById('frame_depth').value;
     const shapeHeight = document.getElementById('shape_height').value;
     const materialThickness = document.getElementById('material_thickness').value;
     const placementLayers = document.getElementById('placement_layers').value;
     const shapeCountValue = document.getElementById('shape-count-value').textContent;
     const toolCount = document.getElementById('tool_count').value;
+    const drop_Count = document.getElementById('drop_Count').value;
 
     // 检查填充数量和工具数量是否有效
     if (!shapeCountValue || !toolCount) {
@@ -629,12 +723,15 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+            frame_length: frame_length,
+            frame_width: frame_width,
             frame_depth: frameDepth,
             shape_height: shapeHeight,
             material_thickness: materialThickness,
             placement_layers: placementLayers,
             total_shapes: shapeCountValue, // 填充数量
-            tool_count: toolCount         // 工具数量
+            tool_count: toolCount,         // 工具数量
+            drop_Count: drop_Count
         }),
     })
     .then(response => {

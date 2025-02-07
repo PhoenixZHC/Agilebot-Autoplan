@@ -94,6 +94,16 @@
                             <label for="tool_spacing">工具间距:</label>
                             <input type="number" id="tool_spacing" name="tool_spacing" step="0.1" placeholder="输入工具间距">
                         </div>
+                        <div>
+                            <label for="frame_lock_state">料框锁定 (DO1) 状态：</label>
+                            <span id="frame_lock_state"></span>
+                            <button id="toggle_frame_lock">切换料框锁定</button>
+                        </div>
+                        <div>
+                            <label for="laser_measure_state">激光测距 (DO2) 状态：</label>
+                            <span id="laser_measure_state"></span>
+                            <button id="toggle_laser_measure">切换激光测距</button>
+                        </div>
                     </div>
                 </div>
 
@@ -130,15 +140,15 @@
                             <div class="input-section">
                                 <h3>料框设置</h3>
                                 <div>
-                                    <label for="frame_length">边框长度:</label>
+                                    <label for="frame_length">料框长度:</label>
                                     <input type="number" id="frame_length" name="frame_length" step="0.1" required>
                                 </div>
                                 <div>
-                                    <label for="frame_width">边框宽度:</label>
+                                    <label for="frame_width">料框宽度:</label>
                                     <input type="number" id="frame_width" name="frame_width" step="0.1" required>
                                 </div>
                                 <div>
-                                    <label for="frame_depth">边框深度:</label>
+                                    <label for="frame_depth">料框深度:</label>
                                     <input type="number" id="frame_depth" name="frame_depth" step="0.1">
                                 </div>
                             </div>
@@ -147,7 +157,7 @@
                             <div class="input-section">
                                 <h3>工件设置</h3>
                                 <div>
-                                    <label for="shape_type">图形类型:</label>
+                                    <label for="shape_type">工件类型:</label>
                                     <select id="shape_type" name="shape_type">
                                         <option value="circle">圆形</option>
                                         <option value="rectangle">长方形</option>
@@ -211,10 +221,15 @@
                                         </select>
                                     </div>
                                 </div>
-                                <!-- 图形高度 -->
+                                <!-- 工件高度 -->
                                 <div>
-                                    <label for="shape_height">图形高度:</label>
+                                    <label for="shape_height">工件高度:</label>
                                     <input type="number" id="shape_height" name="shape_height" step="0.1">
+                                </div>
+                                <!-- 工件高度 -->
+                                <div>
+                                    <label for="drop_Count">前端单次下料数量:</label>
+                                    <input type="number" id="drop_Count" name="shape_height" step="0.1">
                                 </div>
                             </div>
                         </form>

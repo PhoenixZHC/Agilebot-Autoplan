@@ -284,6 +284,23 @@ body {
     color: #333;
 }
 
+/* 按钮格式 */
+#frame_lock_button, #laser_measure_button {
+    padding: 6px 12px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-left: 8px; /* 与输入框保持一定距离 */
+}
+
+#frame_lock_button:hover, #laser_measure_button:hover {
+    background-color: #0056b3;
+}
+
+
 /* 数据清单 */
 .data-list-container {
     padding: 15px;
