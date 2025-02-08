@@ -1029,55 +1029,6 @@ def update_tf_data():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 400
-@app.route('/read_do_state', methods=['POST'])
-def read_do_state():
-    global robot_arm
-    if robot_arm is None:
-        return jsonify({'error': '未连接机器人'}), 400
-
-    try:
-        # 读取 DO1 和 DO2 的状态
-        do1_value, ret = robot_arm.digital_signals.read(SignalType.DO, 1)
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '读取 DO1 失败'}), 400
-
-        do2_value, ret = robot_arm.digital_signals.read(SignalType.DO, 2)
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '读取 DO2 失败'}), 400
-
-        return jsonify({'do1': do1_value, 'do2': do2_value}), 200
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
-
-@app.route('/toggle_do', methods=['POST'])
-def toggle_do():
-    global robot_arm
-    if robot_arm is None:
-        return jsonify({'error': '未连接机器人'}), 400
-
-    data = request.json
-    do_channel = data.get('do_channel')
-
-    if do_channel not in [1, 2]:
-        return jsonify({'error': '无效的 DO 通道'}), 400
-
-    try:
-        # 读取当前 DO 状态
-        current_value, ret = robot_arm.digital_signals.read(SignalType.DO, do_channel)
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': f'读取 DO{do_channel} 失败'}), 400
-
-        # 切换状态
-        new_value = SignalValue.OFF if current_value == SignalValue.ON else SignalValue.ON
-        ret = robot_arm.digital_signals.write(SignalType.DO, do_channel, new_value)
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': f'切换 DO{do_channel} 失败'}), 400
-
-        return jsonify({'message': f'DO{do_channel} 切换成功', 'new_value': new_value}), 200
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)

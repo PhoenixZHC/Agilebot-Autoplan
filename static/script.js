@@ -406,7 +406,6 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
             document.getElementById('program_input').style.display = 'block'; // 显示程序输入框
 
             console.log('机器人连接成功');
-            readDOState();
         })
         .catch(error => {
             console.error('连接失败:', error.message);
@@ -421,96 +420,6 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
         });
     }
 });
-
-// 定义读取 DO1 和 DO2 状态的函数
-function readDOState() {
-    fetch('/read_do_state', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => {
-                throw new Error(err.error || '读取 DO 状态失败');
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        // 更新显示状态
-        document.getElementById('frame_lock_state').textContent = data.do1 === 1 ? 'ON' : 'OFF';
-        document.getElementById('laser_measure_state').textContent = data.do2 === 1 ? 'ON' : 'OFF';
-    })
-    .catch(error => {
-        console.error('读取 DO 状态失败:', error.message);
-        alert('读取 DO 状态失败: ' + error.message);
-    });
-}
-
-
-// 绑定按钮点击事件
-document.getElementById('toggle_frame_lock').addEventListener('click', toggleFrameLock);
-document.getElementById('toggle_laser_measure').addEventListener('click', toggleLaserMeasure);
-
-// 定义切换 DO1 状态的函数
-function toggleFrameLock() {
-    fetch('/toggle_do', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            do_channel: 1, // 切换 DO1
-        }),
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => {
-                throw new Error(err.error || '切换 DO1 失败');
-            });
-        }
-        return response.json();
-    })
-    .then(() => {
-        // 切换成功后重新读取状态
-        readDOState();
-    })
-    .catch(error => {
-        console.error('切换 DO1 失败:', error.message);
-        alert('切换 DO1 失败: ' + error.message);
-    });
-}
-
-// 定义切换 DO2 状态的函数
-function toggleLaserMeasure() {
-    fetch('/toggle_do', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            do_channel: 2, // 切换 DO2
-        }),
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => {
-                throw new Error(err.error || '切换 DO2 失败');
-            });
-        }
-        return response.json();
-    })
-    .then(() => {
-        // 切换成功后重新读取状态
-        readDOState();
-    })
-    .catch(error => {
-        console.error('切换 DO2 失败:', error.message);
-        alert('切换 DO2 失败: ' + error.message);
-    });
-}
 
 // 处理读取P点数据的按钮点击事件
 document.getElementById('read_p_data_button').addEventListener('click', function () {
