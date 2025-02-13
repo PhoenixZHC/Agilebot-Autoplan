@@ -508,6 +508,14 @@ document.getElementById('read_p_data_button').addEventListener('click', function
             cell7.style.padding = '8px';
             row.appendChild(cell7);
 
+            // 坐标系方向值
+            const cell8 = document.createElement('td');
+            const leftRightValue = pose.poseData.cartData.baseCart.posture.arm_left_right;
+            cell8.textContent = leftRightValue === 1 ? '右手' : '左手';  // 将1和-1转换为文本描述
+            cell8.style.border = '1px solid #ddd';
+            cell8.style.padding = '8px';
+            row.appendChild(cell8);
+
             tableBody.appendChild(row);
         });
 
@@ -526,6 +534,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     const prRegisterId = parseInt(document.getElementById('pr_register_id').value, 10); // 将PR寄存器ID转换为整数
     const ufValue = parseInt(document.getElementById('uf_value').value, 10); // 将UF值转换为整数
     const toolCount = parseInt(document.getElementById('tool_count').value, 10); // 获取工具数量
+    const left_right = parseInt(document.getElementById('left_right').value, 10); // 获取工具数量
 
     if (!programName) {
         alert('请输入程序名称');
@@ -573,7 +582,8 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
             z: zValue,     // 使用PR寄存器的Z值
             c: cValue,     // 使用PR寄存器的C值
             uf: ufValue,   // 添加UF值
-            tf: (index % toolCount) + 1 // 根据工具数量循环设置TF值
+            tf: (index % toolCount) + 1,// 根据工具数量循环设置TF值
+            left_right: left_right   // 左手/右手坐标系
         }));
 
         // 发送请求到后端写入P点数据

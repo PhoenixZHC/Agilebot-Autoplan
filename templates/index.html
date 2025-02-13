@@ -94,6 +94,13 @@
                             <label for="tool_spacing">工具间距:</label>
                             <input type="number" id="tool_spacing" name="tool_spacing" step="0.1" placeholder="输入工具间距">
                         </div>
+                        <div>
+                            <label for="left_right">左手/右手坐标系（六轴请选右手）:</label>
+                            <select id="left_right" name="left_right"value="1">
+                                <option value="1">右手坐标系</option>
+                                <option value="-1">左手坐标系</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -110,6 +117,7 @@
                                 <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">C</th>
                                 <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">UF</th>
                                 <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">TF</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">坐标系方向</th>
                             </tr>
                         </thead>
                         <tbody>

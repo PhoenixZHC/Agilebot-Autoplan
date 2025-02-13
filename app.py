@@ -13,7 +13,8 @@ from Agilebot.IR.A.arm import Arm
 from Agilebot.IR.A.status_code import StatusCodeEnum
 from Agilebot.IR.A.sdk_classes import Register
 from Agilebot.IR.A.sdk_types import CoordinateSystemType
-from Agilebot.IR.A.sdk_types import SignalType, SignalValue
+from Agilebot.IR.A.common.const import const
+
 
 app = Flask(__name__)
 robot_arm = None
@@ -703,6 +704,7 @@ def get_p_data():
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '读取P点数据失败'}), 400
 
+
         # 将位姿数据转换为JSON格式
         poses_data = []
         for p in poses:
@@ -712,15 +714,18 @@ def get_p_data():
                 'poseData': {
                     'cartData': {
                         'baseCart': {
+                            'posture': {
+                                'arm_left_right': p.poseData.cartData.baseCart.posture.arm_left_right  # 直接返回坐标系方向值
+                            },
                             'position': {
                                 'x': p.poseData.cartData.baseCart.position.x,
                                 'y': p.poseData.cartData.baseCart.position.y,
                                 'z': p.poseData.cartData.baseCart.position.z,
-                                'c': p.poseData.cartData.baseCart.position.c
-                            }
+                                'c': p.poseData.cartData.baseCart.position.c,
+                            },
                         },
                         'uf': p.poseData.cartData.uf,  # 直接返回UF值
-                        'tf': p.poseData.cartData.tf   # 直接返回TF值
+                        'tf': p.poseData.cartData.tf,  # 直接返回TF值
                     }
                 }
             })
@@ -762,6 +767,7 @@ def write_p_data():
             c = float(p['c'])  # 确保C是浮点数
             uf = int(p.get('uf', 1))  # 确保UF是整数
             tf = int(p.get('tf', 1))  # 确保TF是整数
+            left_right = int(p.get('left_right', 1))  # 确保坐标系方向是整数
 
             # 读取当前P点的位姿数据
             pose, ret = robot_arm.program_pose.read(program_name, pose_id)
@@ -775,6 +781,7 @@ def write_p_data():
             pose.poseData.cartData.baseCart.position.c = c
             pose.poseData.cartData.uf = uf  # 更新UF值
             pose.poseData.cartData.tf = tf  # 更新TF值
+            pose.poseData.cartData.baseCart.posture.arm_left_right = left_right  # 更新坐标系方向值
 
             # 将修改后的位姿数据写回
             ret = robot_arm.program_pose.write(program_name, pose_id, pose)
