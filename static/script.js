@@ -675,6 +675,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
 document.getElementById('write_p_data_button').addEventListener('click', function () {
     const toolCount = parseInt(document.getElementById('tool_count').value, 10); // 获取工具数量
     const toolSpacing = parseFloat(document.getElementById('tool_spacing').value); // 获取工具间距
+    const autoTF = parseInt(document.getElementById('autoTF').value, 10); // 获取自动TF功能开关状态
 
     if (isNaN(toolSpacing)) { // 检查工具间距是否为有效数字
         alert('请输入有效的工具间距');
@@ -683,6 +684,11 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
 
     // 如果工具数量为 1，直接返回，不需要修改 TF
     if (toolCount === 1) {
+        return;
+    }
+
+    // 如果自动TF功能关闭，直接返回，不调整TF
+    if (autoTF === 0) {
         return;
     }
 
