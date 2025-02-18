@@ -135,10 +135,12 @@ document.getElementById('inputForm2').addEventListener('submit', function (event
     // 获取摆放设置表单的数据
     const horizontal_spacing = document.getElementById('horizontal_spacing').value;
     const vertical_spacing = document.getElementById('vertical_spacing').value;
-    const border_distance = document.getElementById('border_distance').value;
+    const horizontal_border_distance = document.getElementById('horizontal_border_distance').value;
+    const vertical_border_distance = document.getElementById('vertical_border_distance').value;
     const material_thickness = document.getElementById('material_thickness').value;
     const placement_layers = document.getElementById('placement_layers').value;
     const layout_type = document.getElementById('layout_type').value;
+    const place_type = document.getElementById('place_type').value;
 
     // 发送请求到后端
     fetch('/calculate', {
@@ -154,7 +156,8 @@ document.getElementById('inputForm2').addEventListener('submit', function (event
             shape_width,
             horizontal_spacing,
             vertical_spacing,
-            border_distance,
+            horizontal_border_distance,
+            vertical_border_distance,
             material_thickness,
             placement_layers,
             shape_type,
@@ -162,7 +165,8 @@ document.getElementById('inputForm2').addEventListener('submit', function (event
             polygon_sides,
             triangle_type,
             triangle_orientation,
-            shape_height
+            shape_height,
+            place_type
         }),
     })
     .then(response => {
