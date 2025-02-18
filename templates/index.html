@@ -12,8 +12,8 @@
         <div class="logo">
             <img src="{{ url_for('static', filename='logo.png')  }}" alt="Logo">
         </div>
-        <div class="title">智能摆盘规划系统</div>
-        <div class="version">V2.0</div>
+        <div class="title">捷勃特智能摆盘规划系统</div>
+        <div class="version">V3.1_20250218</div>
     </div>
 
     <!-- 主容器 -->
@@ -54,7 +54,7 @@
                 <div id="program_input" style="display: none; margin-top: 20px;">
                     <div class="robot-connection">
                         <label for="program_name">程序名称:</label>
-                        <input type="text" id="program_name" name="program_name" placeholder="输入程序名称" value="plan">
+                        <input type="text" id="program_name" name="program_name" placeholder="输入程序名称" value="PUT">
                         <button id="read_p_data_button">读取P点数据</button>
                         <div>
                             <label for="pr_register_id">Z&C参考寄存器:</label>
@@ -295,7 +295,7 @@
                             <div class="robot-connection">
                                 <div>
                                     <label for="write_program_name">程序名称:</label>
-                                    <input type="text" id="write_program_name" name="write_program_name" placeholder="输入程序名称" value="plan">
+                                    <input type="text" id="write_program_name" name="write_program_name" placeholder="输入程序名称" value="PUT">
                                 </div>
 
                                 <!-- 新增一个类名 long-button -->

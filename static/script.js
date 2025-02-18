@@ -423,8 +423,8 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
 
 // 处理读取P点数据的按钮点击事件
 document.getElementById('read_p_data_button').addEventListener('click', function () {
-    const programName = document.getElementById('program_name').value || 'plan';
-    // 如果用户没有输入，则使用默认值 'plan'
+    const programName = document.getElementById('program_name').value || 'PUT';
+    // 如果用户没有输入，则使用默认值 'PUT'
 
     if (!programName) {
         alert('请输入程序名称');
@@ -530,7 +530,7 @@ document.getElementById('read_p_data_button').addEventListener('click', function
 
 // 处理写入P点数据的按钮点击事件
 document.getElementById('write_p_data_button').addEventListener('click', function () {
-    const programName = document.getElementById('write_program_name').value || 'plan'; // 如果用户没有输入，则使用默认值 'plan'
+    const programName = document.getElementById('write_program_name').value || 'PUT'; // 如果用户没有输入，则使用默认值 'PUT'
     const prRegisterId = parseInt(document.getElementById('pr_register_id').value, 10); // 将PR寄存器ID转换为整数
     const ufValue = parseInt(document.getElementById('uf_value').value, 10); // 将UF值转换为整数
     const toolCount = parseInt(document.getElementById('tool_count').value, 10); // 获取工具数量
