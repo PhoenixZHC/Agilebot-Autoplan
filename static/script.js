@@ -178,6 +178,7 @@ document.getElementById('inputForm2').addEventListener('submit', function (event
         // 获取填充的图形数量和中心位置数据
         const totalShapes = response.headers.get('X-Total-Shapes');
         const shapeCentersData = response.headers.get('X-Shape-Centers');
+        const shapesPerRowOrCol = response.headers.get('X-Shapes-Per-Row-Or-Col');  // 获取单行/列填充数量
         shapeCenters = JSON.parse(shapeCentersData);  // 将中心位置数据存储到全局变量中
 
         // 如果是三角形，将 totalShapes 除以 2
@@ -186,9 +187,9 @@ document.getElementById('inputForm2').addEventListener('submit', function (event
             finalTotalShapes = Math.floor(totalShapes / 2); // 使用 Math.floor 确保结果为整数
         }
 
-        return Promise.all([response.blob(), finalTotalShapes]);
+        return Promise.all([response.blob(), finalTotalShapes, shapesPerRowOrCol]);
     })
-    .then(([blob, finalTotalShapes]) => {
+    .then(([blob, finalTotalShapes, shapesPerRowOrCol]) => {
         const imageUrl = URL.createObjectURL(blob);
         const plotImg = document.getElementById('plot');
         plotImg.src = imageUrl;
@@ -199,6 +200,12 @@ document.getElementById('inputForm2').addEventListener('submit', function (event
         const shapeCountValue = document.getElementById('shape-count-value');
         shapeCountValue.textContent = finalTotalShapes; // 使用处理后的 finalTotalShapes
         shapeCount.style.display = 'block';
+
+        // 显示单行/列填充数量
+        const shapesPerRowOrColDiv = document.getElementById('shapes-per-row-or-col');
+        const shapesPerRowOrColValue = document.getElementById('shapes-per-row-or-col-value');
+        shapesPerRowOrColValue.textContent = shapesPerRowOrCol; // 显示单行/列填充数量
+        shapesPerRowOrColDiv.style.display = 'block';
 
         // 显示写入P点的输入框和按钮
         const writePDataSection = document.getElementById('write-p-data-section');
@@ -632,6 +639,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     const shapeCountValue = document.getElementById('shape-count-value').textContent;
     const toolCount = document.getElementById('tool_count').value;
     const drop_Count = document.getElementById('drop_Count').value;
+    const shapesPerRowOrColValue = document.getElementById('shapes-per-row-or-col-value').textContent;
 
     // 检查填充数量和工具数量是否有效
     if (!shapeCountValue || !toolCount) {
@@ -654,7 +662,8 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
             placement_layers: placementLayers,
             total_shapes: shapeCountValue, // 填充数量
             tool_count: toolCount,         // 工具数量
-            drop_Count: drop_Count
+            drop_Count: drop_Count,
+            numofsingle_row_columns: shapesPerRowOrColValue,
         }),
     })
     .then(response => {

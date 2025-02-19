@@ -48,6 +48,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                 shape_centers = []
 
                 if place_type == 'row':
+                    shapes_per_row_or_col = circles_per_row  # 行优先时，单行填充数量为 circles_per_row
                     for row in range(circles_per_column):
                         for col in range(circles_per_row):
                             x_center = round(horizontal_border_distance + diameter / 2 + col * (diameter + horizontal_spacing), 2)
@@ -60,6 +61,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                                 shape_centers.append((x_center, y_center))
                                 total_shapes += 1
                 else:
+                    shapes_per_row_or_col = circles_per_column  # 列优先时，单列填充数量为 circles_per_column
                     for col in range(circles_per_row):
                         for row in range(circles_per_column):
                             x_center = round(horizontal_border_distance + diameter / 2 + col * (diameter + horizontal_spacing), 2)
@@ -87,12 +89,14 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                 shape_centers = []
 
                 if place_type == 'row':
+                    shapes_per_row_or_col = circles_per_row  # 行优先时，单行填充数量为 circles_per_row
                     for row in range(circles_per_column):
                         for col in range(circles_per_row):
                             x_center = round(horizontal_border_distance + diameter / 2 + col * (diameter + horizontal_spacing), 2)
                             y_center = round(vertical_border_distance + diameter / 2 + row * (diameter + vertical_spacing), 2)
                             shape_centers.append((x_center, y_center))
                 else:
+                    shapes_per_row_or_col = circles_per_column  # 列优先时，单列填充数量为 circles_per_column
                     for col in range(circles_per_row):
                         for row in range(circles_per_column):
                             x_center = round(horizontal_border_distance + diameter / 2 + col * (diameter + horizontal_spacing), 2)
@@ -117,6 +121,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                 shape_centers = []
 
                 if place_type == 'row':
+                    shapes_per_row_or_col = rectangles_per_row  # 行优先时，单行填充数量为 circles_per_row
                     for row in range(rectangles_per_column):
                         for col in range(rectangles_per_row):
                             x_center = round(horizontal_border_distance + shape_length / 2 + col * (shape_length + horizontal_spacing), 2)
@@ -129,8 +134,9 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                                 shape_centers.append((x_center, y_center))
                                 total_shapes += 1
                 else:
-                    for col in range(rectangles_per_column):
-                        for row in range(rectangles_per_row):
+                    shapes_per_row_or_col = rectangles_per_column  # 列优先时，单列填充数量为 circles_per_column
+                    for col in range(rectangles_per_row):
+                        for row in range(rectangles_per_column):
                             x_center = round(horizontal_border_distance + shape_length / 2 + col * (shape_length + horizontal_spacing), 2)
                             y_center = round(vertical_border_distance + shape_width / 2 + row * (shape_width * math.sqrt(3) / 2 + vertical_spacing), 2)
                             if row % 2 == 1:
@@ -156,14 +162,16 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                 shape_centers = []
 
                 if place_type == 'row':
+                    shapes_per_row_or_col = rectangles_per_row  # 行优先时，单行填充数量为 circles_per_row
                     for row in range(rectangles_per_column):
                         for col in range(rectangles_per_row):
                             x_center = round(horizontal_border_distance + shape_length / 2 + col * (shape_length + horizontal_spacing), 2)
                             y_center = round(vertical_border_distance + shape_width / 2 + row * (shape_width + vertical_spacing), 2)
                             shape_centers.append((x_center, y_center))
                 else:
-                    for col in range(rectangles_per_column):
-                        for row in range(rectangles_per_row):
+                    shapes_per_row_or_col = rectangles_per_column  # 列优先时，单列填充数量为 circles_per_column
+                    for col in range(rectangles_per_row):
+                        for row in range(rectangles_per_column):
                             x_center = round(horizontal_border_distance + shape_length / 2 + col * (shape_length + horizontal_spacing), 2)
                             y_center = round(vertical_border_distance + shape_width / 2 + row * (shape_width + vertical_spacing), 2)
                             shape_centers.append((x_center, y_center))
@@ -200,6 +208,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                 shape_centers = []
 
                 if place_type == 'row':
+                    shapes_per_row_or_col = polygons_per_row  # 行优先时，单行填充数量为 circles_per_row
                     for row in range(polygons_per_column):
                         for col in range(polygons_per_row):
                             x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * (bounding_box_length + horizontal_spacing), 2)
@@ -212,8 +221,9 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                                 shape_centers.append((x_center, y_center))
                                 total_shapes += 1
                 else:
-                    for col in range(polygons_per_column):
-                        for row in range(polygons_per_row):
+                    shapes_per_row_or_col = polygons_per_column  # 列优先时，单列填充数量为 circles_per_column
+                    for col in range(polygons_per_row):
+                        for row in range(polygons_per_column):
                             x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * (bounding_box_length + horizontal_spacing), 2)
                             y_center = round(vertical_border_distance + bounding_box_width / 2 + row * (bounding_box_width * math.sqrt(3) / 2 + vertical_spacing), 2)
                             if row % 2 == 1:
@@ -239,14 +249,16 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                 shape_centers = []
 
                 if place_type == 'row':
+                    shapes_per_row_or_col = polygons_per_row  # 行优先时，单行填充数量为 circles_per_row
                     for row in range(polygons_per_column):
                         for col in range(polygons_per_row):
                             x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * (bounding_box_length + horizontal_spacing), 2)
                             y_center = round(vertical_border_distance + bounding_box_width / 2 + row * (bounding_box_width + vertical_spacing), 2)
                             shape_centers.append((x_center, y_center))
                 else:
-                    for col in range(polygons_per_column):
-                        for row in range(polygons_per_row):
+                    shapes_per_row_or_col = polygons_per_column  # 列优先时，单列填充数量为 circles_per_column
+                    for col in range(polygons_per_row):
+                        for row in range(polygons_per_column):
                             x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * (bounding_box_length + horizontal_spacing), 2)
                             y_center = round(vertical_border_distance + bounding_box_width / 2 + row * (bounding_box_width + vertical_spacing), 2)
                             shape_centers.append((x_center, y_center))
@@ -346,6 +358,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                 shape_centers = []
 
                 if place_type == 'row':
+                    shapes_per_row_or_col = triangles_per_row  # 行优先时，单行填充数量为 circles_per_row
                     for row in range(triangles_per_column):
                         for col in range(triangles_per_row):
                             x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * (bounding_box_length + horizontal_spacing), 2)
@@ -358,8 +371,9 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                                 shape_centers.append((x_center, y_center))
                                 total_shapes += 1
                 else:
-                    for col in range(triangles_per_column):
-                        for row in range(triangles_per_row):
+                    shapes_per_row_or_col = triangles_per_column  # 列优先时，单列填充数量为 circles_per_column
+                    for col in range(triangles_per_row):
+                        for row in range(triangles_per_column):
                             x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * (bounding_box_length + horizontal_spacing), 2)
                             y_center = round(vertical_border_distance + bounding_box_width / 2 + row * (height + vertical_spacing), 2)
                             if row % 2 == 1:
@@ -384,6 +398,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                 shape_centers = []
 
                 if place_type == 'row':
+                    shapes_per_row_or_col = triangles_per_row  # 行优先时，单行填充数量为 circles_per_row
                     for row in range(triangles_per_column):
                         for col in range(triangles_per_row):
                             x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * (bounding_box_length + horizontal_spacing), 2)
@@ -392,15 +407,16 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             shape_centers.append((x_center, y_center))
                             total_shapes += 1
                 else:
-                    for col in range(triangles_per_column):
-                        for row in range(triangles_per_row):
+                    shapes_per_row_or_col = triangles_per_column  # 列优先时，单列填充数量为 circles_per_column
+                    for col in range(triangles_per_row):
+                        for row in range(triangles_per_column):
                             x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * (bounding_box_length + horizontal_spacing), 2)
                             y_center = round(vertical_border_distance + bounding_box_width / 2 + row * (bounding_box_width + vertical_spacing), 2)
                             # 只返回坐标信息 (x, y)
                             shape_centers.append((x_center, y_center))
                             total_shapes += 1
 
-        return total_shapes, shape_centers
+        return total_shapes, shape_centers, shapes_per_row_or_col,
 
     except Exception as e:
         raise ValueError(f"无法计算填充数量，错误信息：{e}")
@@ -448,7 +464,7 @@ def calculate():
             shape_width = float(shape_width)
 
         # 计算图形填充
-        total_shapes, shape_centers = calculate_shape_centers(
+        total_shapes, shape_centers, shapes_per_row_or_col = calculate_shape_centers(
             frame_length, frame_width, shape_length, shape_width,
             horizontal_spacing, vertical_spacing, horizontal_border_distance,vertical_border_distance,
             is_circle=shape_type == 'circle',
@@ -576,7 +592,8 @@ def calculate():
         # 返回图像文件和填充图形数量
         response = send_file(buf, mimetype='image/png')
         response.headers['X-Total-Shapes'] = str(total_shapes)
-        response.headers['X-Shape-Centers'] = json.dumps(shape_centers)  # 将中心位置数据作为 JSON 字符串返回
+        response.headers['X-Shape-Centers'] = json.dumps(shape_centers)
+        response.headers['X-Shapes-Per-Row-Or-Col'] = str(shapes_per_row_or_col)  # 返回单行/列填充数量
         return response
 
     except Exception as e:
@@ -815,6 +832,7 @@ def write_r_registers():
     total_shapes = data.get('total_shapes')
     tool_count = data.get('tool_count')
     drop_Count = data.get('drop_Count')
+    numofsingle_row_columns = data.get('numofsingle_row_columns')
 
     # 检查机器人是否已连接
     if robot_arm is None:
@@ -902,6 +920,15 @@ def write_r_registers():
         ret = robot_arm.register.write(9, register)  # 写回寄存器
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '写入R9寄存器失败'}), 400
+
+         # 写入R10寄存器（单行列数量）
+        register, ret = robot_arm.register.read(10)  # 先读取当前寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取R4寄存器失败'}), 400
+        register.value = int(numofsingle_row_columns)  # 更新值
+        ret = robot_arm.register.write(10, register)  # 写回寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '写入R4寄存器失败'}), 400
 
         return jsonify({'message': 'R寄存器写入成功'}), 200
 
