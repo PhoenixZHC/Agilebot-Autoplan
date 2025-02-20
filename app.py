@@ -1,5 +1,5 @@
 #打包命令
-#pyinstaller --onefile --add-data "templates;templates" --add-data "static;static" app.py
+#pyinstaller --onefile --add-data "templates;templates" --add-data "static;static" -i C:\Users\Phoenix\Documents\AUTOPLAN\AUTOPLAN_V3.3\static\favicon.ico --name 启动系统 app.py
 
 from flask import Flask, render_template, request, send_file, jsonify
 import matplotlib
