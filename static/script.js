@@ -79,6 +79,17 @@ document.getElementById('shape_type').addEventListener('change', function () {
     updateInputFields(shapeType);
 });
 
+// 页面加载时初始化输入框显示状态
+document.addEventListener('DOMContentLoaded', function () {
+    // 默认显示机器人设置
+    showSection('robot-settings-content');
+    document.getElementById('robot-settings-btn').classList.add('active');
+
+    // 初始化仿形间隔计算器的输入框显示状态
+    const shapeTypeInterval = document.getElementById('shape_type_interval').value;
+    updateIntervalInputFields(shapeTypeInterval);
+});
+
 function updateInputFields(shapeType) {
     // 隐藏所有图形输入框
     document.querySelectorAll('.shape-input').forEach(div => div.style.display = 'none');
@@ -778,5 +789,100 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .catch(error => {
         console.error('更新TF数据失败:', error.message);
         alert('更新TF数据失败: ' + error.message);
+    });
+});
+
+// 添加新的菜单按钮点击事件
+document.getElementById('interval-calculator-btn').addEventListener('click', function () {
+    showSection('interval-calculator-content');
+    setActiveButton('interval-calculator-btn');
+});
+
+// 动态显示或隐藏输入框
+document.getElementById('shape_type_interval').addEventListener('change', function () {
+    const shapeType = this.value;
+    updateIntervalInputFields(shapeType);
+});
+
+function updateIntervalInputFields(shapeType) {
+    // 隐藏所有图形输入框
+    document.querySelectorAll('.shape-input').forEach(div => div.style.display = 'none');
+
+    // 根据选择的图形类型显示对应的输入框
+    if (shapeType === 'circle') {
+        document.getElementById('circle_input_interval').style.display = 'block';
+    } else if (shapeType === 'rectangle') {
+        document.getElementById('rectangle_input_interval').style.display = 'block';
+    }
+}
+
+// 表单提交事件
+document.getElementById('interval-calculator-form').addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    const shapeType = document.getElementById('shape_type_interval').value;
+    let diameter, length, width;
+
+    if (shapeType === 'circle') {
+        diameter = parseFloat(document.getElementById('circle_diameter_interval').value);
+    } else if (shapeType === 'rectangle') {
+        length = parseFloat(document.getElementById('rectangle_length_interval').value);
+        width = parseFloat(document.getElementById('rectangle_width_interval').value);
+    }
+
+    // 发送请求到后端读取PR寄存器的值
+    fetch('/get_pr_data', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            shape_type: shapeType,
+            diameter: diameter,
+            length: length,
+            width: width
+        }),
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || '请求失败');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        const rowSpacing = data.row_spacing;
+        const colSpacing = data.col_spacing;
+        const pr1X = data.pr1_x;
+        const pr1Y = data.pr1_y;
+        const pr2X = data.pr2_x;
+        const pr2Y = data.pr2_y;
+        const pr3X = data.pr3_x;
+        const pr3Y = data.pr3_y;
+
+        // 检查行间距和列间距是否为负数
+        if (rowSpacing < 0 || colSpacing < 0) {
+            document.getElementById('row-spacing').textContent = '计算错误，请检查寄存器值';
+            document.getElementById('col-spacing').textContent = '计算错误，请检查寄存器值';
+        } else {
+            document.getElementById('row-spacing').textContent = rowSpacing.toFixed(2);
+            document.getElementById('col-spacing').textContent = colSpacing.toFixed(2);
+        }
+
+        // 显示PR寄存器的XY值
+        document.getElementById('pr1-x').textContent = pr1X.toFixed(2);
+        document.getElementById('pr1-y').textContent = pr1Y.toFixed(2);
+        document.getElementById('pr2-x').textContent = pr2X.toFixed(2);
+        document.getElementById('pr2-y').textContent = pr2Y.toFixed(2);
+        document.getElementById('pr3-x').textContent = pr3X.toFixed(2);
+        document.getElementById('pr3-y').textContent = pr3Y.toFixed(2);
+
+        // 显示计算结果
+        document.getElementById('interval-result').style.display = 'block';
+    })
+    .catch(error => {
+        console.error('请求失败:', error.message);
+        alert('请求失败: ' + error.message);
     });
 });

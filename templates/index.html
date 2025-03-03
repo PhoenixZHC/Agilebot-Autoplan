@@ -13,7 +13,7 @@
             <img src="{{ url_for('static', filename='logo.png')  }}" alt="Logo">
         </div>
         <div class="title">捷勃特智能摆盘规划系统</div>
-        <div class="version">V3.3_20250219</div>
+        <div class="version">V3.4_20250303</div>
     </div>
 
     <!-- 主容器 -->
@@ -31,6 +31,10 @@
             <button id="data-list-btn">
                 <img src="{{ url_for('static', filename='icons/list.svg')  }}" alt="数据清单" class="icon">
                 <span>数据清单</span>
+            </button>
+            <button id="interval-calculator-btn">
+                <img src="{{ url_for('static', filename='icons/calculator.svg') }}" alt="仿形间隔计算器" class="icon">
+                <span>间隔计算器</span>
             </button>
         </div>
 
@@ -139,7 +143,6 @@
                 <div class="smart-planning-content">
                     <!-- 参数设置 -->
                     <div class="input-container">
-                        <h2>参数设置</h2>
                         <form id="inputForm">
                             <!-- 料框设置板块 -->
                             <div class="input-section">
@@ -242,7 +245,6 @@
 
                     <!-- 摆放设置板块 -->
                     <div class="input-container">
-                        <h2>摆放设置</h2>
                         <form id="inputForm2">
                             <div class="input-section">
                                 <h3>摆放设置</h3>
@@ -327,6 +329,61 @@
                 <div class="data-list-container">
                     <h2>数据清单</h2>
                     <!-- 数据清单内容将动态生成 -->
+                </div>
+            </div>
+
+            <!-- 间隔计算器 -->
+            <div id="interval-calculator-content" class="content-section">
+                <div class="input-container">
+                    <form id="interval-calculator-form">
+                        <h3>计算器使用步骤</h3>
+                        <!-- 添加说明文字 -->
+                        <p>
+                            1，使用示教器，将三个参考位置的中心点示教记录到三个PR寄存器。<br>
+                            第一行第一列（PR1），第一行第二列(PR2)，第二行第一列(PR3)<br>
+                            2，选择仿形的形状并输入形状尺寸。<br>
+                            3，点击计算，则显示行间隔和列间隔的值，并显示三个寄存器的值。
+                        </p>
+                        <div class="input-section">
+                            <h3>仿形参数</h3>
+                            <div>
+                                <label for="shape_type_interval">仿形形状:</label>
+                                <select id="shape_type_interval" name="shape_type_interval">
+                                    <option value="circle">圆形</option>
+                                    <option value="rectangle">长方体</option>
+                                </select>
+                            </div>
+                            <!-- 圆形输入 -->
+                            <div id="circle_input_interval" class="shape-input">
+                                <div>
+                                    <label for="circle_diameter_interval">圆形直径:</label>
+                                    <input type="number" id="circle_diameter_interval" name="circle_diameter_interval" step="0.1">
+                                </div>
+                            </div>
+                            <!-- 长方体输入 -->
+                            <div id="rectangle_input_interval" class="shape-input">
+                                <div>
+                                    <label for="rectangle_length_interval">长方体长度:</label>
+                                    <input type="number" id="rectangle_length_interval" name="rectangle_length_interval" step="0.1">
+                                </div>
+                                <div>
+                                    <label for="rectangle_width_interval">长方体宽度:</label>
+                                    <input type="number" id="rectangle_width_interval" name="rectangle_width_interval" step="0.1">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit">计算</button>
+                    </form>
+                </div>
+
+                <!-- 显示计算结果 -->
+                <div id="interval-result" style="display: none; margin-top: 20px;">
+                    <h3>计算结果</h3>
+                    <div>行间距: <span id="row-spacing"></span></div>
+                    <div>列间距: <span id="col-spacing"></span></div>
+                    <div>PR1: X=<span id="pr1-x"></span>, Y=<span id="pr1-y"></span></div>
+                    <div>PR2: X=<span id="pr2-x"></span>, Y=<span id="pr2-y"></span></div>
+                    <div>PR3: X=<span id="pr3-x"></span>, Y=<span id="pr3-y"></span></div>
                 </div>
             </div>
         </div>

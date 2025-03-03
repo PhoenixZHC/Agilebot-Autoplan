@@ -1039,5 +1039,75 @@ def update_tf_data():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+@app.route('/get_pr_data', methods=['POST'])
+def get_pr_data():
+    data = request.json
+    shape_type = data.get('shape_type')
+    diameter = data.get('diameter')
+    length = data.get('length')
+    width = data.get('width')
+
+    if not shape_type:
+        return jsonify({'error': '缺少仿形形状类型'}), 400
+
+    try:
+        # 读取PR寄存器的值
+        pr1, ret1 = robot_arm.pose_register.read(1)
+        pr2, ret2 = robot_arm.pose_register.read(2)
+        pr3, ret3 = robot_arm.pose_register.read(3)
+
+        if ret1 != StatusCodeEnum.OK or ret2 != StatusCodeEnum.OK or ret3 != StatusCodeEnum.OK:
+            return jsonify({'error': '读取PR寄存器失败'}), 400
+
+        # 获取PR寄存器的X和Y值
+        pr1_x = pr1.poseRegisterData.cartData.position.x
+        pr1_y = pr1.poseRegisterData.cartData.position.y
+        pr2_x = pr2.poseRegisterData.cartData.position.x
+        pr2_y = pr2.poseRegisterData.cartData.position.y
+        pr3_x = pr3.poseRegisterData.cartData.position.x
+        pr3_y = pr3.poseRegisterData.cartData.position.y
+
+        # 调试输出，检查每个 TF 的更新内容
+        print(
+            f"pr1_x：{pr1_x}\n"
+            f"pr1_y：{pr1_y}\n"
+            f"pr2_x：{pr2_x}\n"
+            f"pr2_y：{pr2_y}\n"
+            f"pr3_x：{pr3_x}\n"
+            f"pr3_y：{pr3_y}\n"
+        )
+
+        # 计算行间距和列间距
+        if shape_type == 'circle':
+            row_spacing = abs(pr2_y - pr1_y) - diameter
+            col_spacing = abs(pr3_x - pr1_x) - diameter
+            print(
+                f"row_spacing：{row_spacing}\n"
+                f"col_spacing：{col_spacing}\n"
+            )
+        elif shape_type == 'rectangle':
+            row_spacing = abs(pr2_y - pr1_y) - length
+            col_spacing = abs(pr3_x - pr1_x) - width
+            print(
+                f"row_spacing：{row_spacing}\n"
+                f"col_spacing：{col_spacing}\n"
+            )
+        else:
+            return jsonify({'error': '无效的仿形形状类型'}), 400
+
+        return jsonify({
+            'row_spacing': row_spacing,
+            'col_spacing': col_spacing,
+            'pr1_x': pr1_x,
+            'pr1_y': pr1_y,
+            'pr2_x': pr2_x,
+            'pr2_y': pr2_y,
+            'pr3_x': pr3_x,
+            'pr3_y': pr3_y
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
 if __name__ == '__main__':
     app.run(debug=True)
