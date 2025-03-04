@@ -3,6 +3,23 @@ document.addEventListener('DOMContentLoaded', function () {
     // 默认显示机器人设置
     showSection('robot-settings-content');
     document.getElementById('robot-settings-btn').classList.add('active');
+
+    // 初始化 shape_type 输入框显示状态
+    const shapeType = document.getElementById('shape_type').value;
+    updateInputFields(shapeType);
+
+    // 初始化 shape_type_interval 输入框显示状态
+    const shapeTypeInterval = document.getElementById('shape_type_interval').value;
+    updateIntervalInputFields(shapeTypeInterval);
+
+    // 初始化底边长输入框的显示状态
+    const triangleType = document.getElementById('triangle_type').value;
+    const baseLengthInput = document.getElementById('triangle_base_length_input');
+    if (triangleType === 'isosceles') {
+        baseLengthInput.style.display = 'block'; // 显示底边长输入框
+    } else {
+        baseLengthInput.style.display = 'none'; // 隐藏底边长输入框
+    }
 });
 
 // 菜单栏按钮点击事件
@@ -19,6 +36,11 @@ document.getElementById('smart-planning-btn').addEventListener('click', function
 document.getElementById('data-list-btn').addEventListener('click', function () {
     showSection('data-list-content');
     setActiveButton('data-list-btn');
+});
+
+document.getElementById('interval-calculator-btn').addEventListener('click', function () {
+    showSection('interval-calculator-content');
+    setActiveButton('interval-calculator-btn');
 });
 
 // 显示对应的内容区域
@@ -55,39 +77,28 @@ document.getElementById('triangle_type').addEventListener('change', function () 
     }
 });
 
-// 页面加载时初始化底边长输入框的显示状态
-document.addEventListener('DOMContentLoaded', function () {
-    const triangleType = document.getElementById('triangle_type').value;
-    const baseLengthInput = document.getElementById('triangle_base_length_input');
+// 动态显示或隐藏输入框
+document.getElementById('shape_type_interval').addEventListener('change', function () {
+    const shapeTypeInterval = this.value;
+    updateIntervalInputFields(shapeTypeInterval);
+});
 
-    if (triangleType === 'isosceles') {
-        baseLengthInput.style.display = 'block'; // 显示底边长输入框
-    } else {
-        baseLengthInput.style.display = 'none'; // 隐藏底边长输入框
+function updateIntervalInputFields(shapeTypeInterval) {
+    // 隐藏所有图形输入框
+    document.querySelectorAll('.shape-input-interval').forEach(div => div.style.display = 'none');
+
+    // 根据选择的图形类型显示对应的输入框
+    if (shapeTypeInterval === 'circle') {
+        document.getElementById('circle_input_interval').style.display = 'block';
+    } else if (shapeTypeInterval === 'rectangle') {
+        document.getElementById('rectangle_input_interval').style.display = 'block';
     }
-});
-
-// 页面加载时初始化输入框显示状态
-document.addEventListener('DOMContentLoaded', function () {
-    const shapeType = document.getElementById('shape_type').value;
-    updateInputFields(shapeType);
-});
+}
 
 // 动态显示图形输入框
 document.getElementById('shape_type').addEventListener('change', function () {
     const shapeType = this.value;
     updateInputFields(shapeType);
-});
-
-// 页面加载时初始化输入框显示状态
-document.addEventListener('DOMContentLoaded', function () {
-    // 默认显示机器人设置
-    showSection('robot-settings-content');
-    document.getElementById('robot-settings-btn').classList.add('active');
-
-    // 初始化仿形间隔计算器的输入框显示状态
-    const shapeTypeInterval = document.getElementById('shape_type_interval').value;
-    updateIntervalInputFields(shapeTypeInterval);
 });
 
 function updateInputFields(shapeType) {
@@ -153,6 +164,9 @@ document.getElementById('inputForm2').addEventListener('submit', function (event
     const layout_type = document.getElementById('layout_type').value;
     const place_type = document.getElementById('place_type').value;
 
+    // 获取PR寄存器ID
+    const pr_register_id = document.getElementById('pr_register_id').value;
+
     // 发送请求到后端
     fetch('/calculate', {
         method: 'POST',
@@ -190,7 +204,9 @@ document.getElementById('inputForm2').addEventListener('submit', function (event
         const totalShapes = response.headers.get('X-Total-Shapes');
         const shapeCentersData = response.headers.get('X-Shape-Centers');
         const shapesPerRowOrCol = response.headers.get('X-Shapes-Per-Row-Or-Col');  // 获取单行/列填充数量
+        const rowColInfo = JSON.parse(response.headers.get('X-Row-Col-Info'));  // 获取行号和列号信息
         shapeCenters = JSON.parse(shapeCentersData);  // 将中心位置数据存储到全局变量中
+        rowColInfoGlobal = rowColInfo;  // 将行号和列号信息存储到全局变量中
 
         // 如果是三角形，将 totalShapes 除以 2
         let finalTotalShapes = totalShapes;
@@ -222,72 +238,111 @@ document.getElementById('inputForm2').addEventListener('submit', function (event
         const writePDataSection = document.getElementById('write-p-data-section');
         writePDataSection.style.display = 'block';
 
+        // 读取PR寄存器的C值
+        return fetch('/read_pr_register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                pr_register_id: pr_register_id
+            }),
+        });
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('读取PR寄存器失败');
+        }
+        return response.json();
+    })
+    .then(data => {
+        const cValue = data.c; // 获取PR寄存器的C值
+        console.log('从后端读取的C值:', cValue); // 打印C值
+
+        // 更新数据清单表格中的C列
+        const dataListContainer = document.querySelector('#data-list-content .data-list-container');
+        const table = dataListContainer.querySelector('table');
+        const tbody = table.querySelector('tbody');
+
+        // 清空表格内容
+        tbody.innerHTML = '';
+        console.log('表格内容:', tbody.innerHTML); // 打印表格内容
+        // 动态生成表格行并填充数据
+        shapeCenters.forEach((center, index) => {
+            const row = document.createElement('tr');
+
+            // 行号
+            const cell1 = document.createElement('td');
+            cell1.textContent = rowColInfoGlobal[index][0];  // 行号
+            cell1.style.border = '1px solid #ddd';
+            cell1.style.padding = '8px';
+            row.appendChild(cell1);
+
+            // 列号
+            const cell2 = document.createElement('td');
+            cell2.textContent = rowColInfoGlobal[index][1];  // 列号
+            cell2.style.border = '1px solid #ddd';
+            cell2.style.padding = '8px';
+            row.appendChild(cell2);
+
+            // P_ID
+            const cell3 = document.createElement('td');
+            cell3.textContent = index + 1;  // P_ID
+            cell3.style.border = '1px solid #ddd';
+            cell3.style.padding = '8px';
+            row.appendChild(cell3);
+
+            // X坐标
+            const cell4 = document.createElement('td');
+            cell4.textContent = center[0].toFixed(2);  // X坐标
+            cell4.style.border = '1px solid #ddd';
+            cell4.style.padding = '8px';
+            row.appendChild(cell4);
+
+            // X补偿
+            const cell5 = document.createElement('td');
+            cell5.textContent = '0.00';  // X补偿值，假设为0
+            cell5.style.border = '1px solid #ddd';
+            cell5.style.padding = '8px';
+            row.appendChild(cell5);
+
+            // Y坐标
+            const cell6 = document.createElement('td');
+            cell6.textContent = center[1].toFixed(2);  // Y坐标
+            cell6.style.border = '1px solid #ddd';
+            cell6.style.padding = '8px';
+            row.appendChild(cell6);
+
+            // Y补偿
+            const cell7 = document.createElement('td');
+            cell7.textContent = '0.00';  // Y补偿值，假设为0
+            cell7.style.border = '1px solid #ddd';
+            cell7.style.padding = '8px';
+            row.appendChild(cell7);
+
+            // C坐标
+            const cell8 = document.createElement('td');
+            cell8.textContent = cValue.toFixed(2);  // C坐标
+            cell8.style.border = '1px solid #ddd';
+            cell8.style.padding = '8px';
+            row.appendChild(cell8);
+
+            // C补偿
+            const cell9 = document.createElement('td');
+            cell9.textContent = '0.00';  // C补偿值，假设为0
+            cell9.style.border = '1px solid #ddd';
+            cell9.style.padding = '8px';
+            row.appendChild(cell9);
+
+            tbody.appendChild(row);
+        });
+
         console.log('图像加载成功');
     })
     .catch(error => {
         console.error('请求失败:', error.message);
         alert('请求失败: ' + error.message);
     });
-});
-
-// 在数据清单页面中显示中心位置数据
-document.getElementById('data-list-btn').addEventListener('click', function () {
-    showSection('data-list-content');
-    setActiveButton('data-list-btn');
-
-    // 清空之前的数据
-    const dataListContainer = document.querySelector('#data-list-content .data-list-container');
-    dataListContainer.innerHTML = '<h2>数据清单</h2>';
-
-    // 创建表格来显示中心位置数据
-    const table = document.createElement('table');
-    table.style.width = '100%';
-    table.style.borderCollapse = 'collapse';
-    table.style.marginTop = '20px';
-
-    // 创建表头
-    const thead = document.createElement('thead');
-    const headerRow = document.createElement('tr');
-    const headers = ['序号', 'X 坐标', 'Y 坐标'];
-    headers.forEach(headerText => {
-        const th = document.createElement('th');
-        th.textContent = headerText;
-        th.style.border = '1px solid #ddd';
-        th.style.padding = '8px';
-        th.style.backgroundColor = '#f2f2f2';
-        headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    // 创建表格主体
-    const tbody = document.createElement('tbody');
-    shapeCenters.forEach((center, index) => {
-        const row = document.createElement('tr');
-        const cell1 = document.createElement('td');
-        cell1.textContent = index + 1;
-        cell1.style.border = '1px solid #ddd';
-        cell1.style.padding = '8px';
-        row.appendChild(cell1);
-
-        const cell2 = document.createElement('td');
-        cell2.textContent = center[0].toFixed(2);  // 显示 X 坐标，保留两位小数
-        cell2.style.border = '1px solid #ddd';
-        cell2.style.padding = '8px';
-        row.appendChild(cell2);
-
-        const cell3 = document.createElement('td');
-        cell3.textContent = center[1].toFixed(2);  // 显示 Y 坐标，保留两位小数
-        cell3.style.border = '1px solid #ddd';
-        cell3.style.padding = '8px';
-        row.appendChild(cell3);
-
-        tbody.appendChild(row);
-    });
-    table.appendChild(tbody);
-
-    // 将表格添加到数据清单容器中
-    dataListContainer.appendChild(table);
 });
 
 // 绘制图形
@@ -791,30 +846,6 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         alert('更新TF数据失败: ' + error.message);
     });
 });
-
-// 添加新的菜单按钮点击事件
-document.getElementById('interval-calculator-btn').addEventListener('click', function () {
-    showSection('interval-calculator-content');
-    setActiveButton('interval-calculator-btn');
-});
-
-// 动态显示或隐藏输入框
-document.getElementById('shape_type_interval').addEventListener('change', function () {
-    const shapeType = this.value;
-    updateIntervalInputFields(shapeType);
-});
-
-function updateIntervalInputFields(shapeType) {
-    // 隐藏所有图形输入框
-    document.querySelectorAll('.shape-input').forEach(div => div.style.display = 'none');
-
-    // 根据选择的图形类型显示对应的输入框
-    if (shapeType === 'circle') {
-        document.getElementById('circle_input_interval').style.display = 'block';
-    } else if (shapeType === 'rectangle') {
-        document.getElementById('rectangle_input_interval').style.display = 'block';
-    }
-}
 
 // 表单提交事件
 document.getElementById('interval-calculator-form').addEventListener('submit', function (event) {

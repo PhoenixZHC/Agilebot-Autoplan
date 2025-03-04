@@ -13,7 +13,7 @@
             <img src="{{ url_for('static', filename='logo.png')  }}" alt="Logo">
         </div>
         <div class="title">捷勃特智能摆盘规划系统</div>
-        <div class="version">V3.4_20250303</div>
+        <div class="version">V3.5_20250304</div>
     </div>
 
     <!-- 主容器 -->
@@ -167,7 +167,7 @@
                                 <div>
                                     <label for="shape_type">工件类型:</label>
                                     <select id="shape_type" name="shape_type">
-                                        <option value="circle">圆形</option>
+                                         <option value="circle" selected>圆形</option>
                                         <option value="rectangle">长方形</option>
                                         <option value="polygon">多边形</option>
                                         <option value="triangle">三角形</option>
@@ -324,11 +324,28 @@
                 </div>
             </div>
 
-            <!-- 数据清单 -->
+            <!-- 数据清单表格 -->
             <div id="data-list-content" class="content-section">
                 <div class="data-list-container">
                     <h2>数据清单</h2>
-                    <!-- 数据清单内容将动态生成 -->
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">行号</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">列号</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">P_ID</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">X</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">X补偿</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Y</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Y补偿</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">C</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">C补偿</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 数据将动态填充到这里 -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -354,14 +371,14 @@
                                 </select>
                             </div>
                             <!-- 圆形输入 -->
-                            <div id="circle_input_interval" class="shape-input">
+                            <div id="circle_input_interval" class="shape-input-interval">
                                 <div>
                                     <label for="circle_diameter_interval">圆形直径:</label>
                                     <input type="number" id="circle_diameter_interval" name="circle_diameter_interval" step="0.1">
                                 </div>
                             </div>
                             <!-- 长方体输入 -->
-                            <div id="rectangle_input_interval" class="shape-input">
+                            <div id="rectangle_input_interval" class="shape-input-interval">
                                 <div>
                                     <label for="rectangle_length_interval">长方体长度:</label>
                                     <input type="number" id="rectangle_length_interval" name="rectangle_length_interval" step="0.1">

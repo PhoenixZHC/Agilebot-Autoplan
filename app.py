@@ -46,6 +46,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
 
                 total_shapes = 0
                 shape_centers = []
+                row_col_info = []  # 用于存储每个点的行号和列号
 
                 if place_type == 'row':
                     shapes_per_row_or_col = circles_per_row  # 行优先时，单行填充数量为 circles_per_row
@@ -59,6 +60,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             # 检查是否超出边框
                             if x_center + diameter / 2 <= frame_length - horizontal_border_distance and y_center + diameter / 2 <= frame_width - vertical_border_distance:
                                 shape_centers.append((x_center, y_center))
+                                row_col_info.append((row + 1, col + 1))  # 记录行号和列号
                                 total_shapes += 1
                 else:
                     shapes_per_row_or_col = circles_per_column  # 列优先时，单列填充数量为 circles_per_column
@@ -72,6 +74,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             # 检查是否超出边框
                             if x_center + diameter / 2 <= frame_length - horizontal_border_distance and y_center + diameter / 2 <= frame_width - vertical_border_distance:
                                 shape_centers.append((x_center, y_center))
+                                row_col_info.append((row + 1, col + 1))  # 记录行号和列号
                                 total_shapes += 1
 
             else:
@@ -87,6 +90,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                 total_shapes = circles_per_row * circles_per_column
 
                 shape_centers = []
+                row_col_info = []  # 用于存储每个点的行号和列号
 
                 if place_type == 'row':
                     shapes_per_row_or_col = circles_per_row  # 行优先时，单行填充数量为 circles_per_row
@@ -95,6 +99,8 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             x_center = round(horizontal_border_distance + diameter / 2 + col * (diameter + horizontal_spacing), 2)
                             y_center = round(vertical_border_distance + diameter / 2 + row * (diameter + vertical_spacing), 2)
                             shape_centers.append((x_center, y_center))
+                            row_col_info.append((row + 1, col + 1))  # 记录行号和列号
+
                 else:
                     shapes_per_row_or_col = circles_per_column  # 列优先时，单列填充数量为 circles_per_column
                     for col in range(circles_per_row):
@@ -102,6 +108,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             x_center = round(horizontal_border_distance + diameter / 2 + col * (diameter + horizontal_spacing), 2)
                             y_center = round(vertical_border_distance + diameter / 2 + row * (diameter + vertical_spacing), 2)
                             shape_centers.append((x_center, y_center))
+                            row_col_info.append((row + 1, col + 1))  # 记录行号和列号
 
         elif is_rectangle:
             effective_row_length = frame_length - 2 * horizontal_border_distance
@@ -119,6 +126,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
 
                 total_shapes = 0
                 shape_centers = []
+                row_col_info = []  # 用于存储每个点的行号和列号
 
                 if place_type == 'row':
                     shapes_per_row_or_col = rectangles_per_row  # 行优先时，单行填充数量为 circles_per_row
@@ -132,6 +140,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             # 检查是否超出边框
                             if x_center + shape_length / 2 <= frame_length - horizontal_border_distance and y_center + shape_width / 2 <= frame_width - vertical_border_distance:
                                 shape_centers.append((x_center, y_center))
+                                row_col_info.append((row + 1, col + 1))  # 记录行号和列号
                                 total_shapes += 1
                 else:
                     shapes_per_row_or_col = rectangles_per_column  # 列优先时，单列填充数量为 circles_per_column
@@ -145,6 +154,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             # 检查是否超出边框
                             if x_center + shape_length / 2 <= frame_length - horizontal_border_distance and y_center + shape_width / 2 <= frame_width - vertical_border_distance:
                                 shape_centers.append((x_center, y_center))
+                                row_col_info.append((row + 1, col + 1))  # 记录行号和列号
                                 total_shapes += 1
 
             else:
@@ -160,6 +170,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                 total_shapes = rectangles_per_row * rectangles_per_column
 
                 shape_centers = []
+                row_col_info = []  # 用于存储每个点的行号和列号
 
                 if place_type == 'row':
                     shapes_per_row_or_col = rectangles_per_row  # 行优先时，单行填充数量为 circles_per_row
@@ -168,6 +179,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             x_center = round(horizontal_border_distance + shape_length / 2 + col * (shape_length + horizontal_spacing), 2)
                             y_center = round(vertical_border_distance + shape_width / 2 + row * (shape_width + vertical_spacing), 2)
                             shape_centers.append((x_center, y_center))
+                            row_col_info.append((row + 1, col + 1))  # 记录行号和列号
                 else:
                     shapes_per_row_or_col = rectangles_per_column  # 列优先时，单列填充数量为 circles_per_column
                     for col in range(rectangles_per_row):
@@ -175,6 +187,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             x_center = round(horizontal_border_distance + shape_length / 2 + col * (shape_length + horizontal_spacing), 2)
                             y_center = round(vertical_border_distance + shape_width / 2 + row * (shape_width + vertical_spacing), 2)
                             shape_centers.append((x_center, y_center))
+                            row_col_info.append((row + 1, col + 1))  # 记录行号和列号
 
         elif polygon_sides is not None and 4 < polygon_sides <= 8:
             # 假设多边形为正多边形，以边长表示形状大小
@@ -206,6 +219,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
 
                 total_shapes = 0
                 shape_centers = []
+                row_col_info = []  # 用于存储每个点的行号和列号
 
                 if place_type == 'row':
                     shapes_per_row_or_col = polygons_per_row  # 行优先时，单行填充数量为 circles_per_row
@@ -219,6 +233,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             # 检查是否超出边框
                             if x_center + bounding_box_length / 2 <= frame_length - horizontal_border_distance and y_center + bounding_box_width / 2 <= frame_width - vertical_border_distance:
                                 shape_centers.append((x_center, y_center))
+                                row_col_info.append((row + 1, col + 1))  # 记录行号和列号
                                 total_shapes += 1
                 else:
                     shapes_per_row_or_col = polygons_per_column  # 列优先时，单列填充数量为 circles_per_column
@@ -232,6 +247,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             # 检查是否超出边框
                             if x_center + bounding_box_length / 2 <= frame_length - horizontal_border_distance and y_center + bounding_box_width / 2 <= frame_width - vertical_border_distance:
                                 shape_centers.append((x_center, y_center))
+                                row_col_info.append((row + 1, col + 1))  # 记录行号和列号
                                 total_shapes += 1
 
             else:
@@ -247,6 +263,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                 total_shapes = polygons_per_row * polygons_per_column
 
                 shape_centers = []
+                row_col_info = []  # 用于存储每个点的行号和列号
 
                 if place_type == 'row':
                     shapes_per_row_or_col = polygons_per_row  # 行优先时，单行填充数量为 circles_per_row
@@ -255,6 +272,8 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * (bounding_box_length + horizontal_spacing), 2)
                             y_center = round(vertical_border_distance + bounding_box_width / 2 + row * (bounding_box_width + vertical_spacing), 2)
                             shape_centers.append((x_center, y_center))
+                            row_col_info.append((row + 1, col + 1))  # 记录行号和列号
+
                 else:
                     shapes_per_row_or_col = polygons_per_column  # 列优先时，单列填充数量为 circles_per_column
                     for col in range(polygons_per_row):
@@ -262,6 +281,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * (bounding_box_length + horizontal_spacing), 2)
                             y_center = round(vertical_border_distance + bounding_box_width / 2 + row * (bounding_box_width + vertical_spacing), 2)
                             shape_centers.append((x_center, y_center))
+                            row_col_info.append((row + 1, col + 1))  # 记录行号和列号
 
         elif is_triangle:
             effective_row_length = frame_length - 2 * horizontal_border_distance
@@ -356,6 +376,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
 
                 total_shapes = 0
                 shape_centers = []
+                row_col_info = []  # 用于存储每个点的行号和列号
 
                 if place_type == 'row':
                     shapes_per_row_or_col = triangles_per_row  # 行优先时，单行填充数量为 circles_per_row
@@ -369,6 +390,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             if x_center + bounding_box_length / 2 <= frame_length - horizontal_border_distance and y_center + bounding_box_width / 2 <= frame_width - vertical_border_distance:
                                 # 只返回坐标信息 (x, y)
                                 shape_centers.append((x_center, y_center))
+                                row_col_info.append((row + 1, col + 1))  # 记录行号和列号
                                 total_shapes += 1
                 else:
                     shapes_per_row_or_col = triangles_per_column  # 列优先时，单列填充数量为 circles_per_column
@@ -382,6 +404,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             if x_center + bounding_box_length / 2 <= frame_length - horizontal_border_distance and y_center + bounding_box_width / 2 <= frame_width - vertical_border_distance:
                                 # 只返回坐标信息 (x, y)
                                 shape_centers.append((x_center, y_center))
+                                row_col_info.append((row + 1, col + 1))  # 记录行号和列号
                                 total_shapes += 1
 
             else:
@@ -396,6 +419,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
 
                 total_shapes = triangles_per_row * triangles_per_column
                 shape_centers = []
+                row_col_info = []  # 用于存储每个点的行号和列号
 
                 if place_type == 'row':
                     shapes_per_row_or_col = triangles_per_row  # 行优先时，单行填充数量为 circles_per_row
@@ -405,6 +429,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             y_center = round(vertical_border_distance + bounding_box_width / 2 + row * (bounding_box_width + vertical_spacing), 2)
                             # 只返回坐标信息 (x, y)
                             shape_centers.append((x_center, y_center))
+                            row_col_info.append((row + 1, col + 1))  # 记录行号和列号
                             total_shapes += 1
                 else:
                     shapes_per_row_or_col = triangles_per_column  # 列优先时，单列填充数量为 circles_per_column
@@ -414,9 +439,10 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             y_center = round(vertical_border_distance + bounding_box_width / 2 + row * (bounding_box_width + vertical_spacing), 2)
                             # 只返回坐标信息 (x, y)
                             shape_centers.append((x_center, y_center))
+                            row_col_info.append((row + 1, col + 1))  # 记录行号和列号
                             total_shapes += 1
 
-        return total_shapes, shape_centers, shapes_per_row_or_col,
+        return total_shapes, shape_centers, shapes_per_row_or_col, row_col_info
 
     except Exception as e:
         raise ValueError(f"无法计算填充数量，错误信息：{e}")
@@ -464,7 +490,7 @@ def calculate():
             shape_width = float(shape_width)
 
         # 计算图形填充
-        total_shapes, shape_centers, shapes_per_row_or_col = calculate_shape_centers(
+        total_shapes, shape_centers, shapes_per_row_or_col, row_col_info = calculate_shape_centers(
             frame_length, frame_width, shape_length, shape_width,
             horizontal_spacing, vertical_spacing, horizontal_border_distance,vertical_border_distance,
             is_circle=shape_type == 'circle',
@@ -594,6 +620,7 @@ def calculate():
         response.headers['X-Total-Shapes'] = str(total_shapes)
         response.headers['X-Shape-Centers'] = json.dumps(shape_centers)
         response.headers['X-Shapes-Per-Row-Or-Col'] = str(shapes_per_row_or_col)  # 返回单行/列填充数量
+        response.headers['X-Row-Col-Info'] = json.dumps(row_col_info)  # 返回行号和列号信息
         return response
 
     except Exception as e:
@@ -790,6 +817,7 @@ def read_pr_register():
     global robot_arm
     data = request.json
     pr_register_id = data.get('pr_register_id')
+    print(f"读取PR寄存器 {pr_register_id} 的C值")  # 打印调试信息
 
     if pr_register_id is None:
         return jsonify({'error': '缺少PR寄存器ID'}), 400
@@ -807,6 +835,10 @@ def read_pr_register():
         pose_register, ret = robot_arm.pose_register.read(pr_register_id)
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '读取PR寄存器失败'}), 400
+
+        # 打印调试信息
+        print(f"PR寄存器 {pr_register_id} 的Z值: {pose_register.poseRegisterData.cartData.position.z}")
+        print(f"PR寄存器 {pr_register_id} 的C值: {pose_register.poseRegisterData.cartData.position.c}")
 
         # 返回Z和C的值
         return jsonify({
