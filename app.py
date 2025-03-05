@@ -478,6 +478,7 @@ def calculate():
         triangle_type = data['triangle_type'] if shape_type == 'triangle' else None
         triangle_orientation = data['triangle_orientation'] if shape_type == 'triangle' else None
         place_type = data.get('place_type', 'row')  # 默认值为 'row
+        remainder_turn = data.get('remainder_turn', 'off')  # 默认值为 'off'
 
         # 处理 shape_width
         shape_width = data.get('shape_width', '')  # 获取 shape_width，默认为空字符串
@@ -609,6 +610,10 @@ def calculate():
                                          linestyle='--')
                 ax.add_patch(bounding_box)
 
+        # 计算行数和列数
+        rows = max([row for row, col in row_col_info]) if row_col_info else 0
+        cols = max([col for row, col in row_col_info]) if row_col_info else 0
+
         # 将图像保存为字节流
         buf = io.BytesIO()
         plt.savefig(buf, format='png')
@@ -621,6 +626,9 @@ def calculate():
         response.headers['X-Shape-Centers'] = json.dumps(shape_centers)
         response.headers['X-Shapes-Per-Row-Or-Col'] = str(shapes_per_row_or_col)  # 返回单行/列填充数量
         response.headers['X-Row-Col-Info'] = json.dumps(row_col_info)  # 返回行号和列号信息
+        response.headers['X-Rows'] = str(rows)  # 返回行数
+        response.headers['X-Cols'] = str(cols)  # 返回列数
+        response.headers['X-Remainder-Turn'] = remainder_turn  # 返回余行列转向选项
         return response
 
     except Exception as e:
@@ -865,6 +873,8 @@ def write_r_registers():
     tool_count = data.get('tool_count')
     drop_Count = data.get('drop_Count')
     numofsingle_row_columns = data.get('numofsingle_row_columns')
+    rows = data.get('rows')  # 获取行数
+    cols = data.get('cols')  # 获取列数
 
     # 检查机器人是否已连接
     if robot_arm is None:
@@ -956,11 +966,29 @@ def write_r_registers():
          # 写入R10寄存器（单行列数量）
         register, ret = robot_arm.register.read(10)  # 先读取当前寄存器
         if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '读取R4寄存器失败'}), 400
+            return jsonify({'error': '读取R10寄存器失败'}), 400
         register.value = int(numofsingle_row_columns)  # 更新值
         ret = robot_arm.register.write(10, register)  # 写回寄存器
         if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '写入R4寄存器失败'}), 400
+            return jsonify({'error': '写入R10寄存器失败'}), 400
+
+        # 写入R11寄存器（行数）
+        register, ret = robot_arm.register.read(11)  # 先读取当前寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取R11寄存器失败'}), 400
+        register.value = int(rows)  # 更新值
+        ret = robot_arm.register.write(11, register)  # 写回寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '写入R11寄存器失败'}), 400
+
+         # 写入R12寄存器（列数）
+        register, ret = robot_arm.register.read(12)  # 先读取当前寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取R12寄存器失败'}), 400
+        register.value = int(cols)  # 更新值
+        ret = robot_arm.register.write(12, register)  # 写回寄存器
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '写入R12寄存器失败'}), 400
 
         return jsonify({'message': 'R寄存器写入成功'}), 200
 

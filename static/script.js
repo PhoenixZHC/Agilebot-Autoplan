@@ -117,6 +117,9 @@ function updateInputFields(shapeType) {
     }
 }
 let shapeCenters = [];  // 全局变量，用于存储图形的中心位置
+// 在全局变量中存储行数和列数
+let rows = 0;
+let cols = 0;
 
 // 获取表单数据并发送请求
 document.getElementById('inputForm2').addEventListener('submit', function (event) {
@@ -163,6 +166,7 @@ document.getElementById('inputForm2').addEventListener('submit', function (event
     const placement_layers = document.getElementById('placement_layers').value;
     const layout_type = document.getElementById('layout_type').value;
     const place_type = document.getElementById('place_type').value;
+    const remainder_turn = document.getElementById('remainder_turn').value; // 获取余行列转向选项
 
     // 获取PR寄存器ID
     const pr_register_id = document.getElementById('pr_register_id').value;
@@ -191,7 +195,8 @@ document.getElementById('inputForm2').addEventListener('submit', function (event
             triangle_type,
             triangle_orientation,
             shape_height,
-            place_type
+            place_type,
+            remainder_turn
         }),
     })
     .then(response => {
@@ -205,6 +210,8 @@ document.getElementById('inputForm2').addEventListener('submit', function (event
         const shapeCentersData = response.headers.get('X-Shape-Centers');
         const shapesPerRowOrCol = response.headers.get('X-Shapes-Per-Row-Or-Col');  // 获取单行/列填充数量
         const rowColInfo = JSON.parse(response.headers.get('X-Row-Col-Info'));  // 获取行号和列号信息
+        rows = response.headers.get('X-Rows');  // 获取行数
+        cols = response.headers.get('X-Cols');  // 获取列数
         shapeCenters = JSON.parse(shapeCentersData);  // 将中心位置数据存储到全局变量中
         rowColInfoGlobal = rowColInfo;  // 将行号和列号信息存储到全局变量中
 
@@ -254,6 +261,22 @@ document.getElementById('inputForm2').addEventListener('submit', function (event
     .then(data => {
         const cValue = data.c; // 获取PR寄存器的C值
         console.log('从后端读取的C值:', cValue); // 打印C值
+
+        // 获取工具数量
+        const toolCount = parseInt(document.getElementById('tool_count').value, 10);
+
+        // 获取余行列转向选项
+        const remainderTurn = document.getElementById('remainder_turn').value;
+
+        // 计算余行
+        let remainderRows = [];
+        if (remainderTurn !== 'off' && toolCount > 1) {
+            const rowsCount = parseInt(rows, 10);
+            const remainder = rowsCount % toolCount;
+            if (remainder !== 0) {
+                remainderRows = Array.from({ length: remainder }, (_, i) => rowsCount - remainder + i + 1);
+            }
+        }
 
         // 更新数据清单表格中的C列
         const dataListContainer = document.querySelector('#data-list-content .data-list-container');
@@ -318,7 +341,15 @@ document.getElementById('inputForm2').addEventListener('submit', function (event
 
             // C坐标
             const cell8 = document.createElement('td');
-            cell8.textContent = cValue.toFixed(2);  // C坐标
+            let cValueAdjusted = cValue;
+            if (remainderTurn !== 'off' && remainderRows.includes(rowColInfoGlobal[index][0])) {
+                if (remainderTurn === 'left') {
+                    cValueAdjusted += 90;
+                } else if (remainderTurn === 'right') {
+                    cValueAdjusted -= 90;
+                }
+            }
+            cell8.textContent = cValueAdjusted.toFixed(2);  // C坐标
             cell8.style.border = '1px solid #ddd';
             cell8.style.padding = '8px';
             row.appendChild(cell8);
@@ -726,6 +757,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     const drop_Count = document.getElementById('drop_Count').value;
     const shapesPerRowOrColValue = document.getElementById('shapes-per-row-or-col-value').textContent;
 
+
     // 检查填充数量和工具数量是否有效
     if (!shapeCountValue || !toolCount) {
         alert('请先进行计算并确保工具数量已选择');
@@ -749,6 +781,8 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
             tool_count: toolCount,         // 工具数量
             drop_Count: drop_Count,
             numofsingle_row_columns: shapesPerRowOrColValue,
+            rows: rows,  // 行数
+            cols: cols   // 列数
         }),
     })
     .then(response => {
