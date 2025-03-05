@@ -157,7 +157,6 @@ body {
     border-radius: 4px;
     font-size: 12px; /* 减小按钮字体大小 */
     cursor: pointer;
-    width: 100px; /* 减小按钮宽度 */
 }
 
 .robot-connection button:hover {
@@ -172,6 +171,14 @@ body {
 
 #robot_status div {
     margin-bottom: 4px; /* 减小间距 */
+}
+
+.robot-connection input,
+.robot-connection select {
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 12px;
 }
 
 /* 智能规划布局 */
@@ -200,7 +207,7 @@ body {
 /* 参数设置板块 */
 .input-section {
     background-color: #f9f9f9;
-    padding: 15px;
+    padding: 10px;
     border-radius: 8px;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px; /* 板块之间的间距 */
@@ -239,12 +246,12 @@ body {
 /* 提交按钮 */
 .input-container button {
     width: 100%;
-    padding: 10px;
-    background-color: #28a745;
+    padding: 6px 12px;
+    background-color: #007bff;
     color: #fff;
     border: none;
     border-radius: 4px;
-    font-size: 14px;
+    font-size: 12px;
     cursor: pointer;
     margin-top: 10px;
 }
@@ -434,4 +441,71 @@ body {
     .robot-connection button {
         width: 100%;
     }
+}
+
+.compensation-section {
+    margin-bottom: 20px;
+}
+
+.compensation-section label {
+    font-weight: bold;
+    color: #555;
+    font-size: 12px;
+}
+
+.compensation-section input,
+.compensation-section select {
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.compensation-section button {
+    padding: 6px 12px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.compensation-section button:hover {
+    background-color: #45a049;
+}
+
+/* 程序输入框和写入P点按钮样式 */
+.program-input-section {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.program-input-section label {
+    font-weight: bold;
+    color: #555;
+    font-size: 12px;
+}
+
+.program-input-section input {
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.program-input-section button {
+    padding: 6px 12px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.program-input-section button:hover {
+    background-color: #0056b3;
 }

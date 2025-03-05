@@ -234,10 +234,6 @@ document.getElementById('inputForm2').addEventListener('submit', function (event
         shapesPerRowOrColValue.textContent = shapesPerRowOrCol; // 显示单行/列填充数量
         shapesPerRowOrColDiv.style.display = 'block';
 
-        // 显示写入P点的输入框和按钮
-        const writePDataSection = document.getElementById('write-p-data-section');
-        writePDataSection.style.display = 'block';
-
         // 读取PR寄存器的C值
         return fetch('/read_pr_register', {
             method: 'POST',
@@ -623,11 +619,42 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         return;
     }
 
-    // 获取之前计算出的图形中心数据
-    if (shapeCenters.length === 0) {
-        alert('没有可用的图形中心数据');
+    // 获取数据清单表格中的数据
+    const tableBody = document.querySelector('#data-list-content table tbody');
+    const rows = tableBody.querySelectorAll('tr');
+
+    if (rows.length === 0) {
+        alert('没有可用的数据');
         return;
     }
+
+        // 准备要写入的P点数据
+    const pData = [];
+    rows.forEach(row => {
+        const pId = parseInt(row.cells[2].textContent, 10); // P_ID
+        const x = parseFloat(row.cells[3].textContent); // X坐标
+        const xCompensation = parseFloat(row.cells[4].textContent); // X补偿
+        const y = parseFloat(row.cells[5].textContent); // Y坐标
+        const yCompensation = parseFloat(row.cells[6].textContent); // Y补偿
+        const c = parseFloat(row.cells[7].textContent); // C坐标
+        const cCompensation = parseFloat(row.cells[8].textContent); // C补偿
+
+        // 将XYC与对应的补偿值相加
+        const finalX = x + xCompensation;
+        const finalY = y + yCompensation;
+        const finalC = c + cCompensation;
+
+        pData.push({
+            id: pId,
+            x: finalX,
+            y: finalY,
+            z: 0, // 暂时设置为0，稍后从PR寄存器中读取Z值并更新
+            c: finalC,
+            uf: ufValue,
+            tf: (pId % toolCount) + 1, // 根据工具数量循环设置TF值
+            left_right: left_right
+        });
+    });
 
     // 发送请求到后端读取PR寄存器的Z和C值
     fetch('/read_pr_register', {
@@ -649,19 +676,11 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     })
     .then(data => {
         const zValue = data.z; // 获取PR寄存器的Z值
-        const cValue = data.c; // 获取PR寄存器的C值
 
-        // 准备要写入的P点数据
-        const pData = shapeCenters.map((center, index) => ({
-            id: index + 1, // 序号
-            x: center[0],  // X坐标
-            y: center[1],  // Y坐标
-            z: zValue,     // 使用PR寄存器的Z值
-            c: cValue,     // 使用PR寄存器的C值
-            uf: ufValue,   // 添加UF值
-            tf: (index % toolCount) + 1,// 根据工具数量循环设置TF值
-            left_right: left_right   // 左手/右手坐标系
-        }));
+        // 更新pData中的Z值
+        pData.forEach(p => {
+            p.z = zValue;
+        });
 
         // 发送请求到后端写入P点数据
         return fetch('/write_p_data', {
@@ -916,4 +935,40 @@ document.getElementById('interval-calculator-form').addEventListener('submit', f
         console.error('请求失败:', error.message);
         alert('请求失败: ' + error.message);
     });
+});
+
+// 更新补偿值的事件处理
+document.getElementById('update-compensation').addEventListener('click', function () {
+    const compensationType = document.getElementById('compensation-type').value;
+    const rowColNumber = parseInt(document.getElementById('row-col-number').value, 10);
+    const compensationValue = parseFloat(document.getElementById('compensation-value').value);
+    const angleCompensation = parseFloat(document.getElementById('angle-compensation').value);
+
+    if (isNaN(rowColNumber) || isNaN(compensationValue) || isNaN(angleCompensation)) {
+        alert('请输入有效的行号/列号、补偿值和角度补偿值');
+        return;
+    }
+
+    const tableBody = document.querySelector('#data-list-content table tbody');
+    const rows = tableBody.querySelectorAll('tr');
+
+    rows.forEach(row => {
+        const rowNumber = parseInt(row.cells[0].textContent, 10);
+        const colNumber = parseInt(row.cells[1].textContent, 10);
+
+        if ((compensationType === 'row' && rowNumber === rowColNumber) ||
+            (compensationType === 'col' && colNumber === rowColNumber)) {
+            // 更新Y补偿值（行补偿）或X补偿值（列补偿）
+            if (compensationType === 'row') {
+                row.cells[6].textContent = compensationValue.toFixed(2); // Y补偿
+            } else {
+                row.cells[4].textContent = compensationValue.toFixed(2); // X补偿
+            }
+
+            // 更新C补偿值
+            row.cells[8].textContent = angleCompensation.toFixed(2); // C补偿
+        }
+    });
+
+    alert('补偿值更新成功');
 });
