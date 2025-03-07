@@ -13,7 +13,7 @@
             <img src="{{ url_for('static', filename='logo.png')  }}" alt="Logo">
         </div>
         <div class="title">捷勃特智能摆盘规划系统</div>
-        <div class="version">V3.7_20250305</div>
+        <div class="version">V3.8_20250307</div>
     </div>
 
     <!-- 主容器 -->
@@ -35,6 +35,10 @@
             <button id="interval-calculator-btn">
                 <img src="{{ url_for('static', filename='icons/calculator.svg') }}" alt="仿形间隔计算器" class="icon">
                 <span>间隔计算器</span>
+            </button>
+            <button id="recipe-library-btn">
+                <img src="{{ url_for('static', filename='icons/library.svg') }}" alt="配方库" class="icon">
+                <span>配方库</span>
             </button>
         </div>
 
@@ -354,6 +358,11 @@
                         <label for="write_program_name">程序名称:</label>
                         <input type="text" id="write_program_name" name="write_program_name" placeholder="输入程序名称" value="PUT">
                         <button id="write_p_data_button">写入P点</button>
+                        <label for="recipe_name">配方名:</label>
+                        <input type="text" id="recipe_name" name="recipe_name" placeholder="输入配方名">
+                        <label for="recipe_id">配方编号:</label>
+                        <input type="text" id="recipe_id" name="recipe_id" placeholder="输入配方编号">
+                        <button id="save_recipe_button">保存配方</button>
                     </div>
 
                     <!-- 数据清单表格 -->
@@ -382,7 +391,7 @@
             <div id="interval-calculator-content" class="content-section">
                 <div class="input-container">
                     <form id="interval-calculator-form">
-                        <h3>计算器使用步骤</h3>
+                        <h3>计算器使用说明</h3>
                         <!-- 添加说明文字 -->
                         <p>
                             1，使用示教器，将三个参考位置的中心点示教记录到三个PR寄存器。<br>
@@ -431,6 +440,159 @@
                     <div>PR2: X=<span id="pr2-x"></span>, Y=<span id="pr2-y"></span></div>
                     <div>PR3: X=<span id="pr3-x"></span>, Y=<span id="pr3-y"></span></div>
                 </div>
+            </div>
+
+            <!-- 配方库内容 -->
+            <div id="recipe-library-content" class="content-section">
+                <div class="recipe-library-container">
+                    <div class="search-section">
+                        <label for="recipe-search">查找配方:</label>
+                        <input type="text" id="recipe-search" placeholder="输入配方名">
+                    </div>
+                    <div class="recipe-library">
+                        <!-- 左侧配方列表 -->
+                        <div class="recipe-list-container">
+                            <h3>配方列表</h3>
+                            <ul id="recipe-list" class="recipe-list">
+                                <!-- 配方列表将动态填充到这里 -->
+                            </ul>
+                        </div>
+                        <!-- 配方预览区域 -->
+                        <div class="recipe-preview">
+                            <div id="recipe-preview-content">
+                                <h4>配方预览</h4>
+                                <div class="preview-container">
+                                    <div class="input-container">
+                                        <form>
+                                            <div class="input-section">
+                                                <h3>料框设置</h3>
+                                                <div>
+                                                    <label>料框长度:</label>
+                                                    <span id="preview-frame-length"></span>
+                                                </div>
+                                                <div>
+                                                    <label>料框宽度:</label>
+                                                    <span id="preview-frame-width"></span>
+                                                </div>
+                                                <div>
+                                                    <label>料框深度:</label>
+                                                    <span id="preview-frame-depth"></span>
+                                                </div>
+                                            </div>
+                                            <!-- 工件设置板块 -->
+                                            <div class="input-section">
+                                                <h3>工件设置</h3>
+                                                <div>
+                                                    <label>工件类型:</label>
+                                                    <span id="preview-shape-type"></span>
+                                                </div>
+                                                <!-- 圆形输入 -->
+                                                <div id="preview-circle-input" class="shape-input-preview" style="display: none;">
+                                                    <div>
+                                                        <label>圆形直径:</label>
+                                                        <span id="preview-circle-diameter"></span>
+                                                    </div>
+                                                </div>
+                                                <!-- 长方形输入 -->
+                                                <div id="preview-rectangle-input" class="shape-input-preview" style="display: none;">
+                                                    <div>
+                                                        <label>长方形长度:</label>
+                                                        <span id="preview-rectangle-length"></span>
+                                                    </div>
+                                                    <div>
+                                                        <label>长方形宽度:</label>
+                                                        <span id="preview-rectangle-width"></span>
+                                                    </div>
+                                                </div>
+                                                <!-- 多边形输入 -->
+                                                <div id="preview-polygon-input" class="shape-input-preview" style="display: none;">
+                                                    <div>
+                                                        <label>多边形边数:</label>
+                                                        <span id="preview-polygon-sides"></span>
+                                                    </div>
+                                                    <div>
+                                                        <label>多边形边长:</label>
+                                                        <span id="preview-polygon-side-length"></span>
+                                                    </div>
+                                                </div>
+                                                <!-- 三角形输入 -->
+                                                <div id="preview-triangle-input" class="shape-input-preview" style="display: none;">
+                                                    <div>
+                                                        <label>三角形类型:</label>
+                                                        <span id="preview-triangle-type"></span>
+                                                    </div>
+                                                    <div>
+                                                        <label>三角形边长:</label>
+                                                        <span id="preview-triangle-side-length"></span>
+                                                    </div>
+                                                    <div id="preview-triangle-base-length-input" style="display: none;">
+                                                        <label>三角形底边长:</label>
+                                                        <span id="preview-triangle-base-length"></span>
+                                                    </div>
+                                                    <div>
+                                                        <label>三角形朝向:</label>
+                                                        <span id="preview-triangle-orientation"></span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label>工件高度:</label>
+                                                    <span id="preview-shape-height"></span>
+                                                </div>
+                                                <div>
+                                                    <label>前端单次下料数量:</label>
+                                                    <span id="preview-drop-count"></span>
+                                                </div>
+                                            </div>
+                                            <div class="input-section">
+                                                <h3>摆放设置</h3>
+                                                <div>
+                                                    <label>横向间距:</label>
+                                                    <span id="preview-horizontal-spacing"></span>
+                                                </div>
+                                                <div>
+                                                    <label>纵向间距:</label>
+                                                    <span id="preview-vertical-spacing"></span>
+                                                </div>
+                                                <div>
+                                                    <label>横向边框距离:</label>
+                                                    <span id="preview-horizontal-border-distance"></span>
+                                                </div>
+                                                <div>
+                                                    <label>纵向边框距离:</label>
+                                                    <span id="preview-vertical-border-distance"></span>
+                                                </div>
+                                                <div>
+                                                    <label>包材厚度:</label>
+                                                    <span id="preview-material-thickness"></span>
+                                                </div>
+                                                <div>
+                                                    <label>摆放层数:</label>
+                                                    <span id="preview-placement-layers"></span>
+                                                </div>
+                                                <div>
+                                                    <label>排布方式:</label>
+                                                    <span id="preview-layout-type"></span>
+                                                </div>
+                                                <div>
+                                                    <label>摆盘方式:</label>
+                                                    <span id="preview-place-type"></span>
+                                                </div>
+                                                <div>
+                                                    <label>余行列转向:</label>
+                                                    <span id="preview-remainder-turn"></span>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="preview-image-container">
+                                        <img id="preview-plot" src="" alt="规划结果预览" style="max-width: 100%;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             </div>
         </div>
     </div>

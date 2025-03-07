@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle, Polygon
 import io
 import math
+import os
 import json
 from Agilebot.IR.A.arm import Arm
 from Agilebot.IR.A.status_code import StatusCodeEnum
@@ -1166,6 +1167,200 @@ def get_pr_data():
             'pr3_y': pr3_y
         }), 200
 
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/save_recipe', methods=['POST'])
+def save_recipe():
+    data = request.json
+
+    try:
+        # 获取配方名和配方编号
+        recipe_name = data.get('recipeName')
+        recipe_id = data.get('recipeId')  # 获取配方编号
+
+        if not recipe_name or not recipe_id:
+            return jsonify({'error': '缺少配方名或配方编号'}), 400
+
+        # 获取所有数据
+        table_data = data.get('tableData')
+        frame_length = data.get('frameLength')
+        frame_width = data.get('frameWidth')
+        frame_depth = data.get('frameDepth')
+        shape_height = data.get('shapeHeight')
+        material_thickness = data.get('materialThickness')
+        placement_layers = data.get('placementLayers')
+        shape_type = data.get('shapeType')
+        shape_length = data.get('shapeLength')
+        shape_width = data.get('shapeWidth')
+        dropCount = data.get('dropCount')
+        horizontal_spacing = data.get('horizontalSpacing')
+        vertical_spacing = data.get('verticalSpacing')
+        horizontal_border_distance = data.get('horizontalBorderDistance')
+        vertical_border_distance = data.get('verticalBorderDistance')
+        layout_type = data.get('layoutType')
+        place_type = data.get('placeType')
+        remainder_turn = data.get('remainderTurn')
+        plot_image_base64 = data.get('plotImageBase64')  # 获取Base64编码的图片数据
+        shape_count_value = data.get('shapeCountValue')
+        shapes_per_row_or_col_value = data.get('shapesPerRowOrColValue')
+
+        # 获取工件类型对应的几何参数
+        circle_diameter = data.get('circleDiameter') if shape_type == 'circle' else None
+        rectangle_length = data.get('rectangleLength') if shape_type == 'rectangle' else None
+        rectangle_width = data.get('rectangleWidth') if shape_type == 'rectangle' else None
+        polygon_sides = data.get('polygonSides') if shape_type == 'polygon' else None
+        polygon_side_length = data.get('polygonSideLength') if shape_type == 'polygon' else None
+        triangle_type = data.get('triangleType') if shape_type == 'triangle' else None
+        triangle_side_length = data.get('triangleSideLength') if shape_type == 'triangle' else None
+        triangle_base_length = data.get('triangleBaseLength') if shape_type == 'triangle' else None
+        triangle_orientation = data.get('triangleOrientation') if shape_type == 'triangle' else None
+
+        # 将数据保存到一个 JSON 文件中
+        recipe_data = {
+            'recipeName': recipe_name,
+            'recipeId': recipe_id,  # 保存配方编号
+            'tableData': table_data,
+            'frameLength': frame_length,
+            'frameWidth': frame_width,
+            'frameDepth': frame_depth,
+            'shapeHeight': shape_height,
+            'materialThickness': material_thickness,
+            'placementLayers': placement_layers,
+            'shapeType': shape_type,
+            'shapeLength': shape_length,
+            'shapeWidth': shape_width,
+            'dropCount': dropCount,
+            'horizontalSpacing': horizontal_spacing,
+            'verticalSpacing': vertical_spacing,
+            'horizontalBorderDistance': horizontal_border_distance,
+            'verticalBorderDistance': vertical_border_distance,
+            'layoutType': layout_type,
+            'placeType': place_type,
+            'remainderTurn': remainder_turn,
+            'plotImageBase64': plot_image_base64,  # 保存Base64编码的图片数据
+            'shapeCountValue': shape_count_value,
+            'shapesPerRowOrColValue': shapes_per_row_or_col_value,
+            'circleDiameter': circle_diameter,
+            'rectangleLength': rectangle_length,
+            'rectangleWidth': rectangle_width,
+            'polygonSides': polygon_sides,
+            'polygonSideLength': polygon_side_length,
+            'triangleType': triangle_type,
+            'triangleSideLength': triangle_side_length,
+            'triangleBaseLength': triangle_base_length,
+            'triangleOrientation': triangle_orientation
+        }
+
+        # 保存到文件
+        import json
+        with open(f'recipes/{recipe_name}.json', 'w') as f:
+            json.dump(recipe_data, f)
+
+        return jsonify({'message': '配方保存成功'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/check_recipe', methods=['POST'])
+def check_recipe():
+    data = request.json
+
+    try:
+        # 获取配方名和配方编号
+        recipe_name = data.get('recipeName')
+        recipe_id = data.get('recipeId')  # 获取配方编号
+
+        if not recipe_name or not recipe_id:
+            return jsonify({'error': '缺少配方名或配方编号'}), 400
+
+        # 检查配方文件是否存在
+        recipe_file_path = f'recipes/{recipe_name}.json'
+        exists = os.path.exists(recipe_file_path)
+
+        # 检查配方编号是否重复
+        recipe_dir = 'recipes'
+        if not os.path.exists(recipe_dir):
+            os.makedirs(recipe_dir)
+
+        id_exists = False
+        for f in os.listdir(recipe_dir):
+            if f.endswith('.json'):
+                with open(os.path.join(recipe_dir, f), 'r') as file:
+                    recipe_data = json.load(file)
+                    if recipe_data.get('recipeId') == recipe_id:
+                        id_exists = True
+                        break
+
+        return jsonify({
+            'exists': exists,  # 配方名是否存在
+            'id_exists': id_exists  # 配方编号是否存在
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+
+# app.py
+import os
+import json
+
+@app.route('/get_recipe_list', methods=['GET'])
+def get_recipe_list():
+    """获取所有配方的列表"""
+    try:
+        recipe_dir = 'recipes'
+        if not os.path.exists(recipe_dir):
+            os.makedirs(recipe_dir)
+        recipes = []
+        for f in os.listdir(recipe_dir):
+            if f.endswith('.json'):
+                with open(os.path.join(recipe_dir, f), 'r') as file:
+                    recipe_data = json.load(file)
+                    recipes.append({
+                        'recipeName': recipe_data.get('recipeName'),
+                        'recipeId': recipe_data.get('recipeId')  # 确保返回 recipeId
+                    })
+        return jsonify({'recipes': recipes}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/get_recipe', methods=['POST'])
+def get_recipe():
+    """获取指定配方的详细信息"""
+    data = request.json
+    recipe_name = data.get('recipeName')
+
+    if not recipe_name:
+        return jsonify({'error': '缺少配方名'}), 400
+
+    try:
+        recipe_file_path = f'recipes/{recipe_name}.json'
+        if not os.path.exists(recipe_file_path):
+            return jsonify({'error': '配方不存在'}), 404
+
+        with open(recipe_file_path, 'r') as f:
+            recipe_data = json.load(f)
+        return jsonify(recipe_data), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/delete_recipe', methods=['POST'])
+def delete_recipe():
+    """删除指定配方"""
+    data = request.json
+    recipe_name = data.get('recipeName')
+
+    if not recipe_name:
+        return jsonify({'error': '缺少配方名'}), 400
+
+    try:
+        recipe_file_path = f'recipes/{recipe_name}.json'
+        if not os.path.exists(recipe_file_path):
+            return jsonify({'error': '配方不存在'}), 404
+
+        os.remove(recipe_file_path)
+        return jsonify({'success': True}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 

@@ -509,3 +509,218 @@ body {
 .program-input-section button:hover {
     background-color: #0056b3;
 }
+
+/* 配方库容器 */
+.recipe-library-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 15px;
+}
+
+.recipe-library {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    height: calc(100% - 40px); /* 减去标题高度 */
+}
+
+.recipe-id {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.recipe-name {
+    font-weight: normal;
+}
+
+/* 配方列表样式 */
+.recipe-list-container {
+    width: 300px;
+    height: 780px;
+    overflow-y: auto;
+    overflow-x: hidden; /* 隐藏横向滚动条 */
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;  /* 新增容器边框 */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.recipe-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    border: 1px solid #eee;  /* 新增列表整体边框 */
+}
+
+/* 每个配方项的样式 */
+.recipe-list li {
+    display: flex; /* 使用 Flex 布局 */
+    align-items: center; /* 垂直居中 */
+    justify-content: space-between; /* 将内容分布到两端 */
+    padding: 10px; /* 内边距 */
+    border-bottom: 1px solid #ddd; /* 底部边框 */
+}
+
+/* 配方编号的样式 */
+.recipe-list li .recipe-id {
+    font-weight: bold;
+    margin-right: 10px; /* 与配方名的间距 */
+    min-width: 30px; /* 固定宽度 */
+}
+
+/* 配方名的样式 */
+.recipe-list li .recipe-name {
+    flex: 1; /* 占据剩余空间 */
+    white-space: nowrap; /* 防止换行 */
+    overflow: hidden; /* 超出部分隐藏 */
+    text-overflow: ellipsis; /* 超出部分显示省略号 */
+    max-width: 150px; /* 固定宽度 */
+    margin-right: 10px; /* 与读取按钮的间距 */
+}
+
+/* 读取按钮的样式 */
+.recipe-list li button:nth-child(3) {
+    margin-right: 10px; /* 与删除按钮的间距 */
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* 删除按钮的样式 */
+.recipe-list li button:nth-child(4) {
+    padding: 5px 10px;
+    background-color: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* 按钮悬停效果 */
+.recipe-list li button:hover {
+    opacity: 0.9; /* 悬停时稍微降低透明度 */
+}
+
+/* 配方预览区域 */
+.recipe-preview {
+    flex: 1;
+    height: 100%; /* 固定高度 */
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto; /* 纵向滚动 */
+}
+
+.recipe-preview h4 {
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #333;
+}
+
+.recipe-preview .preview-container {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    width: 100%;
+}
+
+.recipe-preview .input-container {
+    width: 50%; /* 缩小参数框宽度 */
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.recipe-preview .input-section {
+    margin-bottom: 10px;
+}
+
+.recipe-preview .input-section h3 {
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #333;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+}
+
+.recipe-preview .input-section div {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.recipe-preview .input-section label {
+    font-weight: bold;
+    color: #555;
+    font-size: 12px;
+    white-space: nowrap; /* 防止换行 */
+}
+
+.recipe-preview .input-section span {
+    font-size: 12px;
+    color: #333;
+    white-space: nowrap; /* 防止换行 */
+}
+
+.recipe-preview .preview-image-container {
+    width: 50%; /* 图片占据剩余空间 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.recipe-preview .preview-image-container img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* 确保底边长的值不换行 */
+#preview-triangle-base-length-input span {
+    white-space: nowrap;
+    display: inline-block; /* 确保 span 元素在同一行显示 */
+}
+
+/* 查找功能样式 */
+.search-section {
+    margin-bottom: 15px;
+    align-items: center;
+    gap: 10px;
+}
+
+.search-section label {
+    font-weight: bold;
+    color: #555;
+    font-size: 12px;
+}
+
+.search-section input {
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 12px;
+    flex: 1;
+}
+
+.search-section button {
+    padding: 6px 12px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.search-section button:hover {
+    background-color: #0056b3;
+}
