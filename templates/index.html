@@ -13,7 +13,7 @@
             <img src="{{ url_for('static', filename='logo.png')  }}" alt="Logo">
         </div>
         <div class="title">捷勃特智能摆盘规划系统</div>
-        <div class="version">V3.8_20250307</div>
+        <div class="version">V3.9_20250310</div>
     </div>
 
     <!-- 主容器 -->
@@ -448,6 +448,18 @@
                     <div class="search-section">
                         <label for="recipe-search">查找配方:</label>
                         <input type="text" id="recipe-search" placeholder="输入配方名">
+                        <!-- 允许外部调用选择框和输入框 -->
+                        <label for="external-call">允许外部调用:</label>
+                        <select id="external-call">
+                            <option value="0">关闭</option>
+                            <option value="1">开启</option>
+                        </select>
+
+                        <label for="recipe-number">配方号MH:</label>
+                        <input type="number" id="recipe-number" min="1" placeholder="输入配方号MH">
+
+                        <label for="call-signal">调用信号DI:</label>
+                        <input type="number" id="call-signal" min="1" placeholder="输入调用信号DI">
                     </div>
                     <div class="recipe-library">
                         <!-- 左侧配方列表 -->

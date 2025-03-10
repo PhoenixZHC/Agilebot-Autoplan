@@ -724,3 +724,18 @@ body {
 .search-section button:hover {
     background-color: #0056b3;
 }
+
+/* 配方库外部调用选择框样式 */
+#external-call {
+    padding: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 12px;
+    background-color: #fff;
+    color: #333;
+    cursor: pointer;
+}
+
+#external-call:hover {
+    border-color: #007bff;
+}
