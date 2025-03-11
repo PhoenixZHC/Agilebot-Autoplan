@@ -13,7 +13,7 @@
             <img src="{{ url_for('static', filename='logo.png')  }}" alt="Logo">
         </div>
         <div class="title">捷勃特智能摆盘规划系统</div>
-        <div class="version">V3.9_20250310</div>
+        <div class="version">V4.0_20250311</div>
     </div>
 
     <!-- 主容器 -->
@@ -101,6 +101,13 @@
                         <div>
                             <label for="tool_spacing">工具间距:</label>
                             <input type="number" id="tool_spacing" name="tool_spacing" step="0.1" placeholder="输入工具间距">
+                        </div>
+                        <div>
+                            <label for="tool_layout">工具布局:</label>
+                            <select id="tool_layout" name="tool_layout">
+                                <option value="single">单侧</option>
+                                <option value="double">双向</option>
+                            </select>
                         </div>
                         <div>
                             <label for="auto_tf">自动TF计算:</label>

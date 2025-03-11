@@ -832,6 +832,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     const toolCount = parseInt(document.getElementById('tool_count').value, 10); // 获取工具数量
     const toolSpacing = parseFloat(document.getElementById('tool_spacing').value); // 获取工具间距
     const autoTF = parseInt(document.getElementById('autoTF').value, 10); // 获取自动TF功能开关状态
+    const toolLayout = document.getElementById('tool_layout').value; // 获取工具布局选项
 
     if (isNaN(toolSpacing)) { // 检查工具间距是否为有效数字
         alert('请输入有效的工具间距');
@@ -870,27 +871,79 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     const tf1 = data.tf; // 获取TF1的值
 
     // 复制TF1的值给其他TF，并根据工具间距调整Y值
-    const tfUpdates = [];
-    for (let i = 2; i <= toolCount; i++) {
-        const newTf = {
-            coordinate_info: {
-                coordinate_id: i, // 设置新的TF ID
-                name: tf1.coordinate_info.name, // 复制TF1的名称
-                group_id: tf1.coordinate_info.group_id // 复制TF1的组ID
-            },
-            position: {
-                x: tf1.position.x, // 复制TF1的X值
-                y: tf1.position.y + (i - 1) * toolSpacing, // 调整Y值
-                z: tf1.position.z // 复制TF1的Z值
-            },
-            orientation: {
-                r: tf1.orientation.r, // 复制TF1的A值
-                p: tf1.orientation.p, // 复制TF1的B值
-                y: tf1.orientation.y // 复制TF1的C值
+        const tfUpdates = [];
+        if (toolLayout === 'double') {
+            // 双向布局时，工具数量只能为2
+            if (toolCount !== 2) {
+                alert('双向布局时，工具数量必须为2');
+                return;
             }
-        };
-        tfUpdates.push(newTf);
-    }
+
+            // 计算TF1和TF2的Y值
+            const yOffset = toolSpacing / 2;
+
+            // TF1的Y值为正
+            const tf1Update = {
+                coordinate_info: {
+                    coordinate_id: 1, // TF1的ID
+                    name: tf1.coordinate_info.name, // 复制TF1的名称
+                    group_id: tf1.coordinate_info.group_id // 复制TF1的组ID
+                },
+                position: {
+                    x: tf1.position.x, // 复制TF1的X值
+                    y: yOffset, // 调整Y值
+                    z: tf1.position.z // 复制TF1的Z值
+                },
+                orientation: {
+                    r: tf1.orientation.r, // 复制TF1的A值
+                    p: tf1.orientation.p, // 复制TF1的B值
+                    y: tf1.orientation.y // 复制TF1的C值
+                }
+            };
+            tfUpdates.push(tf1Update);
+
+            // TF2的Y值为负
+            const tf2Update = {
+                coordinate_info: {
+                    coordinate_id: 2, // TF2的ID
+                    name: tf1.coordinate_info.name, // 复制TF1的名称
+                    group_id: tf1.coordinate_info.group_id // 复制TF1的组ID
+                },
+                position: {
+                    x: tf1.position.x, // 复制TF1的X值
+                    y: -yOffset, // 调整Y值
+                    z: tf1.position.z // 复制TF1的Z值
+                },
+                orientation: {
+                    r: tf1.orientation.r, // 复制TF1的A值
+                    p: tf1.orientation.p, // 复制TF1的B值
+                    y: tf1.orientation.y // 复制TF1的C值
+                }
+            };
+            tfUpdates.push(tf2Update);
+        } else {
+            // 单侧布局时，保留原有的自动TF计算逻辑
+            for (let i = 2; i <= toolCount; i++) {
+                const newTf = {
+                    coordinate_info: {
+                        coordinate_id: i, // 设置新的TF ID
+                        name: tf1.coordinate_info.name, // 复制TF1的名称
+                        group_id: tf1.coordinate_info.group_id // 复制TF1的组ID
+                    },
+                    position: {
+                        x: tf1.position.x, // 复制TF1的X值
+                        y: tf1.position.y + (i - 1) * toolSpacing, // 调整Y值
+                        z: tf1.position.z // 复制TF1的Z值
+                    },
+                    orientation: {
+                        r: tf1.orientation.r, // 复制TF1的A值
+                        p: tf1.orientation.p, // 复制TF1的B值
+                        y: tf1.orientation.y // 复制TF1的C值
+                    }
+                };
+                tfUpdates.push(newTf);
+            }
+        }
 
     // 调试输出，检查 tfUpdates 的内容
     console.log('tfUpdates:', tfUpdates);
