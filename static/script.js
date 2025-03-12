@@ -39,6 +39,19 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // 监听工具布局选项的变化
+    document.getElementById('tool_layout').addEventListener('change', function () {
+        const toolLayout = this.value;
+        const toolCountInput = document.getElementById('tool_count');
+
+        if (toolLayout === 'double') {
+            toolCountInput.value = 2; // 双向布局时，工具数量固定为2
+            toolCountInput.disabled = true; // 禁用工具数量输入框
+        } else {
+            toolCountInput.disabled = false; // 单侧布局时，启用工具数量输入框
+        }
+    });
+
 });
 
 // 菜单栏按钮点击事件
@@ -706,7 +719,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
             z: 0, // 暂时设置为0，稍后从PR寄存器中读取Z值并更新
             c: finalC,
             uf: ufValue,
-            tf: (pId % toolCount) + 1, // 根据工具数量循环设置TF值
+            tf: (pId - 1) % toolCount + 1, // 根据工具数量循环设置TF值
             left_right: left_right
         });
     });
@@ -831,7 +844,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
 document.getElementById('write_p_data_button').addEventListener('click', function () {
     const toolCount = parseInt(document.getElementById('tool_count').value, 10); // 获取工具数量
     const toolSpacing = parseFloat(document.getElementById('tool_spacing').value); // 获取工具间距
-    const autoTF = parseInt(document.getElementById('autoTF').value, 10); // 获取自动TF功能开关状态
+    const autoTF = parseInt(document.getElementById('auto_tf').value, 10); // 获取自动TF功能开关状态
     const toolLayout = document.getElementById('tool_layout').value; // 获取工具布局选项
 
     if (isNaN(toolSpacing)) { // 检查工具间距是否为有效数字
@@ -867,10 +880,10 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         }
         return response.json();
     })
-.then(data => {
-    const tf1 = data.tf; // 获取TF1的值
+    .then(data => {
+        const tf1 = data.tf; // 获取TF1的值
 
-    // 复制TF1的值给其他TF，并根据工具间距调整Y值
+        // 复制TF1的值给其他TF，并根据工具布局调整Y值
         const tfUpdates = [];
         if (toolLayout === 'double') {
             // 双向布局时，工具数量只能为2
@@ -891,7 +904,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
                 },
                 position: {
                     x: tf1.position.x, // 复制TF1的X值
-                    y: yOffset, // 调整Y值
+                    y: yOffset, // 直接设置为工具间距的一半
                     z: tf1.position.z // 复制TF1的Z值
                 },
                 orientation: {
@@ -911,7 +924,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
                 },
                 position: {
                     x: tf1.position.x, // 复制TF1的X值
-                    y: -yOffset, // 调整Y值
+                    y: -yOffset, // 直接设置为工具间距的一半的负值
                     z: tf1.position.z // 复制TF1的Z值
                 },
                 orientation: {
@@ -945,20 +958,20 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
             }
         }
 
-    // 调试输出，检查 tfUpdates 的内容
-    console.log('tfUpdates:', tfUpdates);
+        // 调试输出，检查 tfUpdates 的内容
+        console.log('tfUpdates:', tfUpdates);
 
-    // 发送请求到后端更新TF
-    return fetch('/update_tf_data', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            tf_updates: tfUpdates
-        }),
-    });
-})
+        // 发送请求到后端更新TF
+        return fetch('/update_tf_data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                tf_updates: tfUpdates
+            }),
+        });
+    })
     .then(response => {
         if (!response.ok) {
             return response.json().then(err => {
