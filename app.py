@@ -1100,6 +1100,7 @@ def update_tf_data():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+# 仿形计算器
 @app.route('/get_pr_data', methods=['POST'])
 def get_pr_data():
     data = request.json
@@ -1140,15 +1141,15 @@ def get_pr_data():
 
         # 计算行间距和列间距
         if shape_type == 'circle':
-            row_spacing = abs(pr2_y - pr1_y) - diameter
-            col_spacing = abs(pr3_x - pr1_x) - diameter
+            row_spacing = abs(pr3_y - pr1_y) - diameter
+            col_spacing = abs(pr2_x - pr1_x) - diameter
             print(
                 f"row_spacing：{row_spacing}\n"
                 f"col_spacing：{col_spacing}\n"
             )
         elif shape_type == 'rectangle':
-            row_spacing = abs(pr2_y - pr1_y) - length
-            col_spacing = abs(pr3_x - pr1_x) - width
+            row_spacing = abs(pr3_y - pr1_y) - width
+            col_spacing = abs(pr2_x - pr1_x) - length
             print(
                 f"row_spacing：{row_spacing}\n"
                 f"col_spacing：{col_spacing}\n"
