@@ -479,7 +479,7 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
     const isConnected = connectButton.textContent === '断开连接';
 
     if (isConnected) {
-        // 如果当前是“断开连接”状态，则发送断开连接请求
+        // 如果当前是"断开连接"状态，则发送断开连接请求
         fetchWithTimeout('/disconnect_robot', {
             method: 'POST',
             headers: {
@@ -507,7 +507,7 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
             alert('断开连接失败: ' + error.message);
         });
     } else {
-        // 如果当前是“连接”状态，则发送连接请求
+        // 如果当前是"连接"状态，则发送连接请求
         if (!robotIp) {
             alert('请输入机器人IP地址');
             return;
@@ -780,7 +780,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     });
 });
 
-// 在“写入P点”按钮点击事件中，新增R逻辑
+// 在"写入P点"按钮点击事件中，新增R逻辑
 document.getElementById('write_p_data_button').addEventListener('click', function () {
     // 获取新增输入框的值
     const frame_length = document.getElementById('frame_length').value;
@@ -840,12 +840,13 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     });
 });
 
-// 在“写入P点”按钮点击事件中，新增tf逻辑
+// 在"写入P点"按钮点击事件中，新增tf逻辑
 document.getElementById('write_p_data_button').addEventListener('click', function () {
     const toolCount = parseInt(document.getElementById('tool_count').value, 10); // 获取工具数量
     const toolSpacing = parseFloat(document.getElementById('tool_spacing').value); // 获取工具间距
     const autoTF = parseInt(document.getElementById('auto_tf').value, 10); // 获取自动TF功能开关状态
     const toolLayout = document.getElementById('tool_layout').value; // 获取工具布局选项
+    const toolDirection = document.getElementById('tool_direction').value;
 
     if (isNaN(toolSpacing)) { // 检查工具间距是否为有效数字
         alert('请输入有效的工具间距');
@@ -883,7 +884,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .then(data => {
         const tf1 = data.tf; // 获取TF1的值
 
-        // 复制TF1的值给其他TF，并根据工具布局调整Y值
+        // 复制TF1的值给其他TF，并根据工具布局和方向调整坐标值
         const tfUpdates = [];
         if (toolLayout === 'double') {
             // 双向布局时，工具数量只能为2
@@ -892,66 +893,66 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
                 return;
             }
 
-            // 计算TF1和TF2的Y值
-            const yOffset = toolSpacing / 2;
+            // 计算TF1和TF2的偏移值
+            const offset = toolSpacing / 2;
 
-            // TF1的Y值为正
+            // TF1的偏移值为正
             const tf1Update = {
                 coordinate_info: {
-                    coordinate_id: 1, // TF1的ID
-                    name: tf1.coordinate_info.name, // 复制TF1的名称
-                    group_id: tf1.coordinate_info.group_id // 复制TF1的组ID
+                    coordinate_id: 1,
+                    name: tf1.coordinate_info.name,
+                    group_id: tf1.coordinate_info.group_id
                 },
                 position: {
-                    x: tf1.position.x, // 复制TF1的X值
-                    y: yOffset, // 直接设置为工具间距的一半
-                    z: tf1.position.z // 复制TF1的Z值
+                    x: toolDirection === 'x' ? offset : tf1.position.x,
+                    y: toolDirection === 'y' ? offset : tf1.position.y,
+                    z: tf1.position.z
                 },
                 orientation: {
-                    r: tf1.orientation.r, // 复制TF1的A值
-                    p: tf1.orientation.p, // 复制TF1的B值
-                    y: tf1.orientation.y // 复制TF1的C值
+                    r: tf1.orientation.r,
+                    p: tf1.orientation.p,
+                    y: tf1.orientation.y
                 }
             };
             tfUpdates.push(tf1Update);
 
-            // TF2的Y值为负
+            // TF2的偏移值为负
             const tf2Update = {
                 coordinate_info: {
-                    coordinate_id: 2, // TF2的ID
-                    name: tf1.coordinate_info.name, // 复制TF1的名称
-                    group_id: tf1.coordinate_info.group_id // 复制TF1的组ID
+                    coordinate_id: 2,
+                    name: tf1.coordinate_info.name,
+                    group_id: tf1.coordinate_info.group_id
                 },
                 position: {
-                    x: tf1.position.x, // 复制TF1的X值
-                    y: -yOffset, // 直接设置为工具间距的一半的负值
-                    z: tf1.position.z // 复制TF1的Z值
+                    x: toolDirection === 'x' ? -offset : tf1.position.x,
+                    y: toolDirection === 'y' ? -offset : tf1.position.y,
+                    z: tf1.position.z
                 },
                 orientation: {
-                    r: tf1.orientation.r, // 复制TF1的A值
-                    p: tf1.orientation.p, // 复制TF1的B值
-                    y: tf1.orientation.y // 复制TF1的C值
+                    r: tf1.orientation.r,
+                    p: tf1.orientation.p,
+                    y: tf1.orientation.y
                 }
             };
             tfUpdates.push(tf2Update);
         } else {
-            // 单侧布局时，保留原有的自动TF计算逻辑
+            // 单侧布局时，根据工具方向调整坐标值
             for (let i = 2; i <= toolCount; i++) {
                 const newTf = {
                     coordinate_info: {
-                        coordinate_id: i, // 设置新的TF ID
-                        name: tf1.coordinate_info.name, // 复制TF1的名称
-                        group_id: tf1.coordinate_info.group_id // 复制TF1的组ID
+                        coordinate_id: i,
+                        name: tf1.coordinate_info.name,
+                        group_id: tf1.coordinate_info.group_id
                     },
                     position: {
-                        x: tf1.position.x, // 复制TF1的X值
-                        y: tf1.position.y + (i - 1) * toolSpacing, // 调整Y值
-                        z: tf1.position.z // 复制TF1的Z值
+                        x: toolDirection === 'x' ? tf1.position.x + (i - 1) * toolSpacing : tf1.position.x,
+                        y: toolDirection === 'y' ? tf1.position.y + (i - 1) * toolSpacing : tf1.position.y,
+                        z: tf1.position.z
                     },
                     orientation: {
-                        r: tf1.orientation.r, // 复制TF1的A值
-                        p: tf1.orientation.p, // 复制TF1的B值
-                        y: tf1.orientation.y // 复制TF1的C值
+                        r: tf1.orientation.r,
+                        p: tf1.orientation.p,
+                        y: tf1.orientation.y
                     }
                 };
                 tfUpdates.push(newTf);
@@ -1153,31 +1154,38 @@ document.getElementById('save_recipe_button').addEventListener('click', function
 
 function saveRecipeData(recipeName, recipeId) {
     // 获取数据清单表格中的数据
-    const tableBody = document.querySelector('#data-list-content table tbody');
-    const rows = tableBody.querySelectorAll('tr');
     const tableData = [];
-    rows.forEach(row => {
-        const rowData = {
-            rowNumber: parseInt(row.cells[0].textContent), // 行号
-            colNumber: parseInt(row.cells[1].textContent), // 列号
-            pId: parseInt(row.cells[2].textContent), // P_ID
-            x: parseFloat(row.cells[3].textContent), // X坐标
-            xCompensation: parseFloat(row.cells[4].textContent), // X补偿
-            y: parseFloat(row.cells[5].textContent), // Y坐标
-            yCompensation: parseFloat(row.cells[6].textContent), // Y补偿
-            c: parseFloat(row.cells[7].textContent), // C坐标
-            cCompensation: parseFloat(row.cells[8].textContent) // C补偿
-        };
-        tableData.push(rowData);
-    });
+    const table = document.getElementById('data-list-table');
+    const rows = table.getElementsByTagName('tr');
+    for (let i = 1; i < rows.length; i++) {
+        const cells = rows[i].getElementsByTagName('td');
+        tableData.push({
+            id: cells[0].textContent,
+            name: cells[1].textContent,
+            x: cells[2].textContent,
+            y: cells[3].textContent,
+            z: cells[4].textContent,
+            c: cells[5].textContent,
+            uf: cells[6].textContent,
+            tf: cells[7].textContent,
+            left_right: cells[8].textContent
+        });
+    }
 
-    // 获取智能规划界面的所有参数
+    // 获取其他表单数据
     const frameLength = document.getElementById('frame_length')?.value || 0;
     const frameWidth = document.getElementById('frame_width')?.value || 0;
     const frameDepth = document.getElementById('frame_depth')?.value || 0;
     const shapeHeight = document.getElementById('shape_height')?.value || 0;
     const materialThickness = document.getElementById('material_thickness')?.value || 0;
-    const placementLayers = document.getElementById('placement_layers')?.value || 0;
+    const placementLayers = document.getElementById('placement_layers')?.value || 1;
+    const toolCount = document.getElementById('tool_count')?.value || 1;
+    const toolSpacing = document.getElementById('tool_spacing')?.value || 0;
+    const toolLayout = document.getElementById('tool_layout')?.value || 'single';
+    const autoTF = document.getElementById('auto_tf')?.value || 1;
+    const leftRight = document.getElementById('left_right')?.value || 1;
+
+    // 获取智能规划界面的所有参数
     const shapeType = document.getElementById('shape_type')?.value || 'circle';
     const shapeLength = document.getElementById('shape_length')?.value || 0;
     const shapeWidth = document.getElementById('shape_width')?.value || 0;
@@ -1189,17 +1197,6 @@ function saveRecipeData(recipeName, recipeId) {
     const layoutType = document.getElementById('layout_type')?.value || 'array';
     const placeType = document.getElementById('place_type')?.value || 'row';
     const remainderTurn = document.getElementById('remainder_turn')?.value || 'off';
-
-    // 获取工件类型对应的几何参数
-    const circleDiameter = document.getElementById('circle_diameter')?.value || 0;
-    const rectangleLength = document.getElementById('rectangle_length')?.value || 0;
-    const rectangleWidth = document.getElementById('rectangle_width')?.value || 0;
-    const polygonSides = document.getElementById('polygon_sides')?.value || 0;
-    const polygonSideLength = document.getElementById('polygon_side_length')?.value || 0;
-    const triangleType = document.getElementById('triangle_type')?.value || 'equilateral';
-    const triangleSideLength = document.getElementById('triangle_side_length')?.value || 0;
-    const triangleBaseLength = document.getElementById('triangle_base_length')?.value || 0;
-    const triangleOrientation = document.getElementById('triangle_orientation')?.value || 'up';
 
     // 获取预览结果图的Base64编码
     const plotImg = document.getElementById('plot');
@@ -1234,15 +1231,15 @@ function saveRecipeData(recipeName, recipeId) {
         plotImageBase64: plotImageBase64, // 使用Base64编码的图片数据
         shapeCountValue: shapeCountValue,
         shapesPerRowOrColValue: shapesPerRowOrColValue,
-        circleDiameter: circleDiameter,
-        rectangleLength: rectangleLength,
-        rectangleWidth: rectangleWidth,
-        polygonSides: polygonSides,
-        polygonSideLength: polygonSideLength,
-        triangleType: triangleType,
-        triangleSideLength: triangleSideLength,
-        triangleBaseLength: triangleBaseLength,
-        triangleOrientation: triangleOrientation
+        circleDiameter: document.getElementById('circle_diameter')?.value || 0,
+        rectangleLength: document.getElementById('rectangle_length')?.value || 0,
+        rectangleWidth: document.getElementById('rectangle_width')?.value || 0,
+        polygonSides: document.getElementById('polygon_sides')?.value || 0,
+        polygonSideLength: document.getElementById('polygon_side_length')?.value || 0,
+        triangleType: document.getElementById('triangle_type')?.value || 'equilateral',
+        triangleSideLength: document.getElementById('triangle_side_length')?.value || 0,
+        triangleBaseLength: document.getElementById('triangle_base_length')?.value || 0,
+        triangleOrientation: document.getElementById('triangle_orientation')?.value || 'up'
     };
 
     // 发送请求到后端保存配方
