@@ -1155,7 +1155,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
 function saveRecipeData(recipeName, recipeId) {
     // 获取数据清单表格中的数据
     const tableData = [];
-    const table = document.getElementById('data-list-table');
+    const table = document.querySelector('#data-list-content table');
     const rows = table.getElementsByTagName('tr');
     for (let i = 1; i < rows.length; i++) {
         const cells = rows[i].getElementsByTagName('td');
