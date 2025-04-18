@@ -9,10 +9,14 @@ from matplotlib.patches import Circle, Rectangle, Polygon
 import io
 import math
 import os
+import platform
 import json
 from Agilebot.IR.A.arm import Arm
 from Agilebot.IR.A.status_code import StatusCodeEnum
 from Agilebot.IR.A.sdk_types import CoordinateSystemType
+
+# 获取插件端口号，无未提供，默认5000
+PORT = os.getenv("PORT", "5000")
 
 app = Flask(__name__)
 robot_arm = None
@@ -1366,4 +1370,6 @@ def delete_recipe():
         return jsonify({'error': str(e)}), 400
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Windows下使用Debug，部署后关闭
+    is_debug = platform.system().lower() == 'windows'
+    app.run(debug=is_debug, host='0.0.0.0', port=int(PORT))
