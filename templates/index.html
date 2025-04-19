@@ -13,7 +13,7 @@
             <img src="{{ url_for('static', filename='logo.png')  }}" alt="Logo">
         </div>
         <div class="title">捷勃特智能摆盘规划系统</div>
-        <div class="version">V4.4_20250416</div>
+        <div class="version">V4.5_20250419</div>
     </div>
 
     <!-- 主容器 -->
@@ -46,122 +46,139 @@
         <div class="content">
             <!-- 机器人设置 -->
             <div id="robot-settings-content" class="content-section active">
-                <h2>机器人设置</h2>
-                <div class="robot-connection">
-                    <label for="robot_ip">机器人IP地址:</label>
-                    <input type="text" id="robot_ip" name="robot_ip" placeholder="输入机器人IP地址">
-                    <button id="robot_connect_button">连接</button>
-                </div>
-                <div id="robot_status" style="display: none; margin-top: 10px; font-size: 14px;">
-                    <div>连接状态: <span id="robot_ip_display"></span></div>
-                    <div>型号: <span id="robot_model"></span></div>
-                    <div>控制柜版本: <span id="controller_version"></span></div>
-                </div>
-
-                <!-- 程序输入部分 -->
-                <div id="program_input" style="display: none; margin-top: 20px;">
+                <div class="robot-settings">
+                    <!-- IP地址输入和连接按钮 -->
                     <div class="robot-connection">
-                        <label for="program_name">程序名称:</label>
-                        <input type="text" id="program_name" name="program_name" placeholder="输入程序名称" value="PUT">
-                        <button id="read_p_data_button">读取P点</button>
-                        <div>
-                            <label for="pr_register_id">Z&C参考寄存器:</label>
-                            <input type="number" id="pr_register_id" name="pr_register_id" placeholder="输入PR寄存器ID">
-                        </div>
-                        <div>
-                            <label for="uf_value">UF值:</label>
-                            <select id="uf_value" name="uf_value">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                                <option value="6">6</option>
-                                <option value="7">7</option>
-                                <option value="8">8</option>
-                                <option value="9">9</option>
-                                <option value="10">10</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="tool_count">工具数量:</label>
-                            <select id="tool_count" name="tool_count">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                                <option value="6">6</option>
-                                <option value="7">7</option>
-                                <option value="8">8</option>
-                                <option value="9">9</option>
-                                <option value="10">10</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="tool_spacing">工具间距:</label>
-                            <input type="number" id="tool_spacing" name="tool_spacing" step="0.1" placeholder="输入工具间距">
-                        </div>
-                        <div>
-                            <label for="tool_direction">工具方向:</label>
-                            <select id="tool_direction" name="tool_direction">
-                                <option value="y">Y方向</option>
-                                <option value="x">X方向</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="tool_layout">工具布局:</label>
-                            <select id="tool_layout" name="tool_layout">
-                                <option value="single">单侧</option>
-                                <option value="double">双向</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="auto_tf">自动TF计算:</label>
-                            <select id="auto_tf" name="auto_tf"value="1">
-                                <option value="1">开启</option>
-                                <option value="0">关闭</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="left_right">左手/右手坐标系（六轴请选右手）:</label>
-                            <select id="left_right" name="left_right"value="1">
-                                <option value="1">右手坐标系</option>
-                                <option value="-1">左手坐标系</option>
-                            </select>
+                        <div class="input-group">
+                            <label for="robot_ip">机器人IP地址:</label>
+                            <input type="text" id="robot_ip" name="robot_ip" placeholder="输入机器人IP地址">
+                            <button id="robot_connect_button">连接</button>
+                            <!-- 将状态信息移到连接按钮后面 -->
+                            <div id="robot_status" style="display: none;">
+                                <span>连接状态: <span id="robot_ip_display"></span></span>
+                                <span>型号: <span id="robot_model"></span></span>
+                                <span>控制柜版本: <span id="controller_version"></span></span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- P点数据表格 -->
-                <div id="p_data_table_container" style="display: none; margin-top: 20px;">
-                    <h3>P点数据</h3>
-                    <table id="p_data_table" style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr>
-                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">序号</th>
-                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">X</th>
-                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Y</th>
-                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Z</th>
-                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">C</th>
-                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">UF</th>
-                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">TF</th>
-                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">坐标系方向</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- P点数据将动态填充到这里 -->
-                        </tbody>
-                    </table>
+                    <!-- 程序设置部分 -->
+                    <div id="program_input" style="display: none;">
+                        <!-- 程序名称 -->
+                        <div class="program-name-section">
+                            <label for="program_name">程序名称:</label>
+                            <input type="text" id="program_name" name="program_name" placeholder="输入程序名称" value="PUT">
+                            <button id="read_p_data_button">读取P点</button>
+                        </div>
+
+                        <!-- 工具设置 -->
+                        <div class="tool-settings">
+                            <div class="input-group">
+                                <label for="pr_register_id">Z&C参考寄存器:</label>
+                                <input type="number" id="pr_register_id" name="pr_register_id" min="1" max="99999" oninput="if(this.value.length > 5) this.value=this.value.slice(0,5)">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="uf_value">UF值:</label>
+                                <select id="uf_value" name="uf_value">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="tool_count">工具数量:</label>
+                                <select id="tool_count" name="tool_count">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="tool_spacing">工具间距:</label>
+                                <input type="number" id="tool_spacing" name="tool_spacing" step="0.1" min="0" max="99999" oninput="if(this.value.length > 5) this.value=this.value.slice(0,5)">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="tool_direction">工具方向:</label>
+                                <select id="tool_direction" name="tool_direction">
+                                    <option value="y">Y方向</option>
+                                    <option value="x">X方向</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="tool_layout">工具布局:</label>
+                                <select id="tool_layout" name="tool_layout">
+                                    <option value="single">单侧</option>
+                                    <option value="double">双向</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="auto_tf">自动TF计算:</label>
+                                <select id="auto_tf" name="auto_tf" value="1">
+                                    <option value="1">开启</option>
+                                    <option value="0">关闭</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="left_right">坐标系方向:</label>
+                                <select id="left_right" name="left_right" value="1">
+                                    <option value="1">右手坐标系</option>
+                                    <option value="-1">左手坐标系</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- P点数据表格 -->
+                    <div id="p_data_table_container" style="display: none;">
+                        <h3>P点数据</h3>
+                        <table id="p_data_table">
+                            <thead>
+                                <tr>
+                                    <th>序号</th>
+                                    <th>X</th>
+                                    <th>Y</th>
+                                    <th>Z</th>
+                                    <th>C</th>
+                                    <th>UF</th>
+                                    <th>TF</th>
+                                    <th>坐标系方向</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- P点数据将动态填充到这里 -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             <!-- 智能规划 -->
             <div id="smart-planning-content" class="content-section">
-                <div class="smart-planning-content">
+                <div class="planning-content">
                     <!-- 参数设置 -->
-                    <div class="input-container">
-                        <form id="inputForm">
+                    <form id="inputForm">
+                        <div class="settings-container">
                             <!-- 料框设置板块 -->
                             <div class="input-section">
                                 <h3>料框设置</h3>
@@ -185,7 +202,7 @@
                                 <div>
                                     <label for="shape_type">工件类型:</label>
                                     <select id="shape_type" name="shape_type">
-                                         <option value="circle" selected>圆形</option>
+                                        <option value="circle" selected>圆形</option>
                                         <option value="rectangle">长方形</option>
                                         <option value="polygon">多边形</option>
                                         <option value="triangle">三角形</option>
@@ -258,12 +275,8 @@
                                     <input type="number" id="drop_Count" name="shape_height" step="0.1">
                                 </div>
                             </div>
-                        </form>
-                    </div>
 
-                    <!-- 摆放设置板块 -->
-                    <div class="input-container">
-                        <form id="inputForm2">
+                            <!-- 摆放设置板块 -->
                             <div class="input-section">
                                 <h3>摆放设置</h3>
                                 <div>
@@ -313,11 +326,13 @@
                                     </select>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- 提交按钮 -->
+                        <!-- 提交按钮容器 -->
+                        <div class="submit-button-container">
                             <button type="submit">计算</button>
-                        </form>
-                    </div>
+                        </div>
+                    </form>
 
                     <!-- 规划结果预览 -->
                     <div class="preview-container">
@@ -325,10 +340,10 @@
                         <div class="preview-image-container">
                             <img id="plot" src="" alt="图形填充结果" style="display: none;">
                         </div>
-                        <div id="shape-count" style="display: none; margin-top: 20px; font-size: 18px; color: #333;">
+                        <div id="shape-count" style="display: none; font-size: 15px; color: #333;">
                             可填充的图形数量：<span id="shape-count-value">0</span>
                         </div>
-                        <div id="shapes-per-row-or-col" style="display: none; margin-top: 10px; font-size: 18px; color: #333;">
+                        <div id="shapes-per-row-or-col" style="display: none; font-size: 15px; color: #333;">
                             单行/列填充数量：<span id="shapes-per-row-or-col-value">0</span>
                         </div>
                     </div>

@@ -9,8 +9,8 @@ from matplotlib.patches import Circle, Rectangle, Polygon
 import io
 import math
 import os
-import json
 import platform
+import json
 from Agilebot.IR.A.arm import Arm
 from Agilebot.IR.A.status_code import StatusCodeEnum
 from Agilebot.IR.A.sdk_types import CoordinateSystemType
@@ -1373,4 +1373,3 @@ if __name__ == '__main__':
     # Windows下使用Debug，部署后关闭
     is_debug = platform.system().lower() == 'windows'
     app.run(debug=is_debug, host='0.0.0.0', port=int(PORT))
-    

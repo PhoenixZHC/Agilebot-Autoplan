@@ -154,7 +154,7 @@ let rows = 0;
 let cols = 0;
 
 // 获取表单数据并发送请求
-document.getElementById('inputForm2').addEventListener('submit', function (event) {
+document.getElementById('inputForm').addEventListener('submit', function (event) {
     event.preventDefault();
 
     // 获取参数设置表单的数据
@@ -248,164 +248,28 @@ document.getElementById('inputForm2').addEventListener('submit', function (event
         rowColInfoGlobal = rowColInfo;  // 将行号和列号信息存储到全局变量中
 
         // 如果是三角形，将 totalShapes 除以 2
-        let finalTotalShapes = totalShapes;
-        if (shape_type === 'triangle') {
-            finalTotalShapes = Math.floor(totalShapes / 2); // 使用 Math.floor 确保结果为整数
-        }
-
-        return Promise.all([response.blob(), finalTotalShapes, shapesPerRowOrCol]);
-    })
-    .then(([blob, finalTotalShapes, shapesPerRowOrCol]) => {
-        const reader = new FileReader();
-        reader.onloadend = function() {
-            const base64data = reader.result; // 获取Base64编码的图片数据
-            const plotImg = document.getElementById('plot');
-            plotImg.src = base64data; // 使用Base64编码的图片数据
-            plotImg.style.display = 'block';
-        };
+        const adjustedTotalShapes = shape_type === 'triangle' ? Math.floor(totalShapes / 2) : totalShapes;
 
         // 显示填充的图形数量
-        const shapeCount = document.getElementById('shape-count');
-        const shapeCountValue = document.getElementById('shape-count-value');
-        shapeCountValue.textContent = finalTotalShapes; // 使用处理后的 finalTotalShapes
-        shapeCount.style.display = 'block';
+        document.getElementById('shape-count').style.display = 'block';
+        document.getElementById('shape-count-value').textContent = adjustedTotalShapes;
 
         // 显示单行/列填充数量
-        const shapesPerRowOrColDiv = document.getElementById('shapes-per-row-or-col');
-        const shapesPerRowOrColValue = document.getElementById('shapes-per-row-or-col-value');
-        shapesPerRowOrColValue.textContent = shapesPerRowOrCol; // 显示单行/列填充数量
-        shapesPerRowOrColDiv.style.display = 'block';
+        document.getElementById('shapes-per-row-or-col').style.display = 'block';
+        document.getElementById('shapes-per-row-or-col-value').textContent = shapesPerRowOrCol;
 
-        reader.readAsDataURL(blob); // 将Blob转换为Base64编码
-
-        // 读取PR寄存器的C值
-        return fetch('/read_pr_register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                pr_register_id: pr_register_id
-            }),
-        });
+        // 返回图像数据
+        return response.blob();
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('读取PR寄存器失败');
-        }
-        return response.json();
-    })
-    .then(data => {
-        const cValue = data.c; // 获取PR寄存器的C值
-        console.log('从后端读取的C值:', cValue); // 打印C值
-
-        // 获取工具数量
-        const toolCount = parseInt(document.getElementById('tool_count').value, 10);
-
-        // 获取余行列转向选项
-        const remainderTurn = document.getElementById('remainder_turn').value;
-
-        // 计算余行
-        let remainderRows = [];
-        if (remainderTurn !== 'off' && toolCount > 1) {
-            const rowsCount = parseInt(rows, 10);
-            const remainder = rowsCount % toolCount;
-            if (remainder !== 0) {
-                remainderRows = Array.from({ length: remainder }, (_, i) => rowsCount - remainder + i + 1);
-            }
-        }
-
-        // 更新数据清单表格中的C列
-        const dataListContainer = document.querySelector('#data-list-content .data-list-container');
-        const table = dataListContainer.querySelector('table');
-        const tbody = table.querySelector('tbody');
-
-        // 清空表格内容
-        tbody.innerHTML = '';
-        console.log('表格内容:', tbody.innerHTML); // 打印表格内容
-        // 动态生成表格行并填充数据
-        shapeCenters.forEach((center, index) => {
-            const row = document.createElement('tr');
-
-            // 行号
-            const cell1 = document.createElement('td');
-            cell1.textContent = rowColInfoGlobal[index][0];  // 行号
-            cell1.style.border = '1px solid #ddd';
-            cell1.style.padding = '8px';
-            row.appendChild(cell1);
-
-            // 列号
-            const cell2 = document.createElement('td');
-            cell2.textContent = rowColInfoGlobal[index][1];  // 列号
-            cell2.style.border = '1px solid #ddd';
-            cell2.style.padding = '8px';
-            row.appendChild(cell2);
-
-            // P_ID
-            const cell3 = document.createElement('td');
-            cell3.textContent = index + 1;  // P_ID
-            cell3.style.border = '1px solid #ddd';
-            cell3.style.padding = '8px';
-            row.appendChild(cell3);
-
-            // X坐标
-            const cell4 = document.createElement('td');
-            cell4.textContent = center[0].toFixed(2);  // X坐标
-            cell4.style.border = '1px solid #ddd';
-            cell4.style.padding = '8px';
-            row.appendChild(cell4);
-
-            // X补偿
-            const cell5 = document.createElement('td');
-            cell5.textContent = '0.00';  // X补偿值，假设为0
-            cell5.style.border = '1px solid #ddd';
-            cell5.style.padding = '8px';
-            row.appendChild(cell5);
-
-            // Y坐标
-            const cell6 = document.createElement('td');
-            cell6.textContent = center[1].toFixed(2);  // Y坐标
-            cell6.style.border = '1px solid #ddd';
-            cell6.style.padding = '8px';
-            row.appendChild(cell6);
-
-            // Y补偿
-            const cell7 = document.createElement('td');
-            cell7.textContent = '0.00';  // Y补偿值，假设为0
-            cell7.style.border = '1px solid #ddd';
-            cell7.style.padding = '8px';
-            row.appendChild(cell7);
-
-            // C坐标
-            const cell8 = document.createElement('td');
-            let cValueAdjusted = cValue;
-            if (remainderTurn !== 'off' && remainderRows.includes(rowColInfoGlobal[index][0])) {
-                if (remainderTurn === 'left') {
-                    cValueAdjusted += 90;
-                } else if (remainderTurn === 'right') {
-                    cValueAdjusted -= 90;
-                }
-            }
-            cell8.textContent = cValueAdjusted.toFixed(2);  // C坐标
-            cell8.style.border = '1px solid #ddd';
-            cell8.style.padding = '8px';
-            row.appendChild(cell8);
-
-            // C补偿
-            const cell9 = document.createElement('td');
-            cell9.textContent = '0.00';  // C补偿值，假设为0
-            cell9.style.border = '1px solid #ddd';
-            cell9.style.padding = '8px';
-            row.appendChild(cell9);
-
-            tbody.appendChild(row);
-        });
-
-        console.log('图像加载成功');
+    .then(blob => {
+        // 创建图像URL
+        const imageUrl = URL.createObjectURL(blob);
+        const plotImage = document.getElementById('plot');
+        plotImage.src = imageUrl;
+        plotImage.style.display = 'block';
     })
     .catch(error => {
-        console.error('请求失败:', error.message);
-        alert('请求失败: ' + error.message);
+        alert(error.message);
     });
 });
 
