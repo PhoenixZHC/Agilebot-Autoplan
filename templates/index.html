@@ -371,13 +371,13 @@
                         </select>
 
                         <label for="row-col-number">行号/列号:</label>
-                        <input type="number" id="row-col-number" min="1" placeholder="输入行号/列号">
+                        <input type="number" id="row-col-number" min="1">
 
                         <label for="compensation-value">补偿值:</label>
-                        <input type="number" id="compensation-value" step="0.1" placeholder="输入补偿值">
+                        <input type="number" id="compensation-value" step="0.1">
 
                         <label for="angle-compensation">角度补偿:</label>
-                        <input type="number" id="angle-compensation" step="0.1" placeholder="输入角度补偿">
+                        <input type="number" id="angle-compensation" step="0.1">
 
                         <button id="update-compensation">更新补偿</button>
                     </div>
@@ -388,9 +388,9 @@
                         <input type="text" id="write_program_name" name="write_program_name" placeholder="输入程序名称" value="PUT">
                         <button id="write_p_data_button">写入P点</button>
                         <label for="recipe_name">配方名:</label>
-                        <input type="text" id="recipe_name" name="recipe_name" placeholder="输入配方名">
+                        <input type="text" id="recipe_name" name="recipe_name">
                         <label for="recipe_id">配方编号:</label>
-                        <input type="text" id="recipe_id" name="recipe_id" placeholder="输入配方编号">
+                        <input type="text" id="recipe_id" name="recipe_id">
                         <button id="save_recipe_button">保存配方</button>
                     </div>
 
@@ -501,7 +501,7 @@
                         <!-- 配方预览区域 -->
                         <div class="recipe-preview">
                             <div id="recipe-preview-content">
-                                <h4>配方预览</h4>
+                                <h2>配方预览</h2>
                                 <div class="preview-container">
                                     <div class="input-container">
                                         <form>

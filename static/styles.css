@@ -58,7 +58,7 @@ body {
 
 /* 左侧菜单栏 */
 .sidebar {
-    width: 30px;
+    width: 30px;  /* 恢复默认宽度为30px */
     background-color: #f8f9fa;
     padding: 3px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -67,14 +67,14 @@ body {
     box-sizing: border-box;
 }
 
-.sidebar:hover {
-    width: 80px;
+.sidebar.expanded {
+    width: 80px;  /* 展开时的宽度 */
 }
 
 .sidebar button {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: center;  /* 默认居中对齐 */
     width: 100%;
     padding: 3px;
     margin-bottom: 3px;
@@ -90,6 +90,10 @@ body {
     height: 25px;
 }
 
+.sidebar.expanded button {
+    justify-content: flex-start;  /* 展开时左对齐 */
+}
+
 .sidebar button img.icon {
     width: 16px;
     height: 16px;
@@ -98,15 +102,11 @@ body {
 }
 
 .sidebar button span {
-    display: none; /* 默认隐藏文字 */
+    display: none;  /* 默认隐藏文字 */
 }
 
-.sidebar:hover button {
-    justify-content: flex-start; /* 鼠标悬停时图标和文字左对齐 */
-}
-
-.sidebar:hover button span {
-    display: inline; /* 鼠标悬停时显示文字 */
+.sidebar.expanded button span {
+    display: inline;  /* 展开时显示文字 */
 }
 
 .sidebar button.active {
@@ -124,8 +124,13 @@ body {
     background-color: #fff;
     overflow-y: auto;
     overflow-x: hidden;
-    width: calc(100% - 30px);
+    width: calc(100% - 30px);  /* 默认减去30px */
     box-sizing: border-box;
+    transition: width 0.3s ease;  /* 添加过渡效果 */
+}
+
+.sidebar.expanded + .content {
+    width: calc(100% - 80px);  /* 展开时减去80px */
 }
 
 .content-section {
@@ -525,17 +530,22 @@ input[type="number"] {
 
 /* 数据清单 */
 .data-list-container {
-    padding: 15px;
+    padding: 5px 8px;
     background-color: #fff;
     border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    min-height: 200px;
 }
 
 .data-list-container h2 {
-    margin-bottom: 15px;
-    font-size: 18px;
+    margin: 0;
+    padding: 0;
+    font-size: 15px;
     color: #333;
+}
+
+.data-list-container p {
+    margin: 5px 0;
+    font-size: 10px;
+    line-height: 1.2;
 }
 
 /* 数据清单表格样式 */
@@ -629,35 +639,59 @@ input[type="number"] {
 }
 
 .compensation-section {
-    margin-bottom: 20px;
+    margin-bottom: 0px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .compensation-section label {
     font-weight: bold;
     color: #555;
-    font-size: 12px;
+    font-size: 10px;
+    white-space: nowrap;
 }
 
 .compensation-section input,
 .compensation-section select {
-    padding: 6px;
+    height: 25px;
+    padding: 3px;
     border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 12px;
+    border-radius: 3px;
+    font-size: 10px;
+    box-sizing: border-box;
+}
+
+.compensation-section input[type="number"] {
+    width: 45px;
+}
+
+.compensation-section select {
+    width: 45px;
+    height: 25px;
+    line-height: 25px;
 }
 
 .compensation-section button {
-    padding: 6px 12px;
+    padding: 3px 6px;
     background-color: #007bff;
     color: #fff;
     border: none;
-    border-radius: 4px;
-    font-size: 12px;
+    border-radius: 3px;
+    font-size: 10px;
     cursor: pointer;
+    height: 25px;
+    line-height: 25px;
+    box-sizing: border-box;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
 }
 
 .compensation-section button:hover {
-    background-color: #45a049;
+    background-color: #0056b3;
 }
 
 /* 程序输入框和写入P点按钮样式 */
@@ -666,33 +700,49 @@ input[type="number"] {
     display: flex;
     align-items: center;
     gap: 5px;
-    width: 300px; /* 设置固定宽度 */
+    flex-wrap: wrap;
 }
 
 .program-input-section label {
     font-weight: bold;
     color: #555;
     font-size: 10px;
-    width: 80px; /* 设置标签固定宽度 */
+    white-space: nowrap;
 }
 
 .program-input-section input {
-    width: 120px; /* 设置输入框固定宽度 */
+    width: 45px;
+    height: 25px;
     padding: 3px;
     border: 1px solid #ccc;
     border-radius: 3px;
     font-size: 10px;
-    flex-shrink: 0; /* 防止输入框被压缩 */
+    box-sizing: border-box;
+}
+
+/* 为程序名称和配方名称设置特殊宽度 */
+#write_program_name,
+#program_name,
+#recipe_name {
+    width: 90px;  /* 45px * 2 */
 }
 
 .program-input-section button {
-    padding: 6px 12px;
+    padding: 3px 6px;
     background-color: #007bff;
     color: #fff;
     border: none;
-    border-radius: 4px;
-    font-size: 12px;
+    border-radius: 3px;
+    font-size: 10px;
     cursor: pointer;
+    height: 25px;
+    line-height: 25px;
+    box-sizing: border-box;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
 }
 
 .program-input-section button:hover {
@@ -723,8 +773,8 @@ input[type="number"] {
 
 /* 配方列表样式 */
 .recipe-list-container {
-    width: 100%;
-    max-height: 300px;
+    width: 30%; /* 从50%减小到40% */
+    max-height: 500px;
     overflow-y: auto;
 }
 
@@ -733,7 +783,7 @@ input[type="number"] {
     padding: 0;
     margin: 0;
     width: 100%;
-    border: 1px solid #eee;  /* 新增列表整体边框 */
+    border: 1px solid #eee;
 }
 
 /* 每个配方项的样式 */
@@ -754,12 +804,12 @@ input[type="number"] {
 
 /* 配方名的样式 */
 .recipe-list li .recipe-name {
-    flex: 1; /* 占据剩余空间 */
-    white-space: nowrap; /* 防止换行 */
-    overflow: hidden; /* 超出部分隐藏 */
-    text-overflow: ellipsis; /* 超出部分显示省略号 */
-    max-width: 150px; /* 固定宽度 */
-    margin-right: 10px; /* 与读取按钮的间距 */
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80px; /* 从100px减小到80px */
+    margin-right: 10px;
 }
 
 /* 读取按钮的样式 */
@@ -791,45 +841,48 @@ input[type="number"] {
 /* 配方预览区域 */
 .recipe-preview {
     flex: 1;
-    height: 100%; /* 固定高度 */
+    height: 100%;
     background-color: #fff;
-    padding: 10px;
+    padding: 0; /* 移除内边距 */
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    overflow-y: auto; /* 纵向滚动 */
+    overflow-y: auto;
 }
 
-.recipe-preview h4 {
-    margin-bottom: 15px;
-    font-size: 18px;
+.recipe-preview h2 {
+    margin: 0; /* 移除标题的上下边距 */
+    padding: 13px; /* 添加内边距 */
+    font-size: 14px; /* 与配方列表字号一致 */
     color: #333;
+    font-weight: bold;
 }
 
 .recipe-preview .preview-container {
     display: flex;
     flex-direction: row;
-    gap: 20px;
+    gap: 10px;
     width: 100%;
+    padding: 5px; /* 添加内边距 */
 }
 
 .recipe-preview .input-container {
-    width: 50%; /* 缩小参数框宽度 */
-    padding: 10px;
+    width: 30%; /* 缩小参数框宽度 */
+    padding: 8px;
     background-color: #f9f9f9;
     border-radius: 8px;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
 }
 
 .recipe-preview .input-section {
-    margin-bottom: 10px;
+    margin-bottom: 0px;
 }
 
 .recipe-preview .input-section h3 {
     margin-bottom: 10px;
-    font-size: 16px;
+    font-size: 15px;
     color: #333;
     border-bottom: 1px solid #ddd;
-    padding-bottom: 8px;
+    padding-bottom: 0px;
 }
 
 .recipe-preview .input-section div {
@@ -841,18 +894,18 @@ input[type="number"] {
 .recipe-preview .input-section label {
     font-weight: bold;
     color: #555;
-    font-size: 12px;
-    white-space: nowrap; /* 防止换行 */
+    font-size: 10px; /* 与配方列表字号一致 */
+    white-space: nowrap;
 }
 
 .recipe-preview .input-section span {
-    font-size: 12px;
+    font-size: 10px; /* 与配方列表字号一致 */
     color: #333;
-    white-space: nowrap; /* 防止换行 */
+    white-space: nowrap;
 }
 
 .recipe-preview .preview-image-container {
-    width: 50%; /* 图片占据剩余空间 */
+    width: 70%; /* 图片占据剩余空间 */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -877,42 +930,40 @@ input[type="number"] {
     display: flex;
     align-items: center;
     gap: 5px;
-    width: 300px; /* 设置固定宽度 */
+    width: 100%; /* 修改为100%宽度 */
+    flex-wrap: nowrap; /* 防止换行 */
 }
 
 .search-section label {
     font-weight: bold;
     color: #555;
     font-size: 10px;
-    width: 80px; /* 设置标签固定宽度 */
+    width: auto; /* 修改为自动宽度 */
+    white-space: nowrap; /* 防止文字换行 */
 }
 
 .search-section input {
-    width: 120px; /* 设置输入框固定宽度 */
+    width: 90px; /* 与程序名称输入框一致 */
+    height: 25px; /* 与程序名称输入框一致 */
     padding: 3px;
     border: 1px solid #ccc;
     border-radius: 3px;
     font-size: 10px;
-    flex-shrink: 0; /* 防止输入框被压缩 */
+    flex-shrink: 0;
+    box-sizing: border-box;
 }
 
-.search-section button {
-    padding: 6px 12px;
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    font-size: 12px;
-    cursor: pointer;
-}
-
-.search-section button:hover {
-    background-color: #0056b3;
+/* 为配方号MH和调用信号DI设置特殊宽度 */
+#recipe-number,
+#call-signal {
+    width: 45px; /* 与补偿值输入框宽度一致 */
 }
 
 /* 配方库外部调用选择框样式 */
 #external-call {
-    width: 120px; /* 设置固定宽度 */
+    width: auto; /* 改为自适应宽度 */
+    min-width: 60px; /* 设置最小宽度 */
+    height: 25px;
     padding: 3px;
     border: 1px solid #ccc;
     border-radius: 3px;
@@ -920,11 +971,17 @@ input[type="number"] {
     background-color: #fff;
     color: #333;
     cursor: pointer;
-    flex-shrink: 0; /* 防止选择框被压缩 */
+    flex-shrink: 0;
+    box-sizing: border-box;
 }
 
 #external-call:hover {
     border-color: #007bff;
+}
+
+/* 移除输入框占位文字 */
+.search-section input::placeholder {
+    color: transparent;
 }
 
 /* 移除所有不必要的过渡效果 */
@@ -944,4 +1001,66 @@ input[type="number"] {
     flex: 1;
     min-width: 220px;
     max-width: 400px;
+}
+
+/* 间隔计算器样式 */
+#interval-calculator-content .input-section div {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+#interval-calculator-content label {
+    font-weight: bold;
+    color: #555;
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+#interval-calculator-content input,
+#interval-calculator-content select {
+    height: 25px;
+    padding: 3px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 10px;
+    box-sizing: border-box;
+}
+
+#interval-calculator-content input[type="number"] {
+    width: 45px;
+}
+
+#interval-calculator-content select {
+    width: 45px;
+    height: 25px;
+    line-height: 25px;
+}
+
+/* 为仿形形状选择框设置特殊宽度 */
+#interval-calculator-content #shape_type_interval {
+    width: 90px;  /* 45px * 2 */
+}
+
+#interval-calculator-content button {
+    padding: 3px 6px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    font-size: 10px;
+    cursor: pointer;
+    height: 25px;
+    line-height: 25px;
+    box-sizing: border-box;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+}
+
+#interval-calculator-content button:hover {
+    background-color: #0056b3;
 }

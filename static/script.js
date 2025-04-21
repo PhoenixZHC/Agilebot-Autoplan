@@ -4,6 +4,22 @@ document.addEventListener('DOMContentLoaded', function () {
     showSection('robot-settings-content');
     document.getElementById('robot-settings-btn').classList.add('active');
 
+    // 初始化菜单栏状态
+    const sidebar = document.querySelector('.sidebar');
+    const content = document.querySelector('.content');
+
+    // 点击菜单按钮时展开菜单
+    document.querySelectorAll('.sidebar button').forEach(button => {
+        button.addEventListener('click', function() {
+            sidebar.classList.add('expanded');
+        });
+    });
+
+    // 点击内容区域时缩回菜单
+    content.addEventListener('click', function() {
+        sidebar.classList.remove('expanded');
+    });
+
     // 初始化 shape_type 输入框显示状态
     const shapeType = document.getElementById('shape_type').value;
     updateInputFields(shapeType);
@@ -253,10 +269,82 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
         // 显示填充的图形数量
         document.getElementById('shape-count').style.display = 'block';
         document.getElementById('shape-count-value').textContent = adjustedTotalShapes;
-
-        // 显示单行/列填充数量
         document.getElementById('shapes-per-row-or-col').style.display = 'block';
         document.getElementById('shapes-per-row-or-col-value').textContent = shapesPerRowOrCol;
+
+        // 填充数据清单表格
+        const tableBody = document.querySelector('#data-list-content table tbody');
+        tableBody.innerHTML = ''; // 清空表格内容
+
+        // 遍历所有图形中心位置，填充到表格中
+        shapeCenters.forEach((center, index) => {
+            const row = document.createElement('tr');
+            
+            // 行号
+            const cell1 = document.createElement('td');
+            cell1.textContent = rowColInfo[index][0]; // 行号
+            cell1.style.border = '1px solid #ddd';
+            cell1.style.padding = '8px';
+            row.appendChild(cell1);
+
+            // 列号
+            const cell2 = document.createElement('td');
+            cell2.textContent = rowColInfo[index][1]; // 列号
+            cell2.style.border = '1px solid #ddd';
+            cell2.style.padding = '8px';
+            row.appendChild(cell2);
+
+            // P_ID
+            const cell3 = document.createElement('td');
+            cell3.textContent = index + 1; // P_ID从1开始
+            cell3.style.border = '1px solid #ddd';
+            cell3.style.padding = '8px';
+            row.appendChild(cell3);
+
+            // X坐标
+            const cell4 = document.createElement('td');
+            cell4.textContent = center[0].toFixed(2); // X坐标
+            cell4.style.border = '1px solid #ddd';
+            cell4.style.padding = '8px';
+            row.appendChild(cell4);
+
+            // X补偿（初始为0）
+            const cell5 = document.createElement('td');
+            cell5.textContent = '0.00';
+            cell5.style.border = '1px solid #ddd';
+            cell5.style.padding = '8px';
+            row.appendChild(cell5);
+
+            // Y坐标
+            const cell6 = document.createElement('td');
+            cell6.textContent = center[1].toFixed(2); // Y坐标
+            cell6.style.border = '1px solid #ddd';
+            cell6.style.padding = '8px';
+            row.appendChild(cell6);
+
+            // Y补偿（初始为0）
+            const cell7 = document.createElement('td');
+            cell7.textContent = '0.00';
+            cell7.style.border = '1px solid #ddd';
+            cell7.style.padding = '8px';
+            row.appendChild(cell7);
+
+            // C坐标（初始为0）
+            const cell8 = document.createElement('td');
+            cell8.textContent = '0.00';
+            cell8.style.border = '1px solid #ddd';
+            cell8.style.padding = '8px';
+            row.appendChild(cell8);
+
+            // C补偿（初始为0）
+            const cell9 = document.createElement('td');
+            cell9.textContent = '0.00';
+            cell9.style.border = '1px solid #ddd';
+            cell9.style.padding = '8px';
+            row.appendChild(cell9);
+
+            tableBody.appendChild(row);
+        });
 
         // 返回图像数据
         return response.blob();
@@ -267,6 +355,17 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
         const plotImage = document.getElementById('plot');
         plotImage.src = imageUrl;
         plotImage.style.display = 'block';
+
+        // 将 blob 转换为 Base64 字符串
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                plotImage.setAttribute('data-base64', reader.result); // 存储 Base64 数据
+                resolve();
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
     })
     .catch(error => {
         alert(error.message);
@@ -1024,15 +1123,15 @@ function saveRecipeData(recipeName, recipeId) {
     for (let i = 1; i < rows.length; i++) {
         const cells = rows[i].getElementsByTagName('td');
         tableData.push({
-            id: cells[0].textContent,
-            name: cells[1].textContent,
-            x: cells[2].textContent,
-            y: cells[3].textContent,
-            z: cells[4].textContent,
-            c: cells[5].textContent,
-            uf: cells[6].textContent,
-            tf: cells[7].textContent,
-            left_right: cells[8].textContent
+            rowNumber: cells[0].textContent,
+            colNumber: cells[1].textContent,
+            pId: cells[2].textContent,
+            x: parseFloat(cells[3].textContent),
+            xCompensation: parseFloat(cells[4].textContent),
+            y: parseFloat(cells[5].textContent),
+            yCompensation: parseFloat(cells[6].textContent),
+            c: parseFloat(cells[7].textContent),
+            cCompensation: parseFloat(cells[8].textContent)
         });
     }
 
@@ -1064,7 +1163,7 @@ function saveRecipeData(recipeName, recipeId) {
 
     // 获取预览结果图的Base64编码
     const plotImg = document.getElementById('plot');
-    const plotImageBase64 = plotImg.src; // 假设图片已经是Base64编码
+    const plotImageBase64 = plotImg.getAttribute('data-base64'); // 使用存储的 Base64 数据
 
     // 获取填充数量和单行/列数量
     const shapeCountValue = document.getElementById('shape-count-value')?.textContent || 0;
@@ -1285,6 +1384,12 @@ function previewRecipe(recipeName) {
     })
     .then(response => response.json())
     .then(data => {
+        // 更新预览标题，显示配方名称
+        const previewTitle = document.querySelector('.recipe-preview h2');
+        if (previewTitle) {
+            previewTitle.textContent = `配方预览 - ${recipeName}`;
+        }
+
         // 填充料框设置
         document.getElementById('preview-frame-length').textContent = data.frameLength;
         document.getElementById('preview-frame-width').textContent = data.frameWidth;
@@ -1439,74 +1544,76 @@ function loadRecipeToPlanning(recipeName) {
         const tableBody = document.querySelector('#data-list-content table tbody');
         tableBody.innerHTML = ''; // 清空表格内容
 
-        data.tableData.forEach((rowData, index) => {
-            const row = document.createElement('tr');
+        if (data.tableData && Array.isArray(data.tableData)) {
+            data.tableData.forEach((rowData) => {
+                const row = document.createElement('tr');
 
-            // 行号
-            const cell1 = document.createElement('td');
-            cell1.textContent = rowData.rowNumber;
-            cell1.style.border = '1px solid #ddd';
-            cell1.style.padding = '8px';
-            row.appendChild(cell1);
+                // 行号
+                const cell1 = document.createElement('td');
+                cell1.textContent = rowData.rowNumber || '';
+                cell1.style.border = '1px solid #ddd';
+                cell1.style.padding = '8px';
+                row.appendChild(cell1);
 
-            // 列号
-            const cell2 = document.createElement('td');
-            cell2.textContent = rowData.colNumber;
-            cell2.style.border = '1px solid #ddd';
-            cell2.style.padding = '8px';
-            row.appendChild(cell2);
+                // 列号
+                const cell2 = document.createElement('td');
+                cell2.textContent = rowData.colNumber || '';
+                cell2.style.border = '1px solid #ddd';
+                cell2.style.padding = '8px';
+                row.appendChild(cell2);
 
-            // P_ID
-            const cell3 = document.createElement('td');
-            cell3.textContent = rowData.pId;
-            cell3.style.border = '1px solid #ddd';
-            cell3.style.padding = '8px';
-            row.appendChild(cell3);
+                // P_ID
+                const cell3 = document.createElement('td');
+                cell3.textContent = rowData.pId || '';
+                cell3.style.border = '1px solid #ddd';
+                cell3.style.padding = '8px';
+                row.appendChild(cell3);
 
-            // X坐标
-            const cell4 = document.createElement('td');
-            cell4.textContent = rowData.x.toFixed(2);
-            cell4.style.border = '1px solid #ddd';
-            cell4.style.padding = '8px';
-            row.appendChild(cell4);
+                // X坐标
+                const cell4 = document.createElement('td');
+                cell4.textContent = (parseFloat(rowData.x) || 0).toFixed(2);
+                cell4.style.border = '1px solid #ddd';
+                cell4.style.padding = '8px';
+                row.appendChild(cell4);
 
-            // X补偿
-            const cell5 = document.createElement('td');
-            cell5.textContent = rowData.xCompensation.toFixed(2);
-            cell5.style.border = '1px solid #ddd';
-            cell5.style.padding = '8px';
-            row.appendChild(cell5);
+                // X补偿
+                const cell5 = document.createElement('td');
+                cell5.textContent = (parseFloat(rowData.xCompensation) || 0).toFixed(2);
+                cell5.style.border = '1px solid #ddd';
+                cell5.style.padding = '8px';
+                row.appendChild(cell5);
 
-            // Y坐标
-            const cell6 = document.createElement('td');
-            cell6.textContent = rowData.y.toFixed(2);
-            cell6.style.border = '1px solid #ddd';
-            cell6.style.padding = '8px';
-            row.appendChild(cell6);
+                // Y坐标
+                const cell6 = document.createElement('td');
+                cell6.textContent = (parseFloat(rowData.y) || 0).toFixed(2);
+                cell6.style.border = '1px solid #ddd';
+                cell6.style.padding = '8px';
+                row.appendChild(cell6);
 
-            // Y补偿
-            const cell7 = document.createElement('td');
-            cell7.textContent = rowData.yCompensation.toFixed(2);
-            cell7.style.border = '1px solid #ddd';
-            cell7.style.padding = '8px';
-            row.appendChild(cell7);
+                // Y补偿
+                const cell7 = document.createElement('td');
+                cell7.textContent = (parseFloat(rowData.yCompensation) || 0).toFixed(2);
+                cell7.style.border = '1px solid #ddd';
+                cell7.style.padding = '8px';
+                row.appendChild(cell7);
 
-            // C坐标
-            const cell8 = document.createElement('td');
-            cell8.textContent = rowData.c.toFixed(2);
-            cell8.style.border = '1px solid #ddd';
-            cell8.style.padding = '8px';
-            row.appendChild(cell8);
+                // C坐标
+                const cell8 = document.createElement('td');
+                cell8.textContent = (parseFloat(rowData.c) || 0).toFixed(2);
+                cell8.style.border = '1px solid #ddd';
+                cell8.style.padding = '8px';
+                row.appendChild(cell8);
 
-            // C补偿
-            const cell9 = document.createElement('td');
-            cell9.textContent = rowData.cCompensation.toFixed(2);
-            cell9.style.border = '1px solid #ddd';
-            cell9.style.padding = '8px';
-            row.appendChild(cell9);
+                // C补偿
+                const cell9 = document.createElement('td');
+                cell9.textContent = (parseFloat(rowData.cCompensation) || 0).toFixed(2);
+                cell9.style.border = '1px solid #ddd';
+                cell9.style.padding = '8px';
+                row.appendChild(cell9);
 
-            tableBody.appendChild(row);
-        });
+                tableBody.appendChild(row);
+            });
+        }
 
         // 填充配方名和配方编号到数据清单的输入框中
         document.getElementById('recipe_name').value = recipeName;
