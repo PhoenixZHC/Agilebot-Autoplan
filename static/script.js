@@ -353,6 +353,10 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
         // 创建图像URL
         const imageUrl = URL.createObjectURL(blob);
         const plotImage = document.getElementById('plot');
+        if (!plotImage) {
+            console.error('plot element not found');
+            return;
+        }
         plotImage.src = imageUrl;
         plotImage.style.display = 'block';
 
@@ -360,10 +364,18 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onloadend = () => {
-                plotImage.setAttribute('data-base64', reader.result); // 存储 Base64 数据
+                if (reader.result) {
+                    plotImage.setAttribute('data-base64', reader.result);
+                    console.log('Base64 data set successfully:', reader.result.substring(0, 50) + '...');
+                } else {
+                    console.error('Failed to convert image to base64');
+                }
                 resolve();
             };
-            reader.onerror = reject;
+            reader.onerror = (error) => {
+                console.error('Error converting image to base64:', error);
+                reject(error);
+            };
             reader.readAsDataURL(blob);
         });
     })
@@ -1063,10 +1075,17 @@ document.getElementById('update-compensation').addEventListener('click', functio
 
 document.getElementById('save_recipe_button').addEventListener('click', function () {
     const recipeName = document.getElementById('recipe_name').value;
-    const recipeId = document.getElementById('recipe_id').value; // 获取配方编号
+    const recipeId = document.getElementById('recipe_id').value;
 
     if (!recipeName || !recipeId) {
         alert('请输入配方名和配方编号');
+        return;
+    }
+
+    // 检查图片是否已经生成
+    const plotImg = document.getElementById('plot');
+    if (!plotImg || !plotImg.getAttribute('data-base64')) {
+        alert('请先生成规划结果图片');
         return;
     }
 
@@ -1078,7 +1097,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
         },
         body: JSON.stringify({
             recipeName: recipeName,
-            recipeId: recipeId // 将配方编号发送到后端
+            recipeId: recipeId
         }),
     })
     .then(response => {
@@ -1091,23 +1110,21 @@ document.getElementById('save_recipe_button').addEventListener('click', function
     })
     .then(data => {
         if (data.exists) {
-            // 如果配方文件已存在，弹出确认框
             const confirmOverwrite = confirm('配方名已存在，是否覆盖？');
             if (!confirmOverwrite) {
-                return; // 用户取消覆盖，直接返回
+                return;
             }
         }
 
         if (data.id_exists) {
-            // 如果配方编号已存在，弹出确认框
             const confirmOverwriteId = confirm('配方编号已存在，是否覆盖？');
             if (!confirmOverwriteId) {
-                return; // 用户取消覆盖，直接返回
+                return;
             }
         }
 
         // 继续保存配方的逻辑
-        saveRecipeData(recipeName, recipeId); // 将配方编号传递给保存函数
+        saveRecipeData(recipeName, recipeId);
     })
     .catch(error => {
         console.error('检查配方失败:', error.message);
@@ -1163,8 +1180,17 @@ function saveRecipeData(recipeName, recipeId) {
 
     // 获取预览结果图的Base64编码
     const plotImg = document.getElementById('plot');
-    const plotImageBase64 = plotImg.getAttribute('data-base64'); // 使用存储的 Base64 数据
-
+    if (!plotImg) {
+        console.error('plot element not found when saving recipe');
+        return;
+    }
+    const plotImageBase64 = plotImg.getAttribute('data-base64');
+    if (!plotImageBase64) {
+        console.error('No base64 data found in plot element when saving recipe');
+        return;
+    }
+    console.log('Saving recipe with base64 data:', plotImageBase64.substring(0, 50) + '...');
+    
     // 获取填充数量和单行/列数量
     const shapeCountValue = document.getElementById('shape-count-value')?.textContent || 0;
     const shapesPerRowOrColValue = document.getElementById('shapes-per-row-or-col-value')?.textContent || 0;
@@ -1446,7 +1472,10 @@ function previewRecipe(recipeName) {
         document.getElementById('preview-remainder-turn').textContent = remainderTurnChinese;
 
         // 显示预览图片
-        document.getElementById('preview-plot').src = data.plotImageBase64; // 使用Base64编码的图片数据
+        const plotImg = document.getElementById('preview-plot');
+        plotImg.src = data.plotImageBase64;
+        plotImg.setAttribute('data-base64', data.plotImageBase64); // 添加这行，设置data-base64属性
+        plotImg.style.display = 'block';
     })
     .catch(error => console.error('加载配方失败:', error));
 }
@@ -1530,6 +1559,7 @@ function loadRecipeToPlanning(recipeName) {
         // 填充结果预览图片
         const plotImg = document.getElementById('plot');
         plotImg.src = data.plotImageBase64;
+        plotImg.setAttribute('data-base64', data.plotImageBase64); // 添加这行，设置data-base64属性
         plotImg.style.display = 'block';
 
         // 填充填充数量和单行/列数量

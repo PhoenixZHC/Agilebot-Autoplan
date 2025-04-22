@@ -1210,6 +1210,11 @@ def save_recipe():
         shape_count_value = data.get('shapeCountValue')
         shapes_per_row_or_col_value = data.get('shapesPerRowOrColValue')
 
+        # 检查图片数据是否存在
+        if not plot_image_base64:
+            print('Warning: No image data found in recipe')
+            # 这里不返回错误，因为图片数据是可选的
+
         # 获取工件类型对应的几何参数
         circle_diameter = data.get('circleDiameter') if shape_type == 'circle' else None
         rectangle_length = data.get('rectangleLength') if shape_type == 'rectangle' else None
@@ -1259,12 +1264,15 @@ def save_recipe():
 
         # 保存到文件
         import json
-        with open(f'recipes/{recipe_name}.json', 'w') as f:
+        recipe_file_path = f'recipes/{recipe_name}.json'
+        with open(recipe_file_path, 'w') as f:
             json.dump(recipe_data, f)
+        print(f'Recipe saved successfully to {recipe_file_path}')
 
         return jsonify({'message': '配方保存成功'}), 200
 
     except Exception as e:
+        print(f'Error saving recipe: {str(e)}')
         return jsonify({'error': str(e)}), 400
 
 @app.route('/check_recipe', methods=['POST'])
