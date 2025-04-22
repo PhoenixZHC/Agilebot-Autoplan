@@ -1,10 +1,11 @@
 // 判断当前环境是否运行在插件中，选择不同的提示框
+const isExtension = gbtExtension.isInExtension();
 const alertSuccess =
-  typeof window.gbtExtension === 'undefined'
+  !isExtension
     ? alert
     : gbtExtension.rtmNotification.success;
 const alertError =
-  typeof window.gbtExtension === 'undefined'
+  !isExtension
     ? alert
     : gbtExtension.rtmNotification.error;
 
