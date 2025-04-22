@@ -1,5 +1,6 @@
 // 判断当前环境是否运行在插件中，选择不同的提示框
 const isExtension = gbtExtension.isInExtension();
+// TP插件环境中，alert无法使用
 const alertSuccess =
   !isExtension
     ? alert
@@ -8,6 +9,19 @@ const alertError =
   !isExtension
     ? alert
     : gbtExtension.rtmNotification.error;
+// TP插件环境中，confirm无法使用
+const myConfirm = function(message) {
+    if (!isExtension) {
+        return confirm(message);
+    }
+    return new Promise((resolve) => {
+        gbtExtension.rtmMessageBox.confirm(message).then(() => {
+            resolve(true);
+        }).catch(() => {
+            resolve(false);
+        });
+    });
+}
 
 
 // 页面加载时初始化菜单栏
@@ -1101,10 +1115,10 @@ document.getElementById('save_recipe_button').addEventListener('click', function
         }
         return response.json();
     })
-    .then(data => {
+    .then(async data => {
         if (data.exists) {
             // 如果配方文件已存在，弹出确认框
-            const confirmOverwrite = confirm('配方名已存在，是否覆盖？');
+            const confirmOverwrite = await myConfirm('配方名已存在，是否覆盖？');
             if (!confirmOverwrite) {
                 return; // 用户取消覆盖，直接返回
             }
@@ -1112,7 +1126,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
 
         if (data.id_exists) {
             // 如果配方编号已存在，弹出确认框
-            const confirmOverwriteId = confirm('配方编号已存在，是否覆盖？');
+            const confirmOverwriteId = await myConfirm('配方编号已存在，是否覆盖？');
             if (!confirmOverwriteId) {
                 return; // 用户取消覆盖，直接返回
             }
@@ -1464,8 +1478,9 @@ function previewRecipe(recipeName) {
 }
 
 // 删除配方
-function deleteRecipe(recipeName) {
-    if (confirm(`确定要删除配方 "${recipeName}" 吗？`)) {
+async function deleteRecipe(recipeName) {
+    const confirmDelete = await myConfirm(`确定要删除配方 "${recipeName}" 吗？`);
+    if (confirmDelete) {
         fetch('/delete_recipe', {
             method: 'POST',
             headers: {

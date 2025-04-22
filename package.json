@@ -24,6 +24,7 @@
       [
         "@babel/preset-env",
         {
+          "modules": false,
           "targets": {
             "android": "13",
             "chrome": "80"
