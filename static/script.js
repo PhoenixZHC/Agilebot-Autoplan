@@ -23,7 +23,6 @@ const myConfirm = function(message) {
     });
 }
 
-
 // 页面加载时初始化菜单栏
 document.addEventListener('DOMContentLoaded', function () {
     // 默认显示机器人设置

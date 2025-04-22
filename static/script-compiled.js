@@ -1,0 +1,1684 @@
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = "function" == typeof Symbol ? Symbol : {}, a = i.iterator || "@@iterator", c = i.asyncIterator || "@@asyncIterator", u = i.toStringTag || "@@toStringTag"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, ""); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, "_invoke", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: "normal", arg: t.call(e, r) }; } catch (t) { return { type: "throw", arg: t }; } } e.wrap = wrap; var h = "suspendedStart", l = "suspendedYield", f = "executing", s = "completed", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { ["next", "throw", "return"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if ("throw" !== c.type) { var u = c.arg, h = u.value; return h && "object" == _typeof(h) && n.call(h, "__await") ? e.resolve(h.__await).then(function (t) { invoke("next", t, i, a); }, function (t) { invoke("throw", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke("throw", t, i, a); }); } a(c.arg); } var r; o(this, "_invoke", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error("Generator is already running"); if (o === s) { if ("throw" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if ("next" === n.method) n.sent = n._sent = n.arg;else if ("throw" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else "return" === n.method && n.abrupt("return", n.arg); o = f; var p = tryCatch(e, r, n); if ("normal" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } "throw" === p.type && (o = s, n.method = "throw", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, "throw" === n && e.iterator.return && (r.method = "return", r.arg = t, maybeInvokeDelegate(e, r), "throw" === r.method) || "return" !== n && (r.method = "throw", r.arg = new TypeError("The iterator does not provide a '" + n + "' method")), y; var i = tryCatch(o, e.iterator, r.arg); if ("throw" === i.type) return r.method = "throw", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, "return" !== r.method && (r.method = "next", r.arg = t), r.delegate = null, y) : a : (r.method = "throw", r.arg = new TypeError("iterator result is not an object"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = "normal", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: "root" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || "" === e) { var r = e[a]; if (r) return r.call(e); if ("function" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(_typeof(e) + " is not iterable"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, "GeneratorFunction"), e.isGeneratorFunction = function (t) { var e = "function" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || "GeneratorFunction" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, "GeneratorFunction")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, "Generator"), define(g, a, function () { return this; }), define(g, "toString", function () { return "[object Generator]"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = "next", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if ("throw" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = "throw", a.arg = e, r.next = n, o && (r.method = "next", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if ("root" === i.tryLoc) return handle("end"); if (i.tryLoc <= this.prev) { var c = n.call(i, "catchLoc"), u = n.call(i, "finallyLoc"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error("try statement without catch or finally"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, "finallyLoc") && this.prev < o.finallyLoc) { var i = o; break; } } i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = "next", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if ("throw" === t.type) throw t.arg; return "break" === t.type || "continue" === t.type ? this.next = t.arg : "return" === t.type ? (this.rval = this.arg = t.arg, this.method = "return", this.next = "end") : "normal" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, catch: function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if ("throw" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error("illegal catch attempt"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, "next" === this.method && (this.arg = t), y; } }, e; }
+function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest(); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+// 判断当前环境是否运行在插件中，选择不同的提示框
+var isExtension = gbtExtension.isInExtension();
+// TP插件环境中，alert无法使用
+var alertSuccess = !isExtension ? alert : gbtExtension.rtmNotification.success;
+var alertError = !isExtension ? alert : gbtExtension.rtmNotification.error;
+// TP插件环境中，confirm无法使用
+var myConfirm = function myConfirm(message) {
+  if (!isExtension) {
+    return confirm(message);
+  }
+  return new Promise(function (resolve) {
+    gbtExtension.rtmMessageBox.confirm(message).then(function () {
+      resolve(true);
+    }).catch(function () {
+      resolve(false);
+    });
+  });
+};
+
+// 页面加载时初始化菜单栏
+document.addEventListener('DOMContentLoaded', function () {
+  // 默认显示机器人设置
+  showSection('robot-settings-content');
+  document.getElementById('robot-settings-btn').classList.add('active');
+
+  // 初始化菜单栏状态
+  var sidebar = document.querySelector('.sidebar');
+  var content = document.querySelector('.content');
+
+  // 点击菜单按钮时展开菜单
+  document.querySelectorAll('.sidebar button').forEach(function (button) {
+    button.addEventListener('click', function () {
+      sidebar.classList.add('expanded');
+    });
+  });
+
+  // 点击内容区域时缩回菜单
+  content.addEventListener('click', function () {
+    sidebar.classList.remove('expanded');
+  });
+
+  // 初始化 shape_type 输入框显示状态
+  var shapeType = document.getElementById('shape_type').value;
+  updateInputFields(shapeType);
+
+  // 初始化 shape_type_interval 输入框显示状态
+  var shapeTypeInterval = document.getElementById('shape_type_interval').value;
+  updateIntervalInputFields(shapeTypeInterval);
+
+  // 初始化底边长输入框的显示状态
+  var triangleType = document.getElementById('triangle_type').value;
+  var baseLengthInput = document.getElementById('triangle_base_length_input');
+  if (triangleType === 'isosceles') {
+    baseLengthInput.style.display = 'block'; // 显示底边长输入框
+  } else {
+    baseLengthInput.style.display = 'none'; // 隐藏底边长输入框
+  }
+  loadRecipeList(); // 初始加载所有配方
+
+  var recipeListItems = document.querySelectorAll("#recipe-list li");
+  recipeListItems.forEach(function (li) {
+    var textNodes = Array.from(li.childNodes).filter(function (node) {
+      return node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== "";
+    });
+    if (textNodes.length > 0) {
+      var recipeName = textNodes[0].textContent.trim();
+      var span = document.createElement("span");
+      span.className = "recipe-name";
+      span.textContent = recipeName;
+      li.insertBefore(span, li.firstChild); // 将包裹后的配方名插入到最前面
+    }
+  });
+
+  // 监听工具布局选项的变化
+  document.getElementById('tool_layout').addEventListener('change', function () {
+    var toolLayout = this.value;
+    var toolCountInput = document.getElementById('tool_count');
+    if (toolLayout === 'double') {
+      toolCountInput.value = 2; // 双向布局时，工具数量固定为2
+      toolCountInput.disabled = true; // 禁用工具数量输入框
+    } else {
+      toolCountInput.disabled = false; // 单侧布局时，启用工具数量输入框
+    }
+  });
+});
+
+// 菜单栏按钮点击事件
+document.getElementById('robot-settings-btn').addEventListener('click', function () {
+  showSection('robot-settings-content');
+  setActiveButton('robot-settings-btn');
+});
+document.getElementById('smart-planning-btn').addEventListener('click', function () {
+  showSection('smart-planning-content');
+  setActiveButton('smart-planning-btn');
+});
+document.getElementById('data-list-btn').addEventListener('click', function () {
+  showSection('data-list-content');
+  setActiveButton('data-list-btn');
+});
+document.getElementById('interval-calculator-btn').addEventListener('click', function () {
+  showSection('interval-calculator-content');
+  setActiveButton('interval-calculator-btn');
+});
+
+// 显示对应的内容区域
+function showSection(sectionId) {
+  // 隐藏所有内容区域
+  document.querySelectorAll('.content-section').forEach(function (section) {
+    section.style.display = 'none';
+  });
+
+  // 显示选中的内容区域
+  document.getElementById(sectionId).style.display = 'block';
+}
+
+// 设置当前选中的菜单按钮
+function setActiveButton(buttonId) {
+  // 移除所有按钮的 active 类
+  document.querySelectorAll('.sidebar button').forEach(function (button) {
+    button.classList.remove('active');
+  });
+
+  // 为选中的按钮添加 active 类
+  document.getElementById(buttonId).classList.add('active');
+}
+
+// 动态显示或隐藏底边长输入框
+document.getElementById('triangle_type').addEventListener('change', function () {
+  var triangleType = this.value;
+  var baseLengthInput = document.getElementById('triangle_base_length_input');
+  if (triangleType === 'isosceles') {
+    baseLengthInput.style.display = 'block'; // 显示底边长输入框
+  } else {
+    baseLengthInput.style.display = 'none'; // 隐藏底边长输入框
+  }
+});
+
+// 动态显示或隐藏输入框
+document.getElementById('shape_type_interval').addEventListener('change', function () {
+  var shapeTypeInterval = this.value;
+  updateIntervalInputFields(shapeTypeInterval);
+});
+function updateIntervalInputFields(shapeTypeInterval) {
+  // 隐藏所有图形输入框
+  document.querySelectorAll('.shape-input-interval').forEach(function (div) {
+    return div.style.display = 'none';
+  });
+
+  // 根据选择的图形类型显示对应的输入框
+  if (shapeTypeInterval === 'circle') {
+    document.getElementById('circle_input_interval').style.display = 'block';
+  } else if (shapeTypeInterval === 'rectangle') {
+    document.getElementById('rectangle_input_interval').style.display = 'block';
+  }
+}
+
+// 动态显示图形输入框
+document.getElementById('shape_type').addEventListener('change', function () {
+  var shapeType = this.value;
+  updateInputFields(shapeType);
+});
+function updateInputFields(shapeType) {
+  // 隐藏所有图形输入框
+  document.querySelectorAll('.shape-input').forEach(function (div) {
+    return div.style.display = 'none';
+  });
+
+  // 根据选择的图形类型显示对应的输入框
+  if (shapeType === 'circle') {
+    document.getElementById('circle_input').style.display = 'block';
+  } else if (shapeType === 'rectangle') {
+    document.getElementById('rectangle_input').style.display = 'block';
+  } else if (shapeType === 'polygon') {
+    document.getElementById('polygon_input').style.display = 'block';
+  } else if (shapeType === 'triangle') {
+    document.getElementById('triangle_input').style.display = 'block';
+  }
+}
+var shapeCenters = []; // 全局变量，用于存储图形的中心位置
+// 在全局变量中存储行数和列数
+var rows = 0;
+var cols = 0;
+
+// 获取表单数据并发送请求
+document.getElementById('inputForm').addEventListener('submit', function (event) {
+  event.preventDefault();
+
+  // 获取参数设置表单的数据
+  var frame_length = document.getElementById('frame_length').value;
+  var frame_width = document.getElementById('frame_width').value;
+  var frame_depth = document.getElementById('frame_depth').value;
+  var shape_type = document.getElementById('shape_type').value;
+  var shape_height = document.getElementById('shape_height').value;
+  var shape_length, shape_width, polygon_sides, triangle_type, triangle_orientation;
+  if (shape_type === 'circle') {
+    shape_length = document.getElementById('circle_diameter').value;
+    shape_width = shape_length;
+  } else if (shape_type === 'rectangle') {
+    shape_length = document.getElementById('rectangle_length').value;
+    shape_width = document.getElementById('rectangle_width').value;
+  } else if (shape_type === 'polygon') {
+    polygon_sides = document.getElementById('polygon_sides').value;
+    shape_length = document.getElementById('polygon_side_length').value;
+    shape_width = shape_length;
+  } else if (shape_type === 'triangle') {
+    triangle_type = document.getElementById('triangle_type').value;
+    shape_length = document.getElementById('triangle_side_length').value;
+    triangle_orientation = document.getElementById('triangle_orientation').value;
+
+    // 如果是等腰三角形，传递底边长；否则传递边长作为底边长
+    if (triangle_type === 'isosceles') {
+      shape_width = document.getElementById('triangle_base_length').value;
+    } else {
+      shape_width = shape_length; // 等边三角形的底边长等于边长
+    }
+  }
+
+  // 获取摆放设置表单的数据
+  var horizontal_spacing = document.getElementById('horizontal_spacing').value;
+  var vertical_spacing = document.getElementById('vertical_spacing').value;
+  var horizontal_border_distance = document.getElementById('horizontal_border_distance').value;
+  var vertical_border_distance = document.getElementById('vertical_border_distance').value;
+  var material_thickness = document.getElementById('material_thickness').value;
+  var placement_layers = document.getElementById('placement_layers').value;
+  var layout_type = document.getElementById('layout_type').value;
+  var place_type = document.getElementById('place_type').value;
+  var remainder_turn = document.getElementById('remainder_turn').value; // 获取余行列转向选项
+
+  // 获取PR寄存器ID
+  var pr_register_id = document.getElementById('pr_register_id').value;
+
+  // 发送请求到后端
+  fetch('/calculate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      frame_length: frame_length,
+      frame_width: frame_width,
+      frame_depth: frame_depth,
+      shape_length: shape_length,
+      shape_width: shape_width,
+      horizontal_spacing: horizontal_spacing,
+      vertical_spacing: vertical_spacing,
+      horizontal_border_distance: horizontal_border_distance,
+      vertical_border_distance: vertical_border_distance,
+      material_thickness: material_thickness,
+      placement_layers: placement_layers,
+      shape_type: shape_type,
+      layout_type: layout_type,
+      polygon_sides: polygon_sides,
+      triangle_type: triangle_type,
+      triangle_orientation: triangle_orientation,
+      shape_height: shape_height,
+      place_type: place_type,
+      remainder_turn: remainder_turn
+    })
+  }).then(function (response) {
+    if (!response.ok) {
+      return response.json().then(function (err) {
+        throw new Error(err.error || '请求失败');
+      });
+    }
+    // 获取填充的图形数量和中心位置数据
+    var totalShapes = response.headers.get('X-Total-Shapes');
+    var shapeCentersData = response.headers.get('X-Shape-Centers');
+    var shapesPerRowOrCol = response.headers.get('X-Shapes-Per-Row-Or-Col'); // 获取单行/列填充数量
+    var rowColInfo = JSON.parse(response.headers.get('X-Row-Col-Info')); // 获取行号和列号信息
+    rows = response.headers.get('X-Rows'); // 获取行数
+    cols = response.headers.get('X-Cols'); // 获取列数
+    shapeCenters = JSON.parse(shapeCentersData); // 将中心位置数据存储到全局变量中
+    rowColInfoGlobal = rowColInfo; // 将行号和列号信息存储到全局变量中
+
+    // 如果是三角形，将 totalShapes 除以 2
+    var adjustedTotalShapes = shape_type === 'triangle' ? Math.floor(totalShapes / 2) : totalShapes;
+
+    // 显示填充的图形数量
+    document.getElementById('shape-count').style.display = 'block';
+    document.getElementById('shape-count-value').textContent = adjustedTotalShapes;
+    document.getElementById('shapes-per-row-or-col').style.display = 'block';
+    document.getElementById('shapes-per-row-or-col-value').textContent = shapesPerRowOrCol;
+
+    // 填充数据清单表格
+    var tableBody = document.querySelector('#data-list-content table tbody');
+    tableBody.innerHTML = ''; // 清空表格内容
+
+    // 遍历所有图形中心位置，填充到表格中
+    shapeCenters.forEach(function (center, index) {
+      var row = document.createElement('tr');
+
+      // 行号
+      var cell1 = document.createElement('td');
+      cell1.textContent = rowColInfo[index][0]; // 行号
+      cell1.style.border = '1px solid #ddd';
+      cell1.style.padding = '8px';
+      row.appendChild(cell1);
+
+      // 列号
+      var cell2 = document.createElement('td');
+      cell2.textContent = rowColInfo[index][1]; // 列号
+      cell2.style.border = '1px solid #ddd';
+      cell2.style.padding = '8px';
+      row.appendChild(cell2);
+
+      // P_ID
+      var cell3 = document.createElement('td');
+      cell3.textContent = index + 1; // P_ID从1开始
+      cell3.style.border = '1px solid #ddd';
+      cell3.style.padding = '8px';
+      row.appendChild(cell3);
+
+      // X坐标
+      var cell4 = document.createElement('td');
+      cell4.textContent = center[0].toFixed(2); // X坐标
+      cell4.style.border = '1px solid #ddd';
+      cell4.style.padding = '8px';
+      row.appendChild(cell4);
+
+      // X补偿（初始为0）
+      var cell5 = document.createElement('td');
+      cell5.textContent = '0.00';
+      cell5.style.border = '1px solid #ddd';
+      cell5.style.padding = '8px';
+      row.appendChild(cell5);
+
+      // Y坐标
+      var cell6 = document.createElement('td');
+      cell6.textContent = center[1].toFixed(2); // Y坐标
+      cell6.style.border = '1px solid #ddd';
+      cell6.style.padding = '8px';
+      row.appendChild(cell6);
+
+      // Y补偿（初始为0）
+      var cell7 = document.createElement('td');
+      cell7.textContent = '0.00';
+      cell7.style.border = '1px solid #ddd';
+      cell7.style.padding = '8px';
+      row.appendChild(cell7);
+
+      // C坐标（初始为0）
+      var cell8 = document.createElement('td');
+      cell8.textContent = '0.00';
+      cell8.style.border = '1px solid #ddd';
+      cell8.style.padding = '8px';
+      row.appendChild(cell8);
+
+      // C补偿（初始为0）
+      var cell9 = document.createElement('td');
+      cell9.textContent = '0.00';
+      cell9.style.border = '1px solid #ddd';
+      cell9.style.padding = '8px';
+      row.appendChild(cell9);
+      tableBody.appendChild(row);
+    });
+
+    // 返回图像数据
+    return response.blob();
+  }).then(function (blob) {
+    // 创建图像URL
+    var imageUrl = URL.createObjectURL(blob);
+    var plotImage = document.getElementById('plot');
+    if (!plotImage) {
+      console.error('plot element not found');
+      return;
+    }
+    plotImage.src = imageUrl;
+    plotImage.style.display = 'block';
+
+    // 将 blob 转换为 Base64 字符串
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onloadend = function () {
+        if (reader.result) {
+          plotImage.setAttribute('data-base64', reader.result);
+          console.log('Base64 data set successfully:', reader.result.substring(0, 50) + '...');
+        } else {
+          console.error('Failed to convert image to base64');
+        }
+        resolve();
+      };
+      reader.onerror = function (error) {
+        console.error('Error converting image to base64:', error);
+        reject(error);
+      };
+      reader.readAsDataURL(blob);
+    });
+  }).catch(function (error) {
+    alertError(error.message);
+  });
+});
+
+// 绘制图形
+function drawShapes(shape_centers, shape_type, frame_length, frame_width) {
+  var canvas = document.getElementById('canvas');
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // 设置画布尺寸与边框尺寸一致
+  var scale_factor = 4; // 放大4倍
+  canvas.width = frame_length * scale_factor;
+  canvas.height = frame_width * scale_factor;
+
+  // 绘制边框
+  ctx.strokeStyle = 'black';
+  ctx.strokeRect(0, 0, frame_length * scale_factor, frame_width * scale_factor);
+  shape_centers.forEach(function (center) {
+    var _center = _slicedToArray(center, 2),
+      x = _center[0],
+      y = _center[1];
+    if (shape_type === 'circle') {
+      ctx.beginPath();
+      ctx.arc(x * scale_factor, y * scale_factor, 5 * scale_factor / 2, 0, 2 * Math.PI); // 半径为5，放大4倍
+      ctx.fillStyle = 'blue';
+      ctx.fill();
+    } else if (shape_type === 'rectangle') {
+      ctx.fillStyle = 'green';
+      ctx.fillRect(x * scale_factor - 5 * scale_factor / 2, y * scale_factor - 5 * scale_factor / 2, 10 * scale_factor / 2, 10 * scale_factor / 2); // 10x10 的矩形，放大4倍
+    } else if (shape_type === 'polygon') {
+      ctx.fillStyle = 'orange';
+      ctx.beginPath();
+      ctx.moveTo(x * scale_factor + 5 * scale_factor / 2, y * scale_factor);
+      ctx.lineTo(x * scale_factor + 2.5 * scale_factor / 2, y * scale_factor + 5 * scale_factor / 2);
+      ctx.lineTo(x * scale_factor - 2.5 * scale_factor / 2, y * scale_factor + 5 * scale_factor / 2);
+      ctx.lineTo(x * scale_factor - 5 * scale_factor / 2, y * scale_factor);
+      ctx.lineTo(x * scale_factor - 2.5 * scale_factor / 2, y * scale_factor - 5 * scale_factor / 2);
+      ctx.lineTo(x * scale_factor + 2.5 * scale_factor / 2, y * scale_factor - 5 * scale_factor / 2);
+      ctx.closePath();
+      ctx.fill();
+    } else if (shape_type === 'triangle') {
+      ctx.fillStyle = 'red';
+      ctx.beginPath();
+      ctx.moveTo(x * scale_factor, y * scale_factor - 5 * scale_factor / 2);
+      ctx.lineTo(x * scale_factor - 5 * scale_factor / 2, y * scale_factor + 5 * scale_factor / 2);
+      ctx.lineTo(x * scale_factor + 5 * scale_factor / 2, y * scale_factor + 5 * scale_factor / 2);
+      ctx.closePath();
+      ctx.fill();
+    }
+  });
+}
+
+// 处理机器人连接和断开连接
+function fetchWithTimeout(url, options) {
+  var timeout = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 5000;
+  return Promise.race([fetch(url, options), new Promise(function (_, reject) {
+    return setTimeout(function () {
+      return reject(new Error('请求超时'));
+    }, timeout);
+  })]);
+}
+
+// 在机器人连接成功后显示程序输入框
+document.getElementById('robot_connect_button').addEventListener('click', function () {
+  var robotIp = document.getElementById('robot_ip').value;
+  var connectButton = document.getElementById('robot_connect_button');
+  var isConnected = connectButton.textContent === '断开连接';
+  if (isConnected) {
+    // 如果当前是"断开连接"状态，则发送断开连接请求
+    fetchWithTimeout('/disconnect_robot', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }, 5000) // 设置超时时间为 5 秒
+    .then(function (response) {
+      if (!response.ok) {
+        return response.json().then(function (err) {
+          throw new Error(err.error || '断开连接失败');
+        });
+      }
+      return response.json();
+    }).then(function (data) {
+      // 更新按钮状态和显示
+      connectButton.textContent = '连接';
+      document.getElementById('robot_status').style.display = 'none';
+      document.getElementById('program_input').style.display = 'none'; // 隐藏程序输入框
+      document.getElementById('p_data_table_container').style.display = 'none'; // 隐藏P点数据表格
+      console.log('机器人已断开连接');
+    }).catch(function (error) {
+      console.error('断开连接失败:', error.message);
+      alertError('断开连接失败: ' + error.message);
+    });
+  } else {
+    // 如果当前是"连接"状态，则发送连接请求
+    if (!robotIp) {
+      alertError('请输入机器人IP地址');
+      return;
+    }
+    fetchWithTimeout('/connect_robot', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        robot_ip: robotIp
+      })
+    }, 5000) // 设置超时时间为 5 秒
+    .then(function (response) {
+      if (!response.ok) {
+        // 连接失败时，重置按钮状态
+        connectButton.textContent = '连接';
+        return response.json().then(function (err) {
+          throw new Error(err.error || '连接失败');
+        });
+      }
+      return response.json();
+    }).then(function (data) {
+      // 更新按钮状态和显示
+      connectButton.textContent = '断开连接';
+      var robotStatus = document.getElementById('robot_status');
+      var robotIpDisplay = document.getElementById('robot_ip_display');
+      var robotModel = document.getElementById('robot_model');
+      var controllerVersion = document.getElementById('controller_version');
+      robotIpDisplay.textContent = robotIp;
+      robotModel.textContent = data.model_info;
+      controllerVersion.textContent = data.controller_version; // 显示控制柜版本
+      robotStatus.style.display = 'block';
+      document.getElementById('program_input').style.display = 'block'; // 显示程序输入框
+
+      console.log('机器人连接成功');
+    }).catch(function (error) {
+      console.error('连接失败:', error.message);
+      // 根据错误类型显示不同的提示
+      if (error.message === '请求超时') {
+        alertError('请求超时: 请检查网络连接或稍后重试');
+      } else {
+        alertError('连接失败: ' + error.message);
+      }
+      // 连接失败时，重置按钮状态
+      connectButton.textContent = '连接';
+    });
+  }
+});
+
+// 处理读取P点数据的按钮点击事件
+document.getElementById('read_p_data_button').addEventListener('click', function () {
+  var programName = document.getElementById('program_name').value || 'PUT';
+  // 如果用户没有输入，则使用默认值 'PUT'
+
+  if (!programName) {
+    alertError('请输入程序名称');
+    return;
+  }
+
+  // 发送请求到后端获取P点数据
+  fetch('/get_p_data', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      program_name: programName
+    })
+  }).then(function (response) {
+    if (!response.ok) {
+      return response.json().then(function (err) {
+        throw new Error(err.error || '获取P点数据失败');
+      });
+    }
+    return response.json();
+  }).then(function (data) {
+    // 显示P点数据表格
+    var tableContainer = document.getElementById('p_data_table_container');
+    var tableBody = document.querySelector('#p_data_table tbody');
+    tableBody.innerHTML = ''; // 清空之前的表格数据
+
+    // 填充表格数据
+    data.poses.forEach(function (pose, index) {
+      var row = document.createElement('tr');
+
+      // 序号
+      var cell1 = document.createElement('td');
+      cell1.textContent = index + 1;
+      cell1.style.border = '1px solid #ddd';
+      cell1.style.padding = '8px';
+      row.appendChild(cell1);
+
+      // X坐标
+      var cell2 = document.createElement('td');
+      cell2.textContent = pose.poseData.cartData.baseCart.position.x.toFixed(2);
+      cell2.style.border = '1px solid #ddd';
+      cell2.style.padding = '8px';
+      row.appendChild(cell2);
+
+      // Y坐标
+      var cell3 = document.createElement('td');
+      cell3.textContent = pose.poseData.cartData.baseCart.position.y.toFixed(2);
+      cell3.style.border = '1px solid #ddd';
+      cell3.style.padding = '8px';
+      row.appendChild(cell3);
+
+      // Z坐标
+      var cell4 = document.createElement('td');
+      cell4.textContent = pose.poseData.cartData.baseCart.position.z.toFixed(2);
+      cell4.style.border = '1px solid #ddd';
+      cell4.style.padding = '8px';
+      row.appendChild(cell4);
+
+      // C坐标
+      var cell5 = document.createElement('td');
+      cell5.textContent = pose.poseData.cartData.baseCart.position.c.toFixed(2);
+      cell5.style.border = '1px solid #ddd';
+      cell5.style.padding = '8px';
+      row.appendChild(cell5);
+
+      // UF值
+      var cell6 = document.createElement('td');
+      cell6.textContent = pose.poseData.cartData.uf; // 直接显示UF值
+      cell6.style.border = '1px solid #ddd';
+      cell6.style.padding = '8px';
+      row.appendChild(cell6);
+
+      // TF值
+      var cell7 = document.createElement('td');
+      cell7.textContent = pose.poseData.cartData.tf; // 直接显示TF值
+      cell7.style.border = '1px solid #ddd';
+      cell7.style.padding = '8px';
+      row.appendChild(cell7);
+
+      // 坐标系方向值
+      var cell8 = document.createElement('td');
+      var leftRightValue = pose.poseData.cartData.baseCart.posture.arm_left_right;
+      cell8.textContent = leftRightValue === 1 ? '右手' : '左手'; // 将1和-1转换为文本描述
+      cell8.style.border = '1px solid #ddd';
+      cell8.style.padding = '8px';
+      row.appendChild(cell8);
+      tableBody.appendChild(row);
+    });
+
+    // 显示表格
+    tableContainer.style.display = 'block';
+  }).catch(function (error) {
+    console.error('获取P点数据失败:', error.message);
+    alertError('获取P点数据失败: ' + error.message);
+  });
+});
+
+// 处理写入P点数据的按钮点击事件
+document.getElementById('write_p_data_button').addEventListener('click', function () {
+  var programName = document.getElementById('write_program_name').value || 'PUT'; // 如果用户没有输入，则使用默认值 'PUT'
+  var prRegisterId = parseInt(document.getElementById('pr_register_id').value, 10); // 将PR寄存器ID转换为整数
+  var ufValue = parseInt(document.getElementById('uf_value').value, 10); // 将UF值转换为整数
+  var toolCount = parseInt(document.getElementById('tool_count').value, 10); // 获取工具数量
+  var left_right = parseInt(document.getElementById('left_right').value, 10); // 获取工具数量
+
+  if (!programName) {
+    alertError('请输入程序名称');
+    return;
+  }
+  if (isNaN(prRegisterId)) {
+    // 检查PR寄存器ID是否为有效数字
+    alertError('请输入有效的PR寄存器ID');
+    return;
+  }
+
+  // 获取数据清单表格中的数据
+  var tableBody = document.querySelector('#data-list-content table tbody');
+  var rows = tableBody.querySelectorAll('tr');
+  if (rows.length === 0) {
+    alertError('没有可用的数据');
+    return;
+  }
+
+  // 准备要写入的P点数据
+  var pData = [];
+  rows.forEach(function (row) {
+    var pId = parseInt(row.cells[2].textContent, 10); // P_ID
+    var x = parseFloat(row.cells[3].textContent); // X坐标
+    var xCompensation = parseFloat(row.cells[4].textContent); // X补偿
+    var y = parseFloat(row.cells[5].textContent); // Y坐标
+    var yCompensation = parseFloat(row.cells[6].textContent); // Y补偿
+    var c = parseFloat(row.cells[7].textContent); // C坐标
+    var cCompensation = parseFloat(row.cells[8].textContent); // C补偿
+
+    // 将XYC与对应的补偿值相加
+    var finalX = x + xCompensation;
+    var finalY = y + yCompensation;
+    var finalC = c + cCompensation;
+    pData.push({
+      id: pId,
+      x: finalX,
+      y: finalY,
+      z: 0,
+      // 暂时设置为0，稍后从PR寄存器中读取Z值并更新
+      c: finalC,
+      uf: ufValue,
+      tf: (pId - 1) % toolCount + 1,
+      // 根据工具数量循环设置TF值
+      left_right: left_right
+    });
+  });
+
+  // 发送请求到后端读取PR寄存器的Z和C值
+  fetch('/read_pr_register', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      pr_register_id: prRegisterId // 传递整数类型的PR寄存器ID
+    })
+  }).then(function (response) {
+    if (!response.ok) {
+      return response.json().then(function (err) {
+        throw new Error(err.error || '读取PR寄存器失败');
+      });
+    }
+    return response.json();
+  }).then(function (data) {
+    var zValue = data.z; // 获取PR寄存器的Z值
+
+    // 更新pData中的Z值
+    pData.forEach(function (p) {
+      p.z = zValue;
+    });
+
+    // 发送请求到后端写入P点数据
+    return fetch('/write_p_data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        program_name: programName,
+        p_data: pData
+      })
+    });
+  }).then(function (response) {
+    if (!response.ok) {
+      return response.json().then(function (err) {
+        throw new Error(err.error || '写入P点数据失败');
+      });
+    }
+    return response.json();
+  }).then(function (data) {
+    console.log('P点数据写入成功');
+    alertSuccess('P点数据写入成功');
+  }).catch(function (error) {
+    console.error('写入P点数据失败:', error.message);
+    alertError('写入P点数据失败: ' + error.message);
+  });
+});
+
+// 在"写入P点"按钮点击事件中，新增R逻辑
+document.getElementById('write_p_data_button').addEventListener('click', function () {
+  // 获取新增输入框的值
+  var frame_length = document.getElementById('frame_length').value;
+  var frame_width = document.getElementById('frame_width').value;
+  var frameDepth = document.getElementById('frame_depth').value;
+  var shapeHeight = document.getElementById('shape_height').value;
+  var materialThickness = document.getElementById('material_thickness').value;
+  var placementLayers = document.getElementById('placement_layers').value;
+  var shapeCountValue = document.getElementById('shape-count-value').textContent;
+  var toolCount = document.getElementById('tool_count').value;
+  var drop_Count = document.getElementById('drop_Count').value;
+  var shapesPerRowOrColValue = document.getElementById('shapes-per-row-or-col-value').textContent;
+
+  // 检查填充数量和工具数量是否有效
+  if (!shapeCountValue || !toolCount) {
+    alertError('请先进行计算并确保工具数量已选择');
+    return;
+  }
+
+  // 发送请求到后端写入R寄存器
+  fetch('/write_r_registers', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      frame_length: frame_length,
+      frame_width: frame_width,
+      frame_depth: frameDepth,
+      shape_height: shapeHeight,
+      material_thickness: materialThickness,
+      placement_layers: placementLayers,
+      total_shapes: shapeCountValue,
+      // 填充数量
+      tool_count: toolCount,
+      // 工具数量
+      drop_Count: drop_Count,
+      numofsingle_row_columns: shapesPerRowOrColValue,
+      rows: rows,
+      // 行数
+      cols: cols // 列数
+    })
+  }).then(function (response) {
+    if (!response.ok) {
+      return response.json().then(function (err) {
+        throw new Error(err.error || '写入R寄存器失败');
+      });
+    }
+    return response.json();
+  }).then(function (data) {
+    console.log('R寄存器写入成功');
+    alertSuccess('R寄存器写入成功');
+  }).catch(function (error) {
+    console.error('写入R寄存器失败:', error.message);
+    alertError('写入R寄存器失败: ' + error.message);
+  });
+});
+
+// 在"写入P点"按钮点击事件中，新增tf逻辑
+document.getElementById('write_p_data_button').addEventListener('click', function () {
+  var toolCount = parseInt(document.getElementById('tool_count').value, 10); // 获取工具数量
+  var toolSpacing = parseFloat(document.getElementById('tool_spacing').value); // 获取工具间距
+  var autoTF = parseInt(document.getElementById('auto_tf').value, 10); // 获取自动TF功能开关状态
+  var toolLayout = document.getElementById('tool_layout').value; // 获取工具布局选项
+  var toolDirection = document.getElementById('tool_direction').value;
+  if (isNaN(toolSpacing)) {
+    // 检查工具间距是否为有效数字
+    alertError('请输入有效的工具间距');
+    return;
+  }
+
+  // 如果工具数量为 1，直接返回，不需要修改 TF
+  if (toolCount === 1) {
+    return;
+  }
+
+  // 如果自动TF功能关闭，直接返回，不调整TF
+  if (autoTF === 0) {
+    return;
+  }
+
+  // 发送请求到后端读取TF1的值
+  fetch('/get_tf_data', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      tf_id: 1 // 读取TF1的值
+    })
+  }).then(function (response) {
+    if (!response.ok) {
+      return response.json().then(function (err) {
+        throw new Error(err.error || '读取TF1数据失败');
+      });
+    }
+    return response.json();
+  }).then(function (data) {
+    var tf1 = data.tf; // 获取TF1的值
+
+    // 复制TF1的值给其他TF，并根据工具布局和方向调整坐标值
+    var tfUpdates = [];
+    if (toolLayout === 'double') {
+      // 双向布局时，工具数量只能为2
+      if (toolCount !== 2) {
+        alertError('双向布局时，工具数量必须为2');
+        return;
+      }
+
+      // 计算TF1和TF2的偏移值
+      var offset = toolSpacing / 2;
+
+      // TF1的偏移值为正
+      var tf1Update = {
+        coordinate_info: {
+          coordinate_id: 1,
+          name: tf1.coordinate_info.name,
+          group_id: tf1.coordinate_info.group_id
+        },
+        position: {
+          x: toolDirection === 'x' ? offset : tf1.position.x,
+          y: toolDirection === 'y' ? offset : tf1.position.y,
+          z: tf1.position.z
+        },
+        orientation: {
+          r: tf1.orientation.r,
+          p: tf1.orientation.p,
+          y: tf1.orientation.y
+        }
+      };
+      tfUpdates.push(tf1Update);
+
+      // TF2的偏移值为负
+      var tf2Update = {
+        coordinate_info: {
+          coordinate_id: 2,
+          name: tf1.coordinate_info.name,
+          group_id: tf1.coordinate_info.group_id
+        },
+        position: {
+          x: toolDirection === 'x' ? -offset : tf1.position.x,
+          y: toolDirection === 'y' ? -offset : tf1.position.y,
+          z: tf1.position.z
+        },
+        orientation: {
+          r: tf1.orientation.r,
+          p: tf1.orientation.p,
+          y: tf1.orientation.y
+        }
+      };
+      tfUpdates.push(tf2Update);
+    } else {
+      // 单侧布局时，根据工具方向调整坐标值
+      for (var i = 2; i <= toolCount; i++) {
+        var newTf = {
+          coordinate_info: {
+            coordinate_id: i,
+            name: tf1.coordinate_info.name,
+            group_id: tf1.coordinate_info.group_id
+          },
+          position: {
+            x: toolDirection === 'x' ? tf1.position.x + (i - 1) * toolSpacing : tf1.position.x,
+            y: toolDirection === 'y' ? tf1.position.y + (i - 1) * toolSpacing : tf1.position.y,
+            z: tf1.position.z
+          },
+          orientation: {
+            r: tf1.orientation.r,
+            p: tf1.orientation.p,
+            y: tf1.orientation.y
+          }
+        };
+        tfUpdates.push(newTf);
+      }
+    }
+
+    // 调试输出，检查 tfUpdates 的内容
+    console.log('tfUpdates:', tfUpdates);
+
+    // 发送请求到后端更新TF
+    return fetch('/update_tf_data', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        tf_updates: tfUpdates
+      })
+    });
+  }).then(function (response) {
+    if (!response.ok) {
+      return response.json().then(function (err) {
+        throw new Error(err.error || '更新TF数据失败');
+      });
+    }
+    return response.json();
+  }).then(function (data) {
+    console.log('TF数据更新成功');
+    alertSuccess('TF数据更新成功');
+  }).catch(function (error) {
+    console.error('更新TF数据失败:', error.message);
+    alertError('更新TF数据失败: ' + error.message);
+  });
+});
+
+// 表单提交事件
+document.getElementById('interval-calculator-form').addEventListener('submit', function (event) {
+  event.preventDefault();
+  var shapeType = document.getElementById('shape_type_interval').value;
+  var diameter, length, width;
+  if (shapeType === 'circle') {
+    diameter = parseFloat(document.getElementById('circle_diameter_interval').value);
+  } else if (shapeType === 'rectangle') {
+    length = parseFloat(document.getElementById('rectangle_length_interval').value);
+    width = parseFloat(document.getElementById('rectangle_width_interval').value);
+  }
+
+  // 发送请求到后端读取PR寄存器的值
+  fetch('/get_pr_data', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      shape_type: shapeType,
+      diameter: diameter,
+      length: length,
+      width: width
+    })
+  }).then(function (response) {
+    if (!response.ok) {
+      return response.json().then(function (err) {
+        throw new Error(err.error || '请求失败');
+      });
+    }
+    return response.json();
+  }).then(function (data) {
+    var rowSpacing = data.row_spacing;
+    var colSpacing = data.col_spacing;
+    var pr1X = data.pr1_x;
+    var pr1Y = data.pr1_y;
+    var pr2X = data.pr2_x;
+    var pr2Y = data.pr2_y;
+    var pr3X = data.pr3_x;
+    var pr3Y = data.pr3_y;
+
+    // 检查行间距和列间距是否为负数
+    if (rowSpacing < 0 || colSpacing < 0) {
+      document.getElementById('row-spacing').textContent = '计算错误，请检查寄存器值';
+      document.getElementById('col-spacing').textContent = '计算错误，请检查寄存器值';
+    } else {
+      document.getElementById('row-spacing').textContent = rowSpacing.toFixed(2);
+      document.getElementById('col-spacing').textContent = colSpacing.toFixed(2);
+    }
+
+    // 显示PR寄存器的XY值
+    document.getElementById('pr1-x').textContent = pr1X.toFixed(2);
+    document.getElementById('pr1-y').textContent = pr1Y.toFixed(2);
+    document.getElementById('pr2-x').textContent = pr2X.toFixed(2);
+    document.getElementById('pr2-y').textContent = pr2Y.toFixed(2);
+    document.getElementById('pr3-x').textContent = pr3X.toFixed(2);
+    document.getElementById('pr3-y').textContent = pr3Y.toFixed(2);
+
+    // 显示计算结果
+    document.getElementById('interval-result').style.display = 'block';
+  }).catch(function (error) {
+    console.error('请求失败:', error.message);
+    alertError('请求失败: ' + error.message);
+  });
+});
+
+// 更新补偿值的事件处理
+document.getElementById('update-compensation').addEventListener('click', function () {
+  var compensationType = document.getElementById('compensation-type').value;
+  var rowColNumber = parseInt(document.getElementById('row-col-number').value, 10);
+  var compensationValue = parseFloat(document.getElementById('compensation-value').value);
+  var angleCompensation = parseFloat(document.getElementById('angle-compensation').value);
+  if (isNaN(rowColNumber) || isNaN(compensationValue) || isNaN(angleCompensation)) {
+    alertError('请输入有效的行号/列号、补偿值和角度补偿值');
+    return;
+  }
+  var tableBody = document.querySelector('#data-list-content table tbody');
+  var rows = tableBody.querySelectorAll('tr');
+  rows.forEach(function (row) {
+    var rowNumber = parseInt(row.cells[0].textContent, 10);
+    var colNumber = parseInt(row.cells[1].textContent, 10);
+    if (compensationType === 'row' && rowNumber === rowColNumber || compensationType === 'col' && colNumber === rowColNumber) {
+      // 更新Y补偿值（行补偿）或X补偿值（列补偿）
+      if (compensationType === 'row') {
+        row.cells[6].textContent = compensationValue.toFixed(2); // Y补偿
+      } else {
+        row.cells[4].textContent = compensationValue.toFixed(2); // X补偿
+      }
+
+      // 更新C补偿值
+      row.cells[8].textContent = angleCompensation.toFixed(2); // C补偿
+    }
+  });
+  alertSuccess('补偿值更新成功');
+});
+document.getElementById('save_recipe_button').addEventListener('click', function () {
+  var recipeName = document.getElementById('recipe_name').value;
+  var recipeId = document.getElementById('recipe_id').value; // 获取配方编号
+
+  if (!recipeName || !recipeId) {
+    alertError('请输入配方名和配方编号');
+    return;
+  }
+
+  // 检查图片是否已经生成
+  var plotImg = document.getElementById('plot');
+  if (!plotImg || !plotImg.getAttribute('data-base64')) {
+    alertError('请先生成规划结果图片');
+    return;
+  }
+
+  // 先检查是否存在重名的配方文件
+  fetch('/check_recipe', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      recipeName: recipeName,
+      recipeId: recipeId // 将配方编号发送到后端
+    })
+  }).then(function (response) {
+    if (!response.ok) {
+      return response.json().then(function (err) {
+        throw new Error(err.error || '检查配方失败');
+      });
+    }
+    return response.json();
+  }).then(/*#__PURE__*/function () {
+    var _ref = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(data) {
+      var confirmOverwrite, confirmOverwriteId;
+      return _regeneratorRuntime().wrap(function _callee$(_context) {
+        while (1) switch (_context.prev = _context.next) {
+          case 0:
+            if (!data.exists) {
+              _context.next = 6;
+              break;
+            }
+            _context.next = 3;
+            return myConfirm('配方名已存在，是否覆盖？');
+          case 3:
+            confirmOverwrite = _context.sent;
+            if (confirmOverwrite) {
+              _context.next = 6;
+              break;
+            }
+            return _context.abrupt("return");
+          case 6:
+            if (!data.id_exists) {
+              _context.next = 12;
+              break;
+            }
+            _context.next = 9;
+            return myConfirm('配方编号已存在，是否覆盖？');
+          case 9:
+            confirmOverwriteId = _context.sent;
+            if (confirmOverwriteId) {
+              _context.next = 12;
+              break;
+            }
+            return _context.abrupt("return");
+          case 12:
+            // 继续保存配方的逻辑
+            saveRecipeData(recipeName, recipeId); // 将配方编号传递给保存函数
+          case 13:
+          case "end":
+            return _context.stop();
+        }
+      }, _callee);
+    }));
+    return function (_x) {
+      return _ref.apply(this, arguments);
+    };
+  }()).catch(function (error) {
+    console.error('检查配方失败:', error.message);
+    alertError('检查配方失败: ' + error.message);
+  });
+});
+function saveRecipeData(recipeName, recipeId) {
+  var _document$getElementB, _document$getElementB2, _document$getElementB3, _document$getElementB4, _document$getElementB5, _document$getElementB6, _document$getElementB7, _document$getElementB8, _document$getElementB9, _document$getElementB10, _document$getElementB11, _document$getElementB12, _document$getElementB13, _document$getElementB14, _document$getElementB15, _document$getElementB16, _document$getElementB17, _document$getElementB18, _document$getElementB19, _document$getElementB20, _document$getElementB21, _document$getElementB22, _document$getElementB23, _document$getElementB24, _document$getElementB25, _document$getElementB26, _document$getElementB27, _document$getElementB28, _document$getElementB29, _document$getElementB30, _document$getElementB31, _document$getElementB32;
+  // 获取数据清单表格中的数据
+  var tableData = [];
+  var table = document.querySelector('#data-list-content table');
+  var rows = table.getElementsByTagName('tr');
+  for (var i = 1; i < rows.length; i++) {
+    var cells = rows[i].getElementsByTagName('td');
+    tableData.push({
+      rowNumber: cells[0].textContent,
+      colNumber: cells[1].textContent,
+      pId: cells[2].textContent,
+      x: parseFloat(cells[3].textContent),
+      xCompensation: parseFloat(cells[4].textContent),
+      y: parseFloat(cells[5].textContent),
+      yCompensation: parseFloat(cells[6].textContent),
+      c: parseFloat(cells[7].textContent),
+      cCompensation: parseFloat(cells[8].textContent)
+    });
+  }
+
+  // 获取其他表单数据
+  var frameLength = ((_document$getElementB = document.getElementById('frame_length')) === null || _document$getElementB === void 0 ? void 0 : _document$getElementB.value) || 0;
+  var frameWidth = ((_document$getElementB2 = document.getElementById('frame_width')) === null || _document$getElementB2 === void 0 ? void 0 : _document$getElementB2.value) || 0;
+  var frameDepth = ((_document$getElementB3 = document.getElementById('frame_depth')) === null || _document$getElementB3 === void 0 ? void 0 : _document$getElementB3.value) || 0;
+  var shapeHeight = ((_document$getElementB4 = document.getElementById('shape_height')) === null || _document$getElementB4 === void 0 ? void 0 : _document$getElementB4.value) || 0;
+  var materialThickness = ((_document$getElementB5 = document.getElementById('material_thickness')) === null || _document$getElementB5 === void 0 ? void 0 : _document$getElementB5.value) || 0;
+  var placementLayers = ((_document$getElementB6 = document.getElementById('placement_layers')) === null || _document$getElementB6 === void 0 ? void 0 : _document$getElementB6.value) || 1;
+  var toolCount = ((_document$getElementB7 = document.getElementById('tool_count')) === null || _document$getElementB7 === void 0 ? void 0 : _document$getElementB7.value) || 1;
+  var toolSpacing = ((_document$getElementB8 = document.getElementById('tool_spacing')) === null || _document$getElementB8 === void 0 ? void 0 : _document$getElementB8.value) || 0;
+  var toolLayout = ((_document$getElementB9 = document.getElementById('tool_layout')) === null || _document$getElementB9 === void 0 ? void 0 : _document$getElementB9.value) || 'single';
+  var autoTF = ((_document$getElementB10 = document.getElementById('auto_tf')) === null || _document$getElementB10 === void 0 ? void 0 : _document$getElementB10.value) || 1;
+  var leftRight = ((_document$getElementB11 = document.getElementById('left_right')) === null || _document$getElementB11 === void 0 ? void 0 : _document$getElementB11.value) || 1;
+
+  // 获取智能规划界面的所有参数
+  var shapeType = ((_document$getElementB12 = document.getElementById('shape_type')) === null || _document$getElementB12 === void 0 ? void 0 : _document$getElementB12.value) || 'circle';
+  var shapeLength = ((_document$getElementB13 = document.getElementById('shape_length')) === null || _document$getElementB13 === void 0 ? void 0 : _document$getElementB13.value) || 0;
+  var shapeWidth = ((_document$getElementB14 = document.getElementById('shape_width')) === null || _document$getElementB14 === void 0 ? void 0 : _document$getElementB14.value) || 0;
+  var dropCount = document.getElementById('drop_Count').value || 0;
+  var horizontalSpacing = ((_document$getElementB15 = document.getElementById('horizontal_spacing')) === null || _document$getElementB15 === void 0 ? void 0 : _document$getElementB15.value) || 0;
+  var verticalSpacing = ((_document$getElementB16 = document.getElementById('vertical_spacing')) === null || _document$getElementB16 === void 0 ? void 0 : _document$getElementB16.value) || 0;
+  var horizontalBorderDistance = ((_document$getElementB17 = document.getElementById('horizontal_border_distance')) === null || _document$getElementB17 === void 0 ? void 0 : _document$getElementB17.value) || 0;
+  var verticalBorderDistance = ((_document$getElementB18 = document.getElementById('vertical_border_distance')) === null || _document$getElementB18 === void 0 ? void 0 : _document$getElementB18.value) || 0;
+  var layoutType = ((_document$getElementB19 = document.getElementById('layout_type')) === null || _document$getElementB19 === void 0 ? void 0 : _document$getElementB19.value) || 'array';
+  var placeType = ((_document$getElementB20 = document.getElementById('place_type')) === null || _document$getElementB20 === void 0 ? void 0 : _document$getElementB20.value) || 'row';
+  var remainderTurn = ((_document$getElementB21 = document.getElementById('remainder_turn')) === null || _document$getElementB21 === void 0 ? void 0 : _document$getElementB21.value) || 'off';
+
+  // 获取预览结果图的Base64编码
+  var plotImg = document.getElementById('plot');
+  if (!plotImg) {
+    console.error('plot element not found when saving recipe');
+    return;
+  }
+  var plotImageBase64 = plotImg.getAttribute('data-base64'); // 使用存储的 Base64 数据
+  if (!plotImageBase64) {
+    console.error('No base64 data found in plot element when saving recipe');
+    return;
+  }
+  console.log('Saving recipe with base64 data:', plotImageBase64.substring(0, 50) + '...');
+
+  // 获取填充数量和单行/列数量
+  var shapeCountValue = ((_document$getElementB22 = document.getElementById('shape-count-value')) === null || _document$getElementB22 === void 0 ? void 0 : _document$getElementB22.textContent) || 0;
+  var shapesPerRowOrColValue = ((_document$getElementB23 = document.getElementById('shapes-per-row-or-col-value')) === null || _document$getElementB23 === void 0 ? void 0 : _document$getElementB23.textContent) || 0;
+
+  // 将所有数据打包成一个对象
+  var recipeData = {
+    recipeName: recipeName,
+    recipeId: recipeId,
+    // 保存配方编号
+    tableData: tableData,
+    frameLength: frameLength,
+    frameWidth: frameWidth,
+    frameDepth: frameDepth,
+    shapeHeight: shapeHeight,
+    materialThickness: materialThickness,
+    placementLayers: placementLayers,
+    shapeType: shapeType,
+    shapeLength: shapeLength,
+    shapeWidth: shapeWidth,
+    dropCount: dropCount,
+    horizontalSpacing: horizontalSpacing,
+    verticalSpacing: verticalSpacing,
+    horizontalBorderDistance: horizontalBorderDistance,
+    verticalBorderDistance: verticalBorderDistance,
+    layoutType: layoutType,
+    placeType: placeType,
+    remainderTurn: remainderTurn,
+    plotImageBase64: plotImageBase64,
+    // 使用Base64编码的图片数据
+    shapeCountValue: shapeCountValue,
+    shapesPerRowOrColValue: shapesPerRowOrColValue,
+    circleDiameter: ((_document$getElementB24 = document.getElementById('circle_diameter')) === null || _document$getElementB24 === void 0 ? void 0 : _document$getElementB24.value) || 0,
+    rectangleLength: ((_document$getElementB25 = document.getElementById('rectangle_length')) === null || _document$getElementB25 === void 0 ? void 0 : _document$getElementB25.value) || 0,
+    rectangleWidth: ((_document$getElementB26 = document.getElementById('rectangle_width')) === null || _document$getElementB26 === void 0 ? void 0 : _document$getElementB26.value) || 0,
+    polygonSides: ((_document$getElementB27 = document.getElementById('polygon_sides')) === null || _document$getElementB27 === void 0 ? void 0 : _document$getElementB27.value) || 0,
+    polygonSideLength: ((_document$getElementB28 = document.getElementById('polygon_side_length')) === null || _document$getElementB28 === void 0 ? void 0 : _document$getElementB28.value) || 0,
+    triangleType: ((_document$getElementB29 = document.getElementById('triangle_type')) === null || _document$getElementB29 === void 0 ? void 0 : _document$getElementB29.value) || 'equilateral',
+    triangleSideLength: ((_document$getElementB30 = document.getElementById('triangle_side_length')) === null || _document$getElementB30 === void 0 ? void 0 : _document$getElementB30.value) || 0,
+    triangleBaseLength: ((_document$getElementB31 = document.getElementById('triangle_base_length')) === null || _document$getElementB31 === void 0 ? void 0 : _document$getElementB31.value) || 0,
+    triangleOrientation: ((_document$getElementB32 = document.getElementById('triangle_orientation')) === null || _document$getElementB32 === void 0 ? void 0 : _document$getElementB32.value) || 'up'
+  };
+
+  // 发送请求到后端保存配方
+  fetch('/save_recipe', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(recipeData)
+  }).then(function (response) {
+    if (!response.ok) {
+      return response.json().then(function (err) {
+        throw new Error(err.error || '保存配方失败');
+      });
+    }
+    return response.json();
+  }).then(function (data) {
+    console.log('配方保存成功');
+    alertSuccess('配方保存成功');
+  }).catch(function (error) {
+    console.error('保存配方失败:', error.message);
+    alertError('保存配方失败: ' + error.message);
+  });
+}
+
+// 新增配方库按钮点击事件
+document.getElementById('recipe-library-btn').addEventListener('click', function () {
+  showSection('recipe-library-content');
+  setActiveButton('recipe-library-btn');
+  loadRecipeList(); // 加载配方列表
+});
+
+// 输入框内容变化时自动查找
+document.getElementById('recipe-search').addEventListener('input', function () {
+  var keyword = this.value;
+  loadRecipeList(keyword); // 根据关键字加载配方列表
+});
+
+// 加载配方列表，支持关键字过滤
+function loadRecipeList() {
+  var keyword = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+  fetch('/get_recipe_list').then(function (response) {
+    return response.json();
+  }).then(function (data) {
+    var recipeList = document.getElementById('recipe-list');
+    recipeList.innerHTML = ''; // 清空列表
+
+    // 过滤配方列表
+    var filteredRecipes = data.recipes.filter(function (recipe) {
+      return recipe.recipeName.toLowerCase().includes(keyword.toLowerCase());
+    });
+
+    // 填充过滤后的配方列表
+    filteredRecipes.forEach(function (recipe) {
+      var li = document.createElement('li');
+
+      // 创建 <span> 并设置配方编号和配方名
+      var recipeIdSpan = document.createElement('span');
+      recipeIdSpan.className = 'recipe-id'; // 添加类名
+      recipeIdSpan.textContent = recipe.recipeId; // 设置配方编号
+
+      var recipeNameSpan = document.createElement('span');
+      recipeNameSpan.className = 'recipe-name'; // 添加类名
+      recipeNameSpan.textContent = recipe.recipeName; // 设置配方名
+
+      // 将 <span> 添加到 <li> 中
+      li.appendChild(recipeIdSpan);
+      li.appendChild(recipeNameSpan);
+
+      // 添加读取按钮
+      var readButton = document.createElement('button');
+      readButton.textContent = '读取';
+      readButton.addEventListener('click', function (e) {
+        e.stopPropagation(); // 阻止事件冒泡
+        loadRecipeToPlanning(recipe.recipeName);
+      });
+
+      // 添加删除按钮
+      var deleteButton = document.createElement('button');
+      deleteButton.textContent = '删除';
+      deleteButton.addEventListener('click', function (e) {
+        e.stopPropagation(); // 阻止事件冒泡
+        deleteRecipe(recipe.recipeName);
+      });
+
+      // 将按钮添加到 <li> 中
+      li.appendChild(readButton);
+      li.appendChild(deleteButton);
+
+      // 将 <li> 添加到 <ul> 中
+      recipeList.appendChild(li);
+
+      // 绑定点击事件到 <li>，点击配方名时触发预览
+      li.addEventListener('click', function () {
+        previewRecipe(recipe.recipeName);
+      });
+    });
+  }).catch(function (error) {
+    return console.error('加载配方列表失败:', error);
+  });
+}
+
+// 将图形类型的英文转换为中文
+function getShapeTypeChinese(shapeType) {
+  switch (shapeType) {
+    case 'circle':
+      return '圆形';
+    case 'rectangle':
+      return '矩形';
+    case 'polygon':
+      return '多边形';
+    case 'triangle':
+      return '三角形';
+    default:
+      return '未知图形';
+  }
+}
+
+// 将三角形类型和朝向的英文转换为中文
+function getTriangleTypeChinese(triangleType) {
+  switch (triangleType) {
+    case 'equilateral':
+      return '等边三角形';
+    case 'isosceles':
+      return '等腰三角形';
+    default:
+      return '未知类型';
+  }
+}
+function getTriangleOrientationChinese(orientation) {
+  switch (orientation) {
+    case 'up':
+      return '向上';
+    case 'down':
+      return '向下';
+    case 'left':
+      return '向左';
+    case 'right':
+      return '向右';
+    default:
+      return '未知朝向';
+  }
+}
+
+// 动态显示或隐藏配方预览页面的几何尺寸输入框
+function updatePreviewInputFields(shapeType) {
+  // 隐藏所有图形输入框
+  document.querySelectorAll('.shape-input-preview').forEach(function (div) {
+    return div.style.display = 'none';
+  });
+  if (shapeType === 'circle') {
+    document.getElementById('preview-circle-input').style.display = 'block';
+  } else if (shapeType === 'rectangle') {
+    document.getElementById('preview-rectangle-input').style.display = 'block';
+  } else if (shapeType === 'polygon') {
+    document.getElementById('preview-polygon-input').style.display = 'block';
+  } else if (shapeType === 'triangle') {
+    document.getElementById('preview-triangle-input').style.display = 'block';
+    // 如果是等腰三角形，显示底边长输入框
+    var triangleType = document.getElementById('triangle_type').value;
+    if (triangleType === 'isosceles') {
+      document.getElementById('preview-triangle-base-length').style.display = 'inline-block';
+    } else {
+      document.getElementById('preview-triangle-base-length').style.display = 'none';
+    }
+  }
+}
+
+// 预览配方
+function previewRecipe(recipeName) {
+  fetch('/get_recipe', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      recipeName: recipeName
+    })
+  }).then(function (response) {
+    return response.json();
+  }).then(function (data) {
+    // 更新预览标题，显示配方名称
+    var previewTitle = document.querySelector('.recipe-preview h2');
+    if (previewTitle) {
+      previewTitle.textContent = "\u914D\u65B9\u9884\u89C8 - ".concat(recipeName);
+    }
+
+    // 填充料框设置
+    document.getElementById('preview-frame-length').textContent = data.frameLength;
+    document.getElementById('preview-frame-width').textContent = data.frameWidth;
+    document.getElementById('preview-frame-depth').textContent = data.frameDepth;
+
+    // 填充工件设置
+    var shapeTypeChinese = getShapeTypeChinese(data.shapeType); // 将图形类型转换为中文
+    document.getElementById('preview-shape-type').textContent = shapeTypeChinese;
+
+    // 根据工件类型显示对应的输入框
+    updatePreviewInputFields(data.shapeType);
+
+    // 填充工件参数
+    if (data.shapeType === 'circle') {
+      document.getElementById('preview-circle-diameter').textContent = data.circleDiameter || 'N/A';
+    } else if (data.shapeType === 'rectangle') {
+      document.getElementById('preview-rectangle-length').textContent = data.rectangleLength || 'N/A';
+      document.getElementById('preview-rectangle-width').textContent = data.rectangleWidth || 'N/A';
+    } else if (data.shapeType === 'polygon') {
+      document.getElementById('preview-polygon-sides').textContent = data.polygonSides || 'N/A';
+      document.getElementById('preview-polygon-side-length').textContent = data.polygonSideLength || 'N/A';
+    } else if (data.shapeType === 'triangle') {
+      var triangleTypeChinese = getTriangleTypeChinese(data.triangleType); // 转换为中文
+      var triangleOrientationChinese = getTriangleOrientationChinese(data.triangleOrientation); // 转换为中文
+      document.getElementById('preview-triangle-type').textContent = triangleTypeChinese || 'N/A';
+      document.getElementById('preview-triangle-side-length').textContent = data.triangleSideLength || 'N/A';
+      document.getElementById('preview-triangle-orientation').textContent = triangleOrientationChinese || 'N/A';
+      // 如果是等腰三角形，显示底边长
+      if (data.triangleType === 'isosceles') {
+        document.getElementById('preview-triangle-base-length').textContent = data.triangleBaseLength || 'N/A';
+        document.getElementById('preview-triangle-base-length-input').style.display = 'inline-block'; // 显示底边长输入框
+      } else {
+        document.getElementById('preview-triangle-base-length-input').style.display = 'none'; // 隐藏底边长输入框
+      }
+    }
+
+    // 填充工件高度和下料数量
+    document.getElementById('preview-shape-height').textContent = data.shapeHeight || 'N/A';
+    document.getElementById('preview-drop-count').textContent = data.dropCount || 'N/A';
+
+    // 填充摆放设置
+    document.getElementById('preview-horizontal-spacing').textContent = data.horizontalSpacing;
+    document.getElementById('preview-vertical-spacing').textContent = data.verticalSpacing;
+    document.getElementById('preview-horizontal-border-distance').textContent = data.horizontalBorderDistance;
+    document.getElementById('preview-vertical-border-distance').textContent = data.verticalBorderDistance;
+    document.getElementById('preview-material-thickness').textContent = data.materialThickness;
+    document.getElementById('preview-placement-layers').textContent = data.placementLayers;
+    var layoutTypeChinese = data.layoutType === 'array' ? '阵列式' : '蜂窝式';
+    var placeTypeChinese = data.placeType === 'row' ? '行优先' : '列优先';
+    var remainderTurnChinese = data.remainderTurn === 'off' ? '关闭' : data.remainderTurn === 'left' ? '左转90度' : '右转90度';
+    document.getElementById('preview-layout-type').textContent = layoutTypeChinese;
+    document.getElementById('preview-place-type').textContent = placeTypeChinese;
+    document.getElementById('preview-remainder-turn').textContent = remainderTurnChinese;
+
+    // 显示预览图片
+    var plotImg = document.getElementById('preview-plot');
+    plotImg.src = data.plotImageBase64;
+    plotImg.setAttribute('data-base64', data.plotImageBase64); // 添加这行，设置data-base64属性
+    plotImg.style.display = 'block';
+  }).catch(function (error) {
+    return console.error('加载配方失败:', error);
+  });
+}
+
+// 删除配方
+function deleteRecipe(_x2) {
+  return _deleteRecipe.apply(this, arguments);
+} // 读取配方到智能规划页面
+function _deleteRecipe() {
+  _deleteRecipe = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2(recipeName) {
+    var confirmDelete;
+    return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+      while (1) switch (_context2.prev = _context2.next) {
+        case 0:
+          _context2.next = 2;
+          return myConfirm("\u786E\u5B9A\u8981\u5220\u9664\u914D\u65B9 \"".concat(recipeName, "\" \u5417\uFF1F"));
+        case 2:
+          confirmDelete = _context2.sent;
+          if (confirmDelete) {
+            fetch('/delete_recipe', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                recipeName: recipeName
+              })
+            }).then(function (response) {
+              return response.json();
+            }).then(function (data) {
+              if (data.success) {
+                loadRecipeList(); // 重新加载配方列表
+              } else {
+                alertError('删除配方失败');
+              }
+            }).catch(function (error) {
+              return console.error('删除配方失败:', error);
+            });
+          }
+        case 4:
+        case "end":
+          return _context2.stop();
+      }
+    }, _callee2);
+  }));
+  return _deleteRecipe.apply(this, arguments);
+}
+function loadRecipeToPlanning(recipeName) {
+  fetch('/get_recipe', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      recipeName: recipeName
+    })
+  }).then(function (response) {
+    return response.json();
+  }).then(function (data) {
+    // 填充智能规划界面的参数
+    document.getElementById('frame_length').value = data.frameLength;
+    document.getElementById('frame_width').value = data.frameWidth;
+    document.getElementById('frame_depth').value = data.frameDepth;
+    document.getElementById('shape_type').value = data.shapeType;
+    document.getElementById('shape_height').value = data.shapeHeight;
+    document.getElementById('drop_Count').value = data.dropCount;
+    document.getElementById('horizontal_spacing').value = data.horizontalSpacing;
+    document.getElementById('vertical_spacing').value = data.verticalSpacing;
+    document.getElementById('horizontal_border_distance').value = data.horizontalBorderDistance;
+    document.getElementById('vertical_border_distance').value = data.verticalBorderDistance;
+    document.getElementById('material_thickness').value = data.materialThickness;
+    document.getElementById('placement_layers').value = data.placementLayers;
+    document.getElementById('layout_type').value = data.layoutType;
+    document.getElementById('place_type').value = data.placeType;
+    document.getElementById('remainder_turn').value = data.remainderTurn;
+
+    // 根据工件类型填充相应的参数
+    if (data.shapeType === 'circle') {
+      document.getElementById('circle_diameter').value = data.circleDiameter;
+    } else if (data.shapeType === 'rectangle') {
+      document.getElementById('rectangle_length').value = data.rectangleLength;
+      document.getElementById('rectangle_width').value = data.rectangleWidth;
+    } else if (data.shapeType === 'polygon') {
+      document.getElementById('polygon_sides').value = data.polygonSides;
+      document.getElementById('polygon_side_length').value = data.polygonSideLength;
+    } else if (data.shapeType === 'triangle') {
+      document.getElementById('triangle_type').value = data.triangleType;
+      document.getElementById('triangle_side_length').value = data.triangleSideLength;
+      // 如果是等腰三角形，填充底边长
+      if (data.triangleType === 'isosceles') {
+        document.getElementById('triangle_base_length').value = data.triangleBaseLength;
+        document.getElementById('triangle_base_length_input').style.display = 'block'; // 显示底边长输入框
+      } else {
+        document.getElementById('triangle_base_length_input').style.display = 'none'; // 隐藏底边长输入框
+      }
+      document.getElementById('triangle_orientation').value = data.triangleOrientation;
+    }
+
+    // 手动触发工件类型的 change 事件，以更新输入框显示状态
+    var shapeTypeSelect = document.getElementById('shape_type');
+    shapeTypeSelect.dispatchEvent(new Event('change'));
+
+    // 填充结果预览图片
+    var plotImg = document.getElementById('plot');
+    plotImg.src = data.plotImageBase64;
+    plotImg.setAttribute('data-base64', data.plotImageBase64); // 添加这行，设置data-base64属性
+    plotImg.style.display = 'block';
+
+    // 填充填充数量和单行/列数量
+    document.getElementById('shape-count-value').textContent = data.shapeCountValue;
+    document.getElementById('shapes-per-row-or-col-value').textContent = data.shapesPerRowOrColValue;
+
+    // 显示填充数量和单行/列数量
+    document.getElementById('shape-count').style.display = 'block';
+    document.getElementById('shapes-per-row-or-col').style.display = 'block';
+
+    // 填充数据清单页面
+    var tableBody = document.querySelector('#data-list-content table tbody');
+    tableBody.innerHTML = ''; // 清空表格内容
+
+    if (data.tableData && Array.isArray(data.tableData)) {
+      data.tableData.forEach(function (rowData) {
+        var row = document.createElement('tr');
+
+        // 行号
+        var cell1 = document.createElement('td');
+        cell1.textContent = rowData.rowNumber || '';
+        cell1.style.border = '1px solid #ddd';
+        cell1.style.padding = '8px';
+        row.appendChild(cell1);
+
+        // 列号
+        var cell2 = document.createElement('td');
+        cell2.textContent = rowData.colNumber || '';
+        cell2.style.border = '1px solid #ddd';
+        cell2.style.padding = '8px';
+        row.appendChild(cell2);
+
+        // P_ID
+        var cell3 = document.createElement('td');
+        cell3.textContent = rowData.pId || '';
+        cell3.style.border = '1px solid #ddd';
+        cell3.style.padding = '8px';
+        row.appendChild(cell3);
+
+        // X坐标
+        var cell4 = document.createElement('td');
+        cell4.textContent = (parseFloat(rowData.x) || 0).toFixed(2);
+        cell4.style.border = '1px solid #ddd';
+        cell4.style.padding = '8px';
+        row.appendChild(cell4);
+
+        // X补偿
+        var cell5 = document.createElement('td');
+        cell5.textContent = (parseFloat(rowData.xCompensation) || 0).toFixed(2);
+        cell5.style.border = '1px solid #ddd';
+        cell5.style.padding = '8px';
+        row.appendChild(cell5);
+
+        // Y坐标
+        var cell6 = document.createElement('td');
+        cell6.textContent = (parseFloat(rowData.y) || 0).toFixed(2);
+        cell6.style.border = '1px solid #ddd';
+        cell6.style.padding = '8px';
+        row.appendChild(cell6);
+
+        // Y补偿
+        var cell7 = document.createElement('td');
+        cell7.textContent = (parseFloat(rowData.yCompensation) || 0).toFixed(2);
+        cell7.style.border = '1px solid #ddd';
+        cell7.style.padding = '8px';
+        row.appendChild(cell7);
+
+        // C坐标
+        var cell8 = document.createElement('td');
+        cell8.textContent = (parseFloat(rowData.c) || 0).toFixed(2);
+        cell8.style.border = '1px solid #ddd';
+        cell8.style.padding = '8px';
+        row.appendChild(cell8);
+
+        // C补偿
+        var cell9 = document.createElement('td');
+        cell9.textContent = (parseFloat(rowData.cCompensation) || 0).toFixed(2);
+        cell9.style.border = '1px solid #ddd';
+        cell9.style.padding = '8px';
+        row.appendChild(cell9);
+        tableBody.appendChild(row);
+      });
+    }
+
+    // 填充配方名和配方编号到数据清单的输入框中
+    document.getElementById('recipe_name').value = recipeName;
+    document.getElementById('recipe_id').value = data.recipeId; // 填充配方编号
+
+    // 显示数据清单页面
+    showSection('data-list-content');
+    setActiveButton('data-list-btn');
+  }).catch(function (error) {
+    return console.error('加载配方失败:', error);
+  });
+}

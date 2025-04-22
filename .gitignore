@@ -1,4 +1,1 @@
 node_modules
-*.log
-static/*-compiled.js
-static/extension-runtime.js
