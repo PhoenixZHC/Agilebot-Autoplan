@@ -1,0 +1,35 @@
+{
+  "name": "autoplan",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "copy": "shx cp ./node_modules/@agilebot/extension-runtime/dist/browser.js ./static/extension-runtime.js",
+    "build": "nr copy && babel ./static/script.js --out-file=./static/script-compiled.js",
+    "watch": "nr build --watch"
+  },
+  "dependencies": {
+    "@agilebot/extension-runtime": "1.0.0-beta.12"
+  },
+  "devDependencies": {
+    "@antfu/ni": "^24.3.0",
+    "@babel/cli": "^7.27.0",
+    "@babel/core": "^7.26.10",
+    "@babel/preset-env": "^7.26.9",
+    "only-allow": "^1.2.1",
+    "shx": "^0.4.0"
+  },
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "targets": {
+            "android": "13",
+            "chrome": "80"
+          }
+        }
+      ]
+    ]
+  }
+}

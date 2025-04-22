@@ -1,3 +1,14 @@
+// 判断当前环境是否运行在插件中，选择不同的提示框
+const alertSuccess =
+  typeof window.gbtExtension === 'undefined'
+    ? alert
+    : gbtExtension.rtmNotification.success;
+const alertError =
+  typeof window.gbtExtension === 'undefined'
+    ? alert
+    : gbtExtension.rtmNotification.error;
+
+
 // 页面加载时初始化菜单栏
 document.addEventListener('DOMContentLoaded', function () {
     // 默认显示机器人设置
@@ -368,7 +379,7 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
         });
     })
     .catch(error => {
-        alert(error.message);
+        alertError(error.message);
     });
 });
 
@@ -467,12 +478,12 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
         })
         .catch(error => {
             console.error('断开连接失败:', error.message);
-            alert('断开连接失败: ' + error.message);
+            alertError('断开连接失败: ' + error.message);
         });
     } else {
         // 如果当前是"连接"状态，则发送连接请求
         if (!robotIp) {
-            alert('请输入机器人IP地址');
+            alertError('请输入机器人IP地址');
             return;
         }
 
@@ -515,9 +526,9 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
             console.error('连接失败:', error.message);
             // 根据错误类型显示不同的提示
             if (error.message === '请求超时') {
-                alert('请求超时: 请检查网络连接或稍后重试');
+                alertError('请求超时: 请检查网络连接或稍后重试');
             } else {
-                alert('连接失败: ' + error.message);
+                alertError('连接失败: ' + error.message);
             }
             // 连接失败时，重置按钮状态
             connectButton.textContent = '连接';
@@ -531,7 +542,7 @@ document.getElementById('read_p_data_button').addEventListener('click', function
     // 如果用户没有输入，则使用默认值 'PUT'
 
     if (!programName) {
-        alert('请输入程序名称');
+        alertError('请输入程序名称');
         return;
     }
 
@@ -628,7 +639,7 @@ document.getElementById('read_p_data_button').addEventListener('click', function
     })
     .catch(error => {
         console.error('获取P点数据失败:', error.message);
-        alert('获取P点数据失败: ' + error.message);
+        alertError('获取P点数据失败: ' + error.message);
     });
 });
 
@@ -641,12 +652,12 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     const left_right = parseInt(document.getElementById('left_right').value, 10); // 获取工具数量
 
     if (!programName) {
-        alert('请输入程序名称');
+        alertError('请输入程序名称');
         return;
     }
 
     if (isNaN(prRegisterId)) { // 检查PR寄存器ID是否为有效数字
-        alert('请输入有效的PR寄存器ID');
+        alertError('请输入有效的PR寄存器ID');
         return;
     }
 
@@ -655,7 +666,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     const rows = tableBody.querySelectorAll('tr');
 
     if (rows.length === 0) {
-        alert('没有可用的数据');
+        alertError('没有可用的数据');
         return;
     }
 
@@ -735,11 +746,11 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     })
     .then(data => {
         console.log('P点数据写入成功');
-        alert('P点数据写入成功');
+        alertSuccess('P点数据写入成功');
     })
     .catch(error => {
         console.error('写入P点数据失败:', error.message);
-        alert('写入P点数据失败: ' + error.message);
+        alertError('写入P点数据失败: ' + error.message);
     });
 });
 
@@ -760,7 +771,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
 
     // 检查填充数量和工具数量是否有效
     if (!shapeCountValue || !toolCount) {
-        alert('请先进行计算并确保工具数量已选择');
+        alertError('请先进行计算并确保工具数量已选择');
         return;
     }
 
@@ -795,11 +806,11 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     })
     .then(data => {
         console.log('R寄存器写入成功');
-        alert('R寄存器写入成功');
+        alertSuccess('R寄存器写入成功');
     })
     .catch(error => {
         console.error('写入R寄存器失败:', error.message);
-        alert('写入R寄存器失败: ' + error.message);
+        alertError('写入R寄存器失败: ' + error.message);
     });
 });
 
@@ -812,7 +823,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     const toolDirection = document.getElementById('tool_direction').value;
 
     if (isNaN(toolSpacing)) { // 检查工具间距是否为有效数字
-        alert('请输入有效的工具间距');
+        alertError('请输入有效的工具间距');
         return;
     }
 
@@ -852,7 +863,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         if (toolLayout === 'double') {
             // 双向布局时，工具数量只能为2
             if (toolCount !== 2) {
-                alert('双向布局时，工具数量必须为2');
+                alertError('双向布局时，工具数量必须为2');
                 return;
             }
 
@@ -946,11 +957,11 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     })
     .then(data => {
         console.log('TF数据更新成功');
-        alert('TF数据更新成功');
+        alertSuccess('TF数据更新成功');
     })
     .catch(error => {
         console.error('更新TF数据失败:', error.message);
-        alert('更新TF数据失败: ' + error.message);
+        alertError('更新TF数据失败: ' + error.message);
     });
 });
 
@@ -1021,7 +1032,7 @@ document.getElementById('interval-calculator-form').addEventListener('submit', f
     })
     .catch(error => {
         console.error('请求失败:', error.message);
-        alert('请求失败: ' + error.message);
+        alertError('请求失败: ' + error.message);
     });
 });
 
@@ -1033,7 +1044,7 @@ document.getElementById('update-compensation').addEventListener('click', functio
     const angleCompensation = parseFloat(document.getElementById('angle-compensation').value);
 
     if (isNaN(rowColNumber) || isNaN(compensationValue) || isNaN(angleCompensation)) {
-        alert('请输入有效的行号/列号、补偿值和角度补偿值');
+        alertError('请输入有效的行号/列号、补偿值和角度补偿值');
         return;
     }
 
@@ -1058,7 +1069,7 @@ document.getElementById('update-compensation').addEventListener('click', functio
         }
     });
 
-    alert('补偿值更新成功');
+    alertSuccess('补偿值更新成功');
 });
 
 document.getElementById('save_recipe_button').addEventListener('click', function () {
@@ -1066,7 +1077,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
     const recipeId = document.getElementById('recipe_id').value; // 获取配方编号
 
     if (!recipeName || !recipeId) {
-        alert('请输入配方名和配方编号');
+        alertError('请输入配方名和配方编号');
         return;
     }
 
@@ -1111,7 +1122,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
     })
     .catch(error => {
         console.error('检查配方失败:', error.message);
-        alert('检查配方失败: ' + error.message);
+        alertError('检查配方失败: ' + error.message);
     });
 });
 
@@ -1223,11 +1234,11 @@ function saveRecipeData(recipeName, recipeId) {
     })
     .then(data => {
         console.log('配方保存成功');
-        alert('配方保存成功');
+        alertSuccess('配方保存成功');
     })
     .catch(error => {
         console.error('保存配方失败:', error.message);
-        alert('保存配方失败: ' + error.message);
+        alertError('保存配方失败: ' + error.message);
     });
 }
 
@@ -1466,7 +1477,7 @@ function deleteRecipe(recipeName) {
                 if (data.success) {
                     loadRecipeList(); // 重新加载配方列表
                 } else {
-                    alert('删除配方失败');
+                    alertError('删除配方失败');
                 }
             })
             .catch(error => console.error('删除配方失败:', error));
