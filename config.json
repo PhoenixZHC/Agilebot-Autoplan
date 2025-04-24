@@ -2,8 +2,8 @@
   "name": "AUTOPLAN",
   "type": "generalService",
   "scriptLang": "python",
-  "description": "摆盘柔性插件",
-  "version": "4.2",
+  "description": "智能摆盘规划系统",
+  "version": "V4.9_20250424",
   "entry": "app.py",
   "url": "/"
 }
