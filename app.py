@@ -1264,7 +1264,7 @@ def save_recipe():
 
         # 保存到文件
         import json
-        recipe_file_path = f'recipes/{recipe_name}.json'
+        recipe_file_path = f'data/{recipe_name}.json'
         with open(recipe_file_path, 'w') as f:
             json.dump(recipe_data, f)
         print(f'Recipe saved successfully to {recipe_file_path}')
@@ -1288,11 +1288,11 @@ def check_recipe():
             return jsonify({'error': '缺少配方名或配方编号'}), 400
 
         # 检查配方文件是否存在
-        recipe_file_path = f'recipes/{recipe_name}.json'
+        recipe_file_path = f'data/{recipe_name}.json'
         exists = os.path.exists(recipe_file_path)
 
         # 检查配方编号是否重复
-        recipe_dir = 'recipes'
+        recipe_dir = 'data'
         if not os.path.exists(recipe_dir):
             os.makedirs(recipe_dir)
 
@@ -1322,7 +1322,7 @@ import json
 def get_recipe_list():
     """获取所有配方的列表"""
     try:
-        recipe_dir = 'recipes'
+        recipe_dir = 'data'
         if not os.path.exists(recipe_dir):
             os.makedirs(recipe_dir)
         recipes = []
@@ -1348,7 +1348,7 @@ def get_recipe():
         return jsonify({'error': '缺少配方名'}), 400
 
     try:
-        recipe_file_path = f'recipes/{recipe_name}.json'
+        recipe_file_path = f'data/{recipe_name}.json'
         if not os.path.exists(recipe_file_path):
             return jsonify({'error': '配方不存在'}), 404
 
@@ -1368,7 +1368,7 @@ def delete_recipe():
         return jsonify({'error': '缺少配方名'}), 400
 
     try:
-        recipe_file_path = f'recipes/{recipe_name}.json'
+        recipe_file_path = f'data/{recipe_name}.json'
         if not os.path.exists(recipe_file_path):
             return jsonify({'error': '配方不存在'}), 404
 
