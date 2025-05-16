@@ -30,7 +30,7 @@ def calculate_bounding_box(vertices):
     return min_x, min_y, max_x - min_x, max_y - min_y
 
 def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width, horizontal_spacing, vertical_spacing, horizontal_border_distance, vertical_border_distance,
-                            is_circle=False, is_rectangle=False, polygon_sides=None, is_triangle=False, triangle_type=None, triangle_orientation=None, is_honeycomb=False, place_type='row'):
+                            is_circle=False, is_rectangle=False, polygon_sides=None, is_triangle=False, triangle_type=None, triangle_orientation=None, is_honeycomb=False, place_type='row', polygon_arrangement='diagonal'):
     """计算给定框内可填充的指定形状的中心位置及数量"""
     try:
         if is_circle:
@@ -198,6 +198,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
         elif polygon_sides is not None and 4 < polygon_sides <= 8:
             # 假设多边形为正多边形，以边长表示形状大小
             circumradius = shape_length / (2 * math.sin(math.pi / polygon_sides))
+            inradius = shape_length / (2 * math.tan(math.pi / polygon_sides))  # 计算内切圆半径
 
             # 计算一个示例多边形的顶点
             example_center = (0, 0)
@@ -215,12 +216,25 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
 
             if is_honeycomb:
                 # 蜂窝式排布
-                polygons_per_row = math.floor((effective_row_length - bounding_box_length) / (bounding_box_length + horizontal_spacing))
-                if effective_row_length - (polygons_per_row * (bounding_box_length + horizontal_spacing) + bounding_box_length) >= 0:
+                if polygon_sides == 6:
+                    if polygon_arrangement == 'diagonal':
+                        # 对角排布：使用外接圆直径
+                        center_distance = 2 * circumradius + horizontal_spacing
+                        vertical_distance = math.sqrt(3) * circumradius + vertical_spacing
+                    else:  # edge
+                        # 对边排布：使用内切圆直径
+                        center_distance = 2 * inradius + horizontal_spacing
+                        vertical_distance = math.sqrt(3) * inradius + vertical_spacing
+                else:
+                    center_distance = bounding_box_length + horizontal_spacing
+                    vertical_distance = bounding_box_width + vertical_spacing
+
+                polygons_per_row = math.floor((effective_row_length - bounding_box_length) / center_distance)
+                if effective_row_length - (polygons_per_row * center_distance + bounding_box_length) >= 0:
                     polygons_per_row += 1
 
-                polygons_per_column = math.floor((effective_column_width - bounding_box_width) / (bounding_box_width * math.sqrt(3) / 2 + vertical_spacing))
-                if effective_column_width - (polygons_per_column * (bounding_box_width * math.sqrt(3) / 2 + vertical_spacing) + bounding_box_width) >= 0:
+                polygons_per_column = math.floor((effective_column_width - bounding_box_width) / vertical_distance)
+                if effective_column_width - (polygons_per_column * vertical_distance + bounding_box_width) >= 0:
                     polygons_per_column += 1
 
                 total_shapes = 0
@@ -231,10 +245,10 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                     shapes_per_row_or_col = polygons_per_row  # 行优先时，单行填充数量为 circles_per_row
                     for row in range(polygons_per_column):
                         for col in range(polygons_per_row):
-                            x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * (bounding_box_length + horizontal_spacing), 2)
-                            y_center = round(vertical_border_distance + bounding_box_width / 2 + row * (bounding_box_width * math.sqrt(3) / 2 + vertical_spacing), 2)
+                            x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * center_distance, 2)
+                            y_center = round(vertical_border_distance + bounding_box_width / 2 + row * vertical_distance, 2)
                             if row % 2 == 1:
-                                x_center = round(x_center + (bounding_box_length + horizontal_spacing) / 2, 2)
+                                x_center = round(x_center + center_distance / 2, 2)
 
                             # 检查是否超出边框
                             if x_center + bounding_box_length / 2 <= frame_length - horizontal_border_distance and y_center + bounding_box_width / 2 <= frame_width - vertical_border_distance:
@@ -245,10 +259,10 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                     shapes_per_row_or_col = polygons_per_column  # 列优先时，单列填充数量为 circles_per_column
                     for col in range(polygons_per_row):
                         for row in range(polygons_per_column):
-                            x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * (bounding_box_length + horizontal_spacing), 2)
-                            y_center = round(vertical_border_distance + bounding_box_width / 2 + row * (bounding_box_width * math.sqrt(3) / 2 + vertical_spacing), 2)
+                            x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * center_distance, 2)
+                            y_center = round(vertical_border_distance + bounding_box_width / 2 + row * vertical_distance, 2)
                             if row % 2 == 1:
-                                x_center = round(x_center + (bounding_box_length + horizontal_spacing) / 2, 2)
+                                x_center = round(x_center + center_distance / 2, 2)
 
                             # 检查是否超出边框
                             if x_center + bounding_box_length / 2 <= frame_length - horizontal_border_distance and y_center + bounding_box_width / 2 <= frame_width - vertical_border_distance:
@@ -258,12 +272,25 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
 
             else:
                 # 阵列式排布
-                polygons_per_row = math.floor((effective_row_length - bounding_box_length) / (bounding_box_length + horizontal_spacing))
-                if effective_row_length - (polygons_per_row * (bounding_box_length + horizontal_spacing) + bounding_box_length) >= 0:
+                if polygon_sides == 6:
+                    if polygon_arrangement == 'diagonal':
+                        # 对角排布：使用外接圆直径
+                        center_distance = 2 * circumradius + horizontal_spacing
+                        vertical_distance = 2 * circumradius + vertical_spacing
+                    else:  # edge
+                        # 对边排布：使用内切圆直径
+                        center_distance = 2 * inradius + horizontal_spacing
+                        vertical_distance = 2 * inradius + vertical_spacing
+                else:
+                    center_distance = bounding_box_length + horizontal_spacing
+                    vertical_distance = bounding_box_width + vertical_spacing
+
+                polygons_per_row = math.floor((effective_row_length - bounding_box_length) / center_distance)
+                if effective_row_length - (polygons_per_row * center_distance + bounding_box_length) >= 0:
                     polygons_per_row += 1
 
-                polygons_per_column = math.floor((effective_column_width - bounding_box_width) / (bounding_box_width + vertical_spacing))
-                if effective_column_width - (polygons_per_column * (bounding_box_width + vertical_spacing) + bounding_box_width) >= 0:
+                polygons_per_column = math.floor((effective_column_width - bounding_box_width) / vertical_distance)
+                if effective_column_width - (polygons_per_column * vertical_distance + bounding_box_width) >= 0:
                     polygons_per_column += 1
 
                 total_shapes = polygons_per_row * polygons_per_column
@@ -275,17 +302,16 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                     shapes_per_row_or_col = polygons_per_row  # 行优先时，单行填充数量为 circles_per_row
                     for row in range(polygons_per_column):
                         for col in range(polygons_per_row):
-                            x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * (bounding_box_length + horizontal_spacing), 2)
-                            y_center = round(vertical_border_distance + bounding_box_width / 2 + row * (bounding_box_width + vertical_spacing), 2)
+                            x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * center_distance, 2)
+                            y_center = round(vertical_border_distance + bounding_box_width / 2 + row * vertical_distance, 2)
                             shape_centers.append((x_center, y_center))
                             row_col_info.append((row + 1, col + 1))  # 记录行号和列号
-
                 else:
                     shapes_per_row_or_col = polygons_per_column  # 列优先时，单列填充数量为 circles_per_column
                     for col in range(polygons_per_row):
                         for row in range(polygons_per_column):
-                            x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * (bounding_box_length + horizontal_spacing), 2)
-                            y_center = round(vertical_border_distance + bounding_box_width / 2 + row * (bounding_box_width + vertical_spacing), 2)
+                            x_center = round(horizontal_border_distance + bounding_box_length / 2 + col * center_distance, 2)
+                            y_center = round(vertical_border_distance + bounding_box_width / 2 + row * vertical_distance, 2)
                             shape_centers.append((x_center, y_center))
                             row_col_info.append((row + 1, col + 1))  # 记录行号和列号
 
@@ -483,8 +509,9 @@ def calculate():
         polygon_sides = int(data['polygon_sides']) if shape_type == 'polygon' else None
         triangle_type = data['triangle_type'] if shape_type == 'triangle' else None
         triangle_orientation = data['triangle_orientation'] if shape_type == 'triangle' else None
-        place_type = data.get('place_type', 'row')  # 默认值为 'row
+        place_type = data.get('place_type', 'row')  # 默认值为 'row'
         remainder_turn = data.get('remainder_turn', 'off')  # 默认值为 'off'
+        polygon_arrangement = data.get('polygon_arrangement', 'diagonal')  # 默认值为 'diagonal'
 
         # 处理 shape_width
         shape_width = data.get('shape_width', '')  # 获取 shape_width，默认为空字符串
@@ -507,7 +534,8 @@ def calculate():
             triangle_type=triangle_type,
             triangle_orientation=triangle_orientation,
             is_honeycomb=layout_type == 'honeycomb',
-            place_type = place_type
+            place_type = place_type,
+            polygon_arrangement = polygon_arrangement
         )
 
         # 使用 matplotlib 绘制图形
@@ -528,9 +556,21 @@ def calculate():
             circumradius = shape_length / (2 * math.sin(math.pi / polygon_sides))
             for center in shape_centers:
                 vertices = []
+                # 计算六边形的旋转角度
+                if polygon_sides == 6:
+                    if polygon_arrangement == 'diagonal':
+                        # 角对角排布时，顶点朝上
+                        start_angle = 0
+                    else:  # edge
+                        # 边对边排布时，边朝上
+                        start_angle = math.pi / 6  # 30度
+                else:
+                    start_angle = 0
+
                 for i in range(polygon_sides):
-                    x = center[0] + circumradius * math.cos(i * math.pi * 2 / polygon_sides)
-                    y = center[1] + circumradius * math.sin(i * math.pi * 2 / polygon_sides)
+                    angle = start_angle + i * math.pi * 2 / polygon_sides
+                    x = center[0] + circumradius * math.cos(angle)
+                    y = center[1] + circumradius * math.sin(angle)
                     vertices.append((x, y))
                 polygon = Polygon(vertices, fill=True)
                 ax.add_patch(polygon)
@@ -1222,6 +1262,7 @@ def save_recipe():
         rectangle_width = data.get('rectangleWidth') if shape_type == 'rectangle' else None
         polygon_sides = data.get('polygonSides') if shape_type == 'polygon' else None
         polygon_side_length = data.get('polygonSideLength') if shape_type == 'polygon' else None
+        polygon_arrangement = data.get('polygonArrangement') if shape_type == 'polygon' else 'diagonal'  # 添加多边形排布方式参数
         triangle_type = data.get('triangleType') if shape_type == 'triangle' else None
         triangle_side_length = data.get('triangleSideLength') if shape_type == 'triangle' else None
         triangle_base_length = data.get('triangleBaseLength') if shape_type == 'triangle' else None
@@ -1257,6 +1298,7 @@ def save_recipe():
             'rectangleWidth': rectangle_width,
             'polygonSides': polygon_sides,
             'polygonSideLength': polygon_side_length,
+            'polygonArrangement': polygon_arrangement,  # 添加多边形排布方式参数
             'triangleType': triangle_type,
             'triangleSideLength': triangle_side_length,
             'triangleBaseLength': triangle_base_length,

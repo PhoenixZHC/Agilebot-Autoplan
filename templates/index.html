@@ -13,7 +13,7 @@
             <img src="{{ url_for('static', filename='logo.png')  }}" alt="Logo">
         </div>
         <div class="title">捷勃特智能摆盘规划系统</div>
-        <div class="version">（TP）V5.0_20250425</div>
+        <div class="version">V5.1_20250516</div>
     </div>
 
     <!-- 主容器 -->
@@ -235,6 +235,13 @@
                                     <div>
                                         <label for="polygon_side_length">多边形边长:</label>
                                         <input type="number" id="polygon_side_length" name="polygon_side_length" step="0.1">
+                                    </div>
+                                    <div id="polygon_arrangement_input" style="display: none;">
+                                        <label for="polygon_arrangement">排布方式:</label>
+                                        <select id="polygon_arrangement" name="polygon_arrangement">
+                                            <option value="diagonal">对角排布</option>
+                                            <option value="edge">对边排布</option>
+                                        </select>
                                     </div>
                                 </div>
                                 <!-- 三角形输入 -->

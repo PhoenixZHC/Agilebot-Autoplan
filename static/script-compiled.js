@@ -170,22 +170,39 @@ document.getElementById('shape_type').addEventListener('change', function () {
   updateInputFields(shapeType);
 });
 function updateInputFields(shapeType) {
-  // 隐藏所有图形输入框
-  document.querySelectorAll('.shape-input').forEach(function (div) {
-    return div.style.display = 'none';
-  });
+  // 隐藏所有形状特定的输入字段
+  document.getElementById('circle_input').style.display = 'none';
+  document.getElementById('rectangle_input').style.display = 'none';
+  document.getElementById('polygon_input').style.display = 'none';
+  document.getElementById('triangle_input').style.display = 'none';
+  document.getElementById('polygon_arrangement_input').style.display = 'none';
 
-  // 根据选择的图形类型显示对应的输入框
+  // 显示所选形状的输入字段
   if (shapeType === 'circle') {
     document.getElementById('circle_input').style.display = 'block';
   } else if (shapeType === 'rectangle') {
     document.getElementById('rectangle_input').style.display = 'block';
   } else if (shapeType === 'polygon') {
     document.getElementById('polygon_input').style.display = 'block';
+    // 检查当前边数
+    var sides = parseInt(document.getElementById('polygon_sides').value);
+    if (sides === 6) {
+      document.getElementById('polygon_arrangement_input').style.display = 'block';
+    }
   } else if (shapeType === 'triangle') {
     document.getElementById('triangle_input').style.display = 'block';
   }
 }
+
+// 添加多边形边数变化的事件监听器
+document.getElementById('polygon_sides').addEventListener('change', function () {
+  var sides = parseInt(this.value);
+  if (sides === 6) {
+    document.getElementById('polygon_arrangement_input').style.display = 'block';
+  } else {
+    document.getElementById('polygon_arrangement_input').style.display = 'none';
+  }
+});
 var shapeCenters = []; // 全局变量，用于存储图形的中心位置
 // 在全局变量中存储行数和列数
 var rows = 0;
@@ -201,7 +218,7 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
   var frame_depth = document.getElementById('frame_depth').value;
   var shape_type = document.getElementById('shape_type').value;
   var shape_height = document.getElementById('shape_height').value;
-  var shape_length, shape_width, polygon_sides, triangle_type, triangle_orientation;
+  var shape_length, shape_width, polygon_sides, triangle_type, triangle_orientation, polygon_arrangement;
   if (shape_type === 'circle') {
     shape_length = document.getElementById('circle_diameter').value;
     shape_width = shape_length;
@@ -212,6 +229,8 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
     polygon_sides = document.getElementById('polygon_sides').value;
     shape_length = document.getElementById('polygon_side_length').value;
     shape_width = shape_length;
+    // 获取多边形排布方式
+    polygon_arrangement = document.getElementById('polygon_arrangement').value;
   } else if (shape_type === 'triangle') {
     triangle_type = document.getElementById('triangle_type').value;
     shape_length = document.getElementById('triangle_side_length').value;
@@ -234,7 +253,7 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
   var placement_layers = document.getElementById('placement_layers').value;
   var layout_type = document.getElementById('layout_type').value;
   var place_type = document.getElementById('place_type').value;
-  var remainder_turn = document.getElementById('remainder_turn').value; // 获取余行列转向选项
+  var remainder_turn = document.getElementById('remainder_turn').value;
 
   // 获取PR寄存器ID
   var pr_register_id = document.getElementById('pr_register_id').value;
@@ -264,7 +283,8 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
       triangle_orientation: triangle_orientation,
       shape_height: shape_height,
       place_type: place_type,
-      remainder_turn: remainder_turn
+      remainder_turn: remainder_turn,
+      polygon_arrangement: polygon_arrangement // 添加多边形排布方式参数
     })
   }).then(function (response) {
     if (!response.ok) {
@@ -1135,7 +1155,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
   });
 });
 function saveRecipeData(recipeName, recipeId) {
-  var _document$getElementB, _document$getElementB2, _document$getElementB3, _document$getElementB4, _document$getElementB5, _document$getElementB6, _document$getElementB7, _document$getElementB8, _document$getElementB9, _document$getElementB10, _document$getElementB11, _document$getElementB12, _document$getElementB13, _document$getElementB14, _document$getElementB15, _document$getElementB16, _document$getElementB17, _document$getElementB18, _document$getElementB19, _document$getElementB20, _document$getElementB21, _document$getElementB22, _document$getElementB23, _document$getElementB24, _document$getElementB25, _document$getElementB26, _document$getElementB27, _document$getElementB28, _document$getElementB29, _document$getElementB30, _document$getElementB31, _document$getElementB32;
+  var _document$getElementB, _document$getElementB2, _document$getElementB3, _document$getElementB4, _document$getElementB5, _document$getElementB6, _document$getElementB7, _document$getElementB8, _document$getElementB9, _document$getElementB10, _document$getElementB11, _document$getElementB12, _document$getElementB13, _document$getElementB14, _document$getElementB15, _document$getElementB16, _document$getElementB17, _document$getElementB18, _document$getElementB19, _document$getElementB20, _document$getElementB21, _document$getElementB22, _document$getElementB23, _document$getElementB24, _document$getElementB25, _document$getElementB26, _document$getElementB27, _document$getElementB28, _document$getElementB29, _document$getElementB30, _document$getElementB31, _document$getElementB32, _document$getElementB33;
   // 获取数据清单表格中的数据
   var tableData = [];
   var table = document.querySelector('#data-list-content table');
@@ -1180,6 +1200,7 @@ function saveRecipeData(recipeName, recipeId) {
   var layoutType = ((_document$getElementB19 = document.getElementById('layout_type')) === null || _document$getElementB19 === void 0 ? void 0 : _document$getElementB19.value) || 'array';
   var placeType = ((_document$getElementB20 = document.getElementById('place_type')) === null || _document$getElementB20 === void 0 ? void 0 : _document$getElementB20.value) || 'row';
   var remainderTurn = ((_document$getElementB21 = document.getElementById('remainder_turn')) === null || _document$getElementB21 === void 0 ? void 0 : _document$getElementB21.value) || 'off';
+  var polygonArrangement = ((_document$getElementB22 = document.getElementById('polygon_arrangement')) === null || _document$getElementB22 === void 0 ? void 0 : _document$getElementB22.value) || 'diagonal'; // 添加多边形排布方式参数
 
   // 获取预览结果图的Base64编码
   var plotImg = document.getElementById('plot');
@@ -1195,8 +1216,8 @@ function saveRecipeData(recipeName, recipeId) {
   console.log('Saving recipe with base64 data:', plotImageBase64.substring(0, 50) + '...');
 
   // 获取填充数量和单行/列数量
-  var shapeCountValue = ((_document$getElementB22 = document.getElementById('shape-count-value')) === null || _document$getElementB22 === void 0 ? void 0 : _document$getElementB22.textContent) || 0;
-  var shapesPerRowOrColValue = ((_document$getElementB23 = document.getElementById('shapes-per-row-or-col-value')) === null || _document$getElementB23 === void 0 ? void 0 : _document$getElementB23.textContent) || 0;
+  var shapeCountValue = ((_document$getElementB23 = document.getElementById('shape-count-value')) === null || _document$getElementB23 === void 0 ? void 0 : _document$getElementB23.textContent) || 0;
+  var shapesPerRowOrColValue = ((_document$getElementB24 = document.getElementById('shapes-per-row-or-col-value')) === null || _document$getElementB24 === void 0 ? void 0 : _document$getElementB24.textContent) || 0;
 
   // 将所有数据打包成一个对象
   var recipeData = {
@@ -1225,15 +1246,17 @@ function saveRecipeData(recipeName, recipeId) {
     // 使用Base64编码的图片数据
     shapeCountValue: shapeCountValue,
     shapesPerRowOrColValue: shapesPerRowOrColValue,
-    circleDiameter: ((_document$getElementB24 = document.getElementById('circle_diameter')) === null || _document$getElementB24 === void 0 ? void 0 : _document$getElementB24.value) || 0,
-    rectangleLength: ((_document$getElementB25 = document.getElementById('rectangle_length')) === null || _document$getElementB25 === void 0 ? void 0 : _document$getElementB25.value) || 0,
-    rectangleWidth: ((_document$getElementB26 = document.getElementById('rectangle_width')) === null || _document$getElementB26 === void 0 ? void 0 : _document$getElementB26.value) || 0,
-    polygonSides: ((_document$getElementB27 = document.getElementById('polygon_sides')) === null || _document$getElementB27 === void 0 ? void 0 : _document$getElementB27.value) || 0,
-    polygonSideLength: ((_document$getElementB28 = document.getElementById('polygon_side_length')) === null || _document$getElementB28 === void 0 ? void 0 : _document$getElementB28.value) || 0,
-    triangleType: ((_document$getElementB29 = document.getElementById('triangle_type')) === null || _document$getElementB29 === void 0 ? void 0 : _document$getElementB29.value) || 'equilateral',
-    triangleSideLength: ((_document$getElementB30 = document.getElementById('triangle_side_length')) === null || _document$getElementB30 === void 0 ? void 0 : _document$getElementB30.value) || 0,
-    triangleBaseLength: ((_document$getElementB31 = document.getElementById('triangle_base_length')) === null || _document$getElementB31 === void 0 ? void 0 : _document$getElementB31.value) || 0,
-    triangleOrientation: ((_document$getElementB32 = document.getElementById('triangle_orientation')) === null || _document$getElementB32 === void 0 ? void 0 : _document$getElementB32.value) || 'up'
+    circleDiameter: ((_document$getElementB25 = document.getElementById('circle_diameter')) === null || _document$getElementB25 === void 0 ? void 0 : _document$getElementB25.value) || 0,
+    rectangleLength: ((_document$getElementB26 = document.getElementById('rectangle_length')) === null || _document$getElementB26 === void 0 ? void 0 : _document$getElementB26.value) || 0,
+    rectangleWidth: ((_document$getElementB27 = document.getElementById('rectangle_width')) === null || _document$getElementB27 === void 0 ? void 0 : _document$getElementB27.value) || 0,
+    polygonSides: ((_document$getElementB28 = document.getElementById('polygon_sides')) === null || _document$getElementB28 === void 0 ? void 0 : _document$getElementB28.value) || 0,
+    polygonSideLength: ((_document$getElementB29 = document.getElementById('polygon_side_length')) === null || _document$getElementB29 === void 0 ? void 0 : _document$getElementB29.value) || 0,
+    polygonArrangement: polygonArrangement,
+    // 添加多边形排布方式参数
+    triangleType: ((_document$getElementB30 = document.getElementById('triangle_type')) === null || _document$getElementB30 === void 0 ? void 0 : _document$getElementB30.value) || 'equilateral',
+    triangleSideLength: ((_document$getElementB31 = document.getElementById('triangle_side_length')) === null || _document$getElementB31 === void 0 ? void 0 : _document$getElementB31.value) || 0,
+    triangleBaseLength: ((_document$getElementB32 = document.getElementById('triangle_base_length')) === null || _document$getElementB32 === void 0 ? void 0 : _document$getElementB32.value) || 0,
+    triangleOrientation: ((_document$getElementB33 = document.getElementById('triangle_orientation')) === null || _document$getElementB33 === void 0 ? void 0 : _document$getElementB33.value) || 'up'
   };
 
   // 发送请求到后端保存配方
@@ -1566,6 +1589,7 @@ function loadRecipeToPlanning(recipeName) {
     } else if (data.shapeType === 'polygon') {
       document.getElementById('polygon_sides').value = data.polygonSides;
       document.getElementById('polygon_side_length').value = data.polygonSideLength;
+      document.getElementById('polygon_arrangement').value = data.polygonArrangement || 'diagonal'; // 添加多边形排布方式参数
     } else if (data.shapeType === 'triangle') {
       document.getElementById('triangle_type').value = data.triangleType;
       document.getElementById('triangle_side_length').value = data.triangleSideLength;

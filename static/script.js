@@ -175,20 +175,40 @@ document.getElementById('shape_type').addEventListener('change', function () {
 });
 
 function updateInputFields(shapeType) {
-    // 隐藏所有图形输入框
-    document.querySelectorAll('.shape-input').forEach(div => div.style.display = 'none');
+    // 隐藏所有形状特定的输入字段
+    document.getElementById('circle_input').style.display = 'none';
+    document.getElementById('rectangle_input').style.display = 'none';
+    document.getElementById('polygon_input').style.display = 'none';
+    document.getElementById('triangle_input').style.display = 'none';
+    document.getElementById('polygon_arrangement_input').style.display = 'none';
 
-    // 根据选择的图形类型显示对应的输入框
+    // 显示所选形状的输入字段
     if (shapeType === 'circle') {
         document.getElementById('circle_input').style.display = 'block';
     } else if (shapeType === 'rectangle') {
         document.getElementById('rectangle_input').style.display = 'block';
     } else if (shapeType === 'polygon') {
         document.getElementById('polygon_input').style.display = 'block';
+        // 检查当前边数
+        const sides = parseInt(document.getElementById('polygon_sides').value);
+        if (sides === 6) {
+            document.getElementById('polygon_arrangement_input').style.display = 'block';
+        }
     } else if (shapeType === 'triangle') {
         document.getElementById('triangle_input').style.display = 'block';
     }
 }
+
+// 添加多边形边数变化的事件监听器
+document.getElementById('polygon_sides').addEventListener('change', function() {
+    const sides = parseInt(this.value);
+    if (sides === 6) {
+        document.getElementById('polygon_arrangement_input').style.display = 'block';
+    } else {
+        document.getElementById('polygon_arrangement_input').style.display = 'none';
+    }
+});
+
 let shapeCenters = [];  // 全局变量，用于存储图形的中心位置
 // 在全局变量中存储行数和列数
 let rows = 0;
@@ -205,7 +225,7 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
     const shape_type = document.getElementById('shape_type').value;
     const shape_height = document.getElementById('shape_height').value;
 
-    let shape_length, shape_width, polygon_sides, triangle_type, triangle_orientation;
+    let shape_length, shape_width, polygon_sides, triangle_type, triangle_orientation, polygon_arrangement;
 
     if (shape_type === 'circle') {
         shape_length = document.getElementById('circle_diameter').value;
@@ -217,6 +237,8 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
         polygon_sides = document.getElementById('polygon_sides').value;
         shape_length = document.getElementById('polygon_side_length').value;
         shape_width = shape_length;
+        // 获取多边形排布方式
+        polygon_arrangement = document.getElementById('polygon_arrangement').value;
     } else if (shape_type === 'triangle') {
         triangle_type = document.getElementById('triangle_type').value;
         shape_length = document.getElementById('triangle_side_length').value;
@@ -239,7 +261,7 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
     const placement_layers = document.getElementById('placement_layers').value;
     const layout_type = document.getElementById('layout_type').value;
     const place_type = document.getElementById('place_type').value;
-    const remainder_turn = document.getElementById('remainder_turn').value; // 获取余行列转向选项
+    const remainder_turn = document.getElementById('remainder_turn').value;
 
     // 获取PR寄存器ID
     const pr_register_id = document.getElementById('pr_register_id').value;
@@ -269,7 +291,8 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
             triangle_orientation,
             shape_height,
             place_type,
-            remainder_turn
+            remainder_turn,
+            polygon_arrangement  // 添加多边形排布方式参数
         }),
     })
     .then(response => {
@@ -1204,6 +1227,7 @@ function saveRecipeData(recipeName, recipeId) {
     const layoutType = document.getElementById('layout_type')?.value || 'array';
     const placeType = document.getElementById('place_type')?.value || 'row';
     const remainderTurn = document.getElementById('remainder_turn')?.value || 'off';
+    const polygonArrangement = document.getElementById('polygon_arrangement')?.value || 'diagonal';  // 添加多边形排布方式参数
 
     // 获取预览结果图的Base64编码
     const plotImg = document.getElementById('plot');
@@ -1252,6 +1276,7 @@ function saveRecipeData(recipeName, recipeId) {
         rectangleWidth: document.getElementById('rectangle_width')?.value || 0,
         polygonSides: document.getElementById('polygon_sides')?.value || 0,
         polygonSideLength: document.getElementById('polygon_side_length')?.value || 0,
+        polygonArrangement: polygonArrangement,  // 添加多边形排布方式参数
         triangleType: document.getElementById('triangle_type')?.value || 'equilateral',
         triangleSideLength: document.getElementById('triangle_side_length')?.value || 0,
         triangleBaseLength: document.getElementById('triangle_base_length')?.value || 0,
@@ -1567,6 +1592,7 @@ function loadRecipeToPlanning(recipeName) {
         } else if (data.shapeType === 'polygon') {
             document.getElementById('polygon_sides').value = data.polygonSides;
             document.getElementById('polygon_side_length').value = data.polygonSideLength;
+            document.getElementById('polygon_arrangement').value = data.polygonArrangement || 'diagonal';  // 添加多边形排布方式参数
         } else if (data.shapeType === 'triangle') {
             document.getElementById('triangle_type').value = data.triangleType;
             document.getElementById('triangle_side_length').value = data.triangleSideLength;
