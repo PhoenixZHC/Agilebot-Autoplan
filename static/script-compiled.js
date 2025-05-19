@@ -255,9 +255,6 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
   var place_type = document.getElementById('place_type').value;
   var remainder_turn = document.getElementById('remainder_turn').value;
 
-  // 获取PR寄存器ID
-  var pr_register_id = document.getElementById('pr_register_id').value;
-
   // 发送请求到后端
   fetch('/calculate', {
     method: 'POST',
@@ -311,6 +308,60 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
     document.getElementById('shapes-per-row-or-col').style.display = 'block';
     document.getElementById('shapes-per-row-or-col-value').textContent = shapesPerRowOrCol;
 
+    // 返回图像数据
+    return response.blob();
+  }).then(function (blob) {
+    // 创建图像URL
+    var imageUrl = URL.createObjectURL(blob);
+    var plotImage = document.getElementById('plot');
+    if (!plotImage) {
+      console.error('plot element not found');
+      return;
+    }
+    plotImage.src = imageUrl;
+    plotImage.style.display = 'block';
+
+    // 将 blob 转换为 Base64 字符串
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onloadend = function () {
+        if (reader.result) {
+          plotImage.setAttribute('data-base64', reader.result);
+          console.log('Base64 data set successfully:', reader.result.substring(0, 50) + '...');
+        } else {
+          console.error('Failed to convert image to base64');
+        }
+        resolve();
+      };
+      reader.onerror = function (error) {
+        console.error('Error converting image to base64:', error);
+        reject(error);
+      };
+      reader.readAsDataURL(blob);
+    });
+  }).then(function () {
+    // 获取PR寄存器ID
+    var pr_register_id = document.getElementById('pr_register_id').value;
+
+    // 读取PR寄存器的C值
+    return fetch('/read_pr_register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        pr_register_id: pr_register_id
+      })
+    });
+  }).then(function (response) {
+    if (!response.ok) {
+      throw new Error('读取PR寄存器失败');
+    }
+    return response.json();
+  }).then(function (data) {
+    var cValue = parseFloat(data.c); // 获取PR寄存器的C值并转换为浮点数
+    console.log('从后端读取的C值:', cValue); // 打印C值
+
     // 填充数据清单表格
     var tableBody = document.querySelector('#data-list-content table tbody');
     tableBody.innerHTML = ''; // 清空表格内容
@@ -321,14 +372,14 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
 
       // 行号
       var cell1 = document.createElement('td');
-      cell1.textContent = rowColInfo[index][0]; // 行号
+      cell1.textContent = rowColInfoGlobal[index][0]; // 行号
       cell1.style.border = '1px solid #ddd';
       cell1.style.padding = '8px';
       row.appendChild(cell1);
 
       // 列号
       var cell2 = document.createElement('td');
-      cell2.textContent = rowColInfo[index][1]; // 列号
+      cell2.textContent = rowColInfoGlobal[index][1]; // 列号
       cell2.style.border = '1px solid #ddd';
       cell2.style.padding = '8px';
       row.appendChild(cell2);
@@ -368,9 +419,9 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
       cell7.style.padding = '8px';
       row.appendChild(cell7);
 
-      // C坐标（初始为0）
+      // C坐标（使用从PR寄存器读取的C值）
       var cell8 = document.createElement('td');
-      cell8.textContent = '0.00';
+      cell8.textContent = isNaN(cValue) ? '0.00' : cValue.toFixed(2); // 使用读取到的C值，如果无效则显示0.00
       cell8.style.border = '1px solid #ddd';
       cell8.style.padding = '8px';
       row.appendChild(cell8);
@@ -382,38 +433,6 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
       cell9.style.padding = '8px';
       row.appendChild(cell9);
       tableBody.appendChild(row);
-    });
-
-    // 返回图像数据
-    return response.blob();
-  }).then(function (blob) {
-    // 创建图像URL
-    var imageUrl = URL.createObjectURL(blob);
-    var plotImage = document.getElementById('plot');
-    if (!plotImage) {
-      console.error('plot element not found');
-      return;
-    }
-    plotImage.src = imageUrl;
-    plotImage.style.display = 'block';
-
-    // 将 blob 转换为 Base64 字符串
-    return new Promise(function (resolve, reject) {
-      var reader = new FileReader();
-      reader.onloadend = function () {
-        if (reader.result) {
-          plotImage.setAttribute('data-base64', reader.result);
-          console.log('Base64 data set successfully:', reader.result.substring(0, 50) + '...');
-        } else {
-          console.error('Failed to convert image to base64');
-        }
-        resolve();
-      };
-      reader.onerror = function (error) {
-        console.error('Error converting image to base64:', error);
-        reject(error);
-      };
-      reader.readAsDataURL(blob);
     });
   }).catch(function (error) {
     alertError(error.message);
