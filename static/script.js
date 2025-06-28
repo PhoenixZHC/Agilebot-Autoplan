@@ -93,7 +93,375 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // 添加配方号输入框的事件监听器
+    const recipeNumberInput = document.getElementById('recipe-number');
+    if (recipeNumberInput) {
+        recipeNumberInput.addEventListener('input', updateExternalCallVisibility);
+    }
+    
+    // 添加调用信号DI输入框的事件监听器
+    const callSignalInput = document.getElementById('call-signal');
+    if (callSignalInput) {
+        callSignalInput.addEventListener('input', updateExternalCallVisibility);
+    }
+    
+    // 初始化显示状态
+    updateExternalCallVisibility();
+    
+    // 添加外部调用选择框的事件监听器
+    const externalCallSelect = document.getElementById('external-call');
+    if (externalCallSelect) {
+        externalCallSelect.addEventListener('change', handleExternalCallChange);
+    }
+    
+    // 页面卸载时清理监控
+    window.addEventListener('beforeunload', function() {
+        stopExternalCallMonitor();
+    });
 });
+
+// 处理外部调用选择框变化
+function handleExternalCallChange() {
+    const externalCallValue = document.getElementById('external-call').value;
+    const recipeNumber = document.getElementById('recipe-number').value;
+    const callSignal = document.getElementById('call-signal').value;
+    
+    if (externalCallValue === '1' && recipeNumber && callSignal) {
+        // 开启外部调用监控
+        startExternalCallMonitor();
+    } else {
+        // 停止外部调用监控
+        stopExternalCallMonitor();
+    }
+}
+
+// 外部调用监控相关变量
+let externalCallInterval = null;
+let isMonitoring = false;
+let lastTriggerTime = 0; // 记录上次触发时间
+let isAutoWriting = false; // 记录是否正在自动写入
+const TRIGGER_COOLDOWN = 3000; // 3秒冷却时间
+
+// 开始外部调用监控
+function startExternalCallMonitor() {
+    if (isMonitoring) {
+        return; // 已经在监控中
+    }
+    
+    const recipeNumber = document.getElementById('recipe-number').value;
+    const callSignal = document.getElementById('call-signal').value;
+    
+    if (!recipeNumber || !callSignal) {
+        alertError('请先输入配方号MH和调用信号DI');
+        return;
+    }
+    
+    isMonitoring = true;
+    console.log('开始外部调用监控...');
+    updateStatusDisplay(`监控状态: 正在监控 DI${callSignal} 信号，等待触发...`, 'monitoring');
+    
+    // 每0.3秒检查一次DI信号
+    externalCallInterval = setInterval(() => {
+        checkExternalCall();
+    }, 300);
+}
+
+// 停止外部调用监控
+function stopExternalCallMonitor() {
+    if (externalCallInterval) {
+        clearInterval(externalCallInterval);
+        externalCallInterval = null;
+    }
+    isMonitoring = false;
+    isAutoWriting = false; // 重置写入状态
+    console.log('停止外部调用监控');
+    updateStatusDisplay('监控状态: 已停止');
+}
+
+// 检查外部调用
+function checkExternalCall() {
+    const recipeNumber = document.getElementById('recipe-number').value;
+    const callSignal = document.getElementById('call-signal').value;
+    
+    // 如果正在自动写入，则跳过此次检查
+    if (isAutoWriting) {
+        console.log('正在自动写入中，跳过此次配方调用检查');
+        updateStatusDisplay('正在自动写入中，暂停接收新的配方调用...', 'processing');
+        return;
+    }
+    
+    fetch('/start_external_call_monitor', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            mh_number: recipeNumber,
+            di_number: callSignal
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            console.error('外部调用监控错误:', data.error);
+            updateStatusDisplay(`监控错误: ${data.error}`, 'error');
+            stopExternalCallMonitor();
+            return;
+        }
+        
+        // 打印DI信号状态
+        console.log(`DI${callSignal} 信号状态: ${data.di_value}`);
+        
+        if (data.triggered) {
+            // 再次检查是否正在自动写入（双重保险）
+            if (isAutoWriting) {
+                console.log('正在自动写入中，忽略此次触发');
+                return;
+            }
+            
+            // 检查是否在冷却时间内
+            const currentTime = Date.now();
+            if (currentTime - lastTriggerTime < TRIGGER_COOLDOWN) {
+                console.log('触发信号在冷却时间内，忽略此次触发');
+                return;
+            }
+            
+            // 更新触发时间
+            lastTriggerTime = currentTime;
+            
+            // DI信号为1，读取到MH值，加载对应配方
+            console.log(`检测到触发信号，MH${recipeNumber} 寄存器值: ${data.mh_value}`);
+            updateStatusDisplay(`检测到触发信号，MH值: ${data.mh_value}，正在加载配方...`, 'triggered');
+            
+            // 加载配方但不停止监控
+            loadRecipeByMHValue(data.mh_value);
+            
+            // 延迟一下再继续监控，避免重复触发
+            setTimeout(() => {
+                if (isMonitoring) {
+                    updateStatusDisplay(`监控状态: 正在监控 DI${callSignal} 信号，等待下一次触发...`, 'monitoring');
+                }
+            }, 2000); // 2秒后恢复监控状态显示
+        }
+    })
+    .catch(error => {
+        console.error('外部调用监控请求失败:', error);
+        updateStatusDisplay(`监控请求失败: ${error.message}`, 'error');
+        stopExternalCallMonitor();
+    });
+}
+
+// 根据MH值加载配方
+function loadRecipeByMHValue(mhValue) {
+    console.log('开始根据MH值加载配方，MH值:', mhValue);
+    
+    // 首先获取所有配方列表
+    fetch('/get_recipe_list', {
+        method: 'GET',
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            console.error('获取配方列表失败:', data.error);
+            updateStatusDisplay(`获取配方列表失败: ${data.error}`, 'error');
+            return;
+        }
+        
+        console.log('获取到的配方列表:', data.recipes);
+        
+        // 查找配方编号匹配的配方
+        const targetRecipe = data.recipes.find(recipe => {
+            console.log('检查配方:', recipe.recipeName, '配方编号:', recipe.recipeId, '目标MH值:', mhValue);
+            return recipe.recipeId == mhValue; // 使用==进行类型转换比较
+        });
+        
+        if (targetRecipe) {
+            console.log('找到匹配的配方:', targetRecipe.recipeName, '配方编号:', targetRecipe.recipeId);
+            
+            // 检查是否开启自动写入
+            const autoWriteValue = document.getElementById('auto-write').value;
+            console.log('自动写入设置:', autoWriteValue);
+            
+            if (autoWriteValue === '1') {
+                // 自动写入模式：先跳转到数据清单页面，然后执行自动写入
+                console.log('执行自动写入模式，跳转到数据清单页面...');
+                updateStatusDisplay(`找到配方: ${targetRecipe.recipeName}，跳转到数据清单页面...`, 'processing');
+                
+                // 跳转到数据清单页面
+                showSection('data-list-content');
+                setActiveButton('data-list-btn');
+                
+                // 然后执行自动写入
+                performAutoWrite(targetRecipe.recipeName);
+            } else {
+                // 手动模式：加载到数据清单页面并显示配方数据
+                console.log('执行手动模式，加载配方到数据清单页面');
+                window.isFromExternalCall = true; // 设置标志位
+                loadRecipeToPlanning(targetRecipe.recipeName);
+                updateStatusDisplay(`配方加载成功: ${targetRecipe.recipeName}`, 'success');
+                alertSuccess(`检测到配方调用，配方: ${targetRecipe.recipeName}`);
+            }
+        } else {
+            console.log('未找到配方编号为', mhValue, '的配方');
+            console.log('可用的配方编号:', data.recipes.map(r => r.recipeId));
+            updateStatusDisplay(`未找到配方编号为 ${mhValue} 的配方`, 'error');
+            alertError(`未找到配方编号为 ${mhValue} 的配方`);
+        }
+    })
+    .catch(error => {
+        console.error('根据MH值加载配方失败:', error);
+        updateStatusDisplay(`加载配方失败: ${error.message}`, 'error');
+    });
+}
+
+// 全局变量，用于跟踪写入P点操作的状态
+let isWriteOperationInProgress = false;
+let writeOperationPromise = null;
+let writeOperationCount = 0; // 跟踪需要完成的写入操作数量
+let completedOperations = 0; // 已完成的写入操作数量
+let writeOperationResults = []; // 存储所有写入操作的结果
+
+// 执行自动写入功能
+function performAutoWrite(recipeName) {
+    console.log('开始执行自动写入功能，配方名称:', recipeName);
+    
+    // 设置正在自动写入标志
+    isAutoWriting = true;
+    updateStatusDisplay(`正在加载配方到数据清单页面...`, 'processing');
+    
+    // 重置写入操作计数器
+    writeOperationCount = 0;
+    completedOperations = 0;
+    writeOperationResults = [];
+    
+    // 1. 首先加载配方到数据清单页面
+    window.isFromExternalCall = true; // 设置标志位
+    loadRecipeToPlanning(recipeName);
+    
+    // 2. 等待页面加载完成后，检查机器人状态
+    setTimeout(() => {
+        updateStatusDisplay(`正在检查机器人状态...`, 'processing');
+        
+        // 检查机器人状态
+        fetch('/check_robot_status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({}),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('检查机器人状态失败:', data.error);
+                updateStatusDisplay(`机器人状态检查失败: ${data.error}`, 'error');
+                alertError(`机器人状态检查失败: ${data.error}`);
+                isAutoWriting = false; // 重置写入状态
+                throw new Error(data.error);
+            }
+            
+            console.log('机器人状态:', data.status, '是否空闲:', data.is_idle);
+            
+            if (!data.is_idle) {
+                updateStatusDisplay(`机器人当前状态: ${data.status}，无法自动写入`, 'error');
+                alertError(`机器人当前状态: ${data.status}，无法自动写入`);
+                isAutoWriting = false; // 重置写入状态
+                throw new Error(`机器人当前状态: ${data.status}，无法自动写入`);
+            }
+            
+            // 3. 检查运行中的程序
+            updateStatusDisplay(`机器人状态正常，检查运行中的程序...`, 'processing');
+            return fetch('/check_running_programs', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({}),
+            });
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('检查运行程序失败:', data.error);
+                updateStatusDisplay(`检查运行程序失败: ${data.error}`, 'error');
+                alertError(`检查运行程序失败: ${data.error}`);
+                isAutoWriting = false; // 重置写入状态
+                throw new Error(data.error);
+            }
+            
+            console.log('运行中的程序:', data.running_programs, '是否有程序运行:', data.has_running_programs);
+            
+            if (data.has_running_programs) {
+                updateStatusDisplay(`当前有程序在运行: ${data.running_programs.join(', ')}，无法自动写入`, 'error');
+                alertError(`当前有程序在运行: ${data.running_programs.join(', ')}，无法自动写入`);
+                isAutoWriting = false; // 重置写入状态
+                throw new Error(`当前有程序在运行: ${data.running_programs.join(', ')}，无法自动写入`);
+            }
+            
+            // 4. 状态检查通过，开始写入P点操作
+            updateStatusDisplay(`状态检查通过，开始自动写入P点...`, 'processing');
+            
+            // 确保程序名称输入框有值
+            const programNameInput = document.getElementById('write_program_name');
+            if (!programNameInput.value) {
+                programNameInput.value = recipeName; // 使用配方名称作为程序名称
+            }
+            
+            // 创建一个Promise来等待所有写入操作完成
+            writeOperationPromise = new Promise((resolve, reject) => {
+                // 设置写入操作完成后的回调
+                // 注意：P点写入和R寄存器写入总是会执行，TF写入只有在自动TF功能开启时才会执行
+                window.onWriteOperationComplete = (success, message, operationType) => {
+                    console.log(`写入操作完成: ${operationType}, 成功: ${success}, 消息: ${message}`);
+                    
+                    // 记录操作结果
+                    writeOperationResults.push({
+                        type: operationType,
+                        success: success,
+                        message: message
+                    });
+                    
+                    completedOperations++;
+                    
+                    // 检查是否所有操作都完成了
+                    if (completedOperations >= writeOperationCount) {
+                        // 检查是否有失败的操作
+                        const failedOperations = writeOperationResults.filter(op => !op.success);
+                        
+                        if (failedOperations.length > 0) {
+                            // 有失败的操作
+                            const errorMessages = failedOperations.map(op => `${op.type}: ${op.message}`).join('; ');
+                            reject(new Error(errorMessages));
+                        } else {
+                            // 所有操作都成功
+                            const successMessages = writeOperationResults.map(op => `${op.type}: ${op.message}`).join('; ');
+                            resolve(successMessages);
+                        }
+                    }
+                };
+                
+                // 模拟点击写入P点按钮
+                console.log('模拟点击写入P点按钮');
+                document.getElementById('write_p_data_button').click();
+            });
+            
+            // 等待写入操作完成
+            return writeOperationPromise;
+        })
+        .then((message) => {
+            console.log('自动写入完成:', message);
+            updateStatusDisplay(`配方 ${recipeName} 自动写入完成`, 'success');
+            alertSuccess(`配方 ${recipeName} 自动写入成功！`);
+            isAutoWriting = false; // 重置写入状态
+        })
+        .catch(error => {
+            console.error('自动写入过程出错:', error);
+            updateStatusDisplay(`自动写入失败: ${error.message}`, 'error');
+            alertError(`自动写入失败: ${error.message}`);
+            isAutoWriting = false; // 重置写入状态
+        });
+    }, 1000); // 等待1秒，确保页面加载完成
+}
 
 // 菜单栏按钮点击事件
 document.getElementById('robot-settings-btn').addEventListener('click', function () {
@@ -741,7 +1109,13 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         return;
     }
 
-        // 准备要写入的P点数据
+    // 如果是自动写入模式，增加操作计数器
+    if (isAutoWriting) {
+        writeOperationCount++;
+        console.log(`增加P点写入操作计数器，当前总数: ${writeOperationCount}`);
+    }
+
+    // 准备要写入的P点数据
     const pData = [];
     rows.forEach(row => {
         const pId = parseInt(row.cells[2].textContent, 10); // P_ID
@@ -818,15 +1192,31 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .then(data => {
         console.log('P点数据写入成功');
         alertSuccess('P点数据写入成功');
+        
+        // 如果有自动写入的回调函数，调用它
+        if (window.onWriteOperationComplete) {
+            window.onWriteOperationComplete(true, 'P点数据写入成功', 'P点写入');
+        }
     })
     .catch(error => {
         console.error('写入P点数据失败:', error.message);
         alertError('写入P点数据失败: ' + error.message);
+        
+        // 如果有自动写入的回调函数，调用它
+        if (window.onWriteOperationComplete) {
+            window.onWriteOperationComplete(false, '写入P点数据失败: ' + error.message, 'P点写入');
+        }
     });
 });
 
 // 在"写入P点"按钮点击事件中，新增R逻辑
 document.getElementById('write_p_data_button').addEventListener('click', function () {
+    // 如果是自动写入模式，增加操作计数器
+    if (isAutoWriting) {
+        writeOperationCount++;
+        console.log(`增加R寄存器写入操作计数器，当前总数: ${writeOperationCount}`);
+    }
+    
     // 获取新增输入框的值
     const frame_length = document.getElementById('frame_length').value;
     const frame_width = document.getElementById('frame_width').value;
@@ -838,7 +1228,6 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     const toolCount = document.getElementById('tool_count').value;
     const drop_Count = document.getElementById('drop_Count').value;
     const shapesPerRowOrColValue = document.getElementById('shapes-per-row-or-col-value').textContent;
-
 
     // 检查填充数量和工具数量是否有效
     if (!shapeCountValue || !toolCount) {
@@ -878,10 +1267,20 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .then(data => {
         console.log('R寄存器写入成功');
         alertSuccess('R寄存器写入成功');
+        
+        // 如果有自动写入的回调函数，调用它
+        if (window.onWriteOperationComplete) {
+            window.onWriteOperationComplete(true, 'R寄存器写入成功', 'R寄存器写入');
+        }
     })
     .catch(error => {
         console.error('写入R寄存器失败:', error.message);
         alertError('写入R寄存器失败: ' + error.message);
+        
+        // 如果有自动写入的回调函数，调用它
+        if (window.onWriteOperationComplete) {
+            window.onWriteOperationComplete(false, '写入R寄存器失败: ' + error.message, 'R寄存器写入');
+        }
     });
 });
 
@@ -892,6 +1291,12 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     const autoTF = parseInt(document.getElementById('auto_tf').value, 10); // 获取自动TF功能开关状态
     const toolLayout = document.getElementById('tool_layout').value; // 获取工具布局选项
     const toolDirection = document.getElementById('tool_direction').value;
+
+    // 如果是自动写入模式且自动TF功能开启，增加操作计数器
+    if (isAutoWriting && autoTF === 1) {
+        writeOperationCount++;
+        console.log(`增加TF写入操作计数器，当前总数: ${writeOperationCount}`);
+    }
 
     if (isNaN(toolSpacing)) { // 检查工具间距是否为有效数字
         alertError('请输入有效的工具间距');
@@ -1029,10 +1434,20 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .then(data => {
         console.log('TF数据更新成功');
         alertSuccess('TF数据更新成功');
+        
+        // 如果有自动写入的回调函数且自动TF功能开启，调用它
+        if (window.onWriteOperationComplete && autoTF === 1) {
+            window.onWriteOperationComplete(true, 'TF数据更新成功', 'TF写入');
+        }
     })
     .catch(error => {
         console.error('更新TF数据失败:', error.message);
         alertError('更新TF数据失败: ' + error.message);
+        
+        // 如果有自动写入的回调函数且自动TF功能开启，调用它
+        if (window.onWriteOperationComplete && autoTF === 1) {
+            window.onWriteOperationComplete(false, '更新TF数据失败: ' + error.message, 'TF写入');
+        }
     });
 });
 
@@ -1725,9 +2140,68 @@ function loadRecipeToPlanning(recipeName) {
         document.getElementById('recipe_name').value = recipeName;
         document.getElementById('recipe_id').value = data.recipeId; // 填充配方编号
 
-        // 显示数据清单页面
-        showSection('data-list-content');
-        setActiveButton('data-list-btn');
+        // 检查是否来自外部调用监控
+        const isFromExternalCall = window.isFromExternalCall;
+        if (isFromExternalCall) {
+            // 如果是外部调用，显示数据清单页面
+            showSection('data-list-content');
+            setActiveButton('data-list-btn');
+            window.isFromExternalCall = false; // 重置标志位
+        } else {
+            // 如果是手动加载，也显示数据清单页面
+            showSection('data-list-content');
+            setActiveButton('data-list-btn');
+        }
     })
     .catch(error => console.error('加载配方失败:', error));
+}
+
+// 配方库界面选择框显示控制
+function updateExternalCallVisibility() {
+    const recipeNumber = document.getElementById('recipe-number').value;
+    const callSignal = document.getElementById('call-signal').value;
+    const externalCallContainer = document.getElementById('external-call-container');
+    const autoWriteContainer = document.getElementById('auto-write-container');
+    const externalCallStatus = document.getElementById('external-call-status');
+    
+    // 只有当配方号和调用信号DI都输入了值时才显示选择框
+    if (recipeNumber && callSignal) {
+        externalCallContainer.style.display = 'block';
+        autoWriteContainer.style.display = 'block';
+        externalCallStatus.style.display = 'block';
+    } else {
+        externalCallContainer.style.display = 'none';
+        autoWriteContainer.style.display = 'none';
+        externalCallStatus.style.display = 'none';
+        // 如果隐藏选择框，也要停止监控
+        stopExternalCallMonitor();
+    }
+}
+
+// 更新状态显示
+function updateStatusDisplay(message, type = 'normal') {
+    const statusText = document.getElementById('status-text');
+    const statusContainer = document.getElementById('external-call-status');
+    
+    if (statusText) {
+        statusText.textContent = message;
+    }
+    
+    if (statusContainer) {
+        // 移除所有状态类
+        statusContainer.classList.remove('monitoring', 'triggered', 'error', 'processing', 'success');
+        
+        // 根据类型添加相应的类
+        if (type === 'monitoring') {
+            statusContainer.classList.add('monitoring');
+        } else if (type === 'triggered') {
+            statusContainer.classList.add('triggered');
+        } else if (type === 'error') {
+            statusContainer.classList.add('error');
+        } else if (type === 'processing') {
+            statusContainer.classList.add('processing');
+        } else if (type === 'success') {
+            statusContainer.classList.add('success');
+        }
+    }
 }

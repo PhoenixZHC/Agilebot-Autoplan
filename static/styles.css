@@ -1112,3 +1112,129 @@ input[type="number"] {
 #p_data_table tr:hover {
     background-color: #f1f1f1;
 }
+
+/* 确保shape-input类中的元素与其他input-section中的元素样式一致 */
+.shape-input div {
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.shape-input div:last-child {
+    margin-bottom: 0;
+}
+
+.shape-input label {
+    width: 90px;
+    font-weight: bold;
+    color: #555;
+    font-size: 10px;
+    margin-right: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.shape-input input,
+.shape-input select {
+    width: calc(100% - 95px);
+    padding: 2px 4px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 10px;
+    height: 25px;
+    box-sizing: border-box;
+}
+
+/* 特别针对多边形排布方式选择框的样式 - 使用更高优先级 */
+.planning-content .input-section .shape-input #polygon_arrangement_input[style*="display: block"] {
+    margin-bottom: 5px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.planning-content .input-section .shape-input #polygon_arrangement_input[style*="display: block"] label {
+    width: 90px !important;
+    font-weight: bold !important;
+    color: #555 !important;
+    font-size: 10px !important;
+    margin-right: 5px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.planning-content .input-section .shape-input #polygon_arrangement_input[style*="display: block"] select {
+    width: calc(100% - 95px) !important;
+    padding: 2px 4px !important;
+    border: 1px solid #ccc !important;
+    border-radius: 3px !important;
+    font-size: 10px !important;
+    height: 25px !important;
+    box-sizing: border-box !important;
+}
+
+/* 配方库界面新增选择框样式 */
+#external-call-container,
+#auto-write-container {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 10px;
+}
+
+#external-call-container label,
+#auto-write-container label {
+    font-weight: bold;
+    color: #555;
+    font-size: 10px;
+    margin-right: 5px;
+    white-space: nowrap;
+}
+
+#external-call-container select,
+#auto-write-container select {
+    height: 25px;
+    padding: 3px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 10px;
+    box-sizing: border-box;
+    min-width: 60px;
+}
+
+/* 外部调用状态显示样式 */
+#external-call-status {
+    font-size: 10px;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+#external-call-status.monitoring {
+    background-color: #e7f3ff;
+    border-color: #007bff;
+    color: #007bff;
+}
+
+#external-call-status.triggered {
+    background-color: #d4edda;
+    border-color: #28a745;
+    color: #28a745;
+}
+
+#external-call-status.error {
+    background-color: #f8d7da;
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+#external-call-status.processing {
+    background-color: #fff3cd;
+    border-color: #ffc107;
+    color: #856404;
+}
+
+#external-call-status.success {
+    background-color: #d1ecf1;
+    border-color: #17a2b8;
+    color: #0c5460;
+}

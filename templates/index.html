@@ -13,7 +13,7 @@
             <img src="{{ url_for('static', filename='logo.png')  }}" alt="Logo">
         </div>
         <div class="title">捷勃特智能摆盘规划系统</div>
-        <div class="version">V5.2_20250519</div>
+        <div class="version">V6.0_20250628</div>
     </div>
 
     <!-- 主容器 -->
@@ -75,7 +75,7 @@
                         <div class="tool-settings">
                             <div class="input-group">
                                 <label for="pr_register_id">Z&C参考寄存器:</label>
-                                <input type="number" id="pr_register_id" name="pr_register_id" min="1" max="99999" oninput="if(this.value.length > 5) this.value=this.value.slice(0,5)">
+                                <input type="number" id="pr_register_id" name="pr_register_id" min="1" max="99999" value="1" oninput="if(this.value.length > 5) this.value=this.value.slice(0,5)">
                             </div>
 
                             <div class="input-group">
@@ -112,7 +112,7 @@
 
                             <div class="input-group">
                                 <label for="tool_spacing">工具间距:</label>
-                                <input type="number" id="tool_spacing" name="tool_spacing" step="0.1" min="0" max="99999" oninput="if(this.value.length > 5) this.value=this.value.slice(0,5)">
+                                <input type="number" id="tool_spacing" name="tool_spacing" step="0.1" min="0" max="99999" value="0" oninput="if(this.value.length > 5) this.value=this.value.slice(0,5)">
                             </div>
 
                             <div class="input-group">
@@ -133,16 +133,16 @@
 
                             <div class="input-group">
                                 <label for="auto_tf">自动TF计算:</label>
-                                <select id="auto_tf" name="auto_tf" value="0">
+                                <select id="auto_tf" name="auto_tf">
+                                    <option value="0" selected>关闭</option>
                                     <option value="1">开启</option>
-                                    <option value="0">关闭</option>
                                 </select>
                             </div>
 
                             <div class="input-group">
                                 <label for="left_right">坐标系方向:</label>
-                                <select id="left_right" name="left_right" value="1">
-                                    <option value="1">右手坐标系</option>
+                                <select id="left_right" name="left_right">
+                                    <option value="1" selected>右手坐标系</option>
                                     <option value="-1">左手坐标系</option>
                                 </select>
                             </div>
@@ -484,18 +484,35 @@
                     <div class="search-section">
                         <label for="recipe-search">查找配方:</label>
                         <input type="text" id="recipe-search" placeholder="输入配方名">
-                        <!-- 允许外部调用选择框和输入框 -->
-                        <label for="external-call">允许外部调用:</label>
-                        <select id="external-call">
-                            <option value="0">关闭</option>
-                            <option value="1">开启</option>
-                        </select>
 
                         <label for="recipe-number">配方号MH:</label>
                         <input type="number" id="recipe-number" min="1" placeholder="输入配方号MH">
 
                         <label for="call-signal">调用信号DI:</label>
                         <input type="number" id="call-signal" min="1" placeholder="输入调用信号DI">
+
+                        <!-- 允许外部调用选择框 - 默认隐藏 -->
+                        <div id="external-call-container" style="display: none;">
+                            <label for="external-call">允许外部调用:</label>
+                            <select id="external-call">
+                                <option value="0">关闭</option>
+                                <option value="1">开启</option>
+                            </select>
+                        </div>
+
+                        <!-- 自动写入选择框 - 默认隐藏 -->
+                        <div id="auto-write-container" style="display: none;">
+                            <label for="auto-write">自动写入:</label>
+                            <select id="auto-write">
+                                <option value="0" selected>关闭</option>
+                                <option value="1">开启</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 外部调用状态显示 -->
+                        <div id="external-call-status" style="display: none; margin-top: 10px; padding: 5px; background-color: #f0f0f0; border-radius: 3px;">
+                            <span id="status-text">监控状态: 未启动</span>
+                        </div>
                     </div>
                     <div class="recipe-library">
                         <!-- 左侧配方列表 -->

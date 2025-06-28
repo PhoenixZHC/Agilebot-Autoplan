@@ -14,15 +14,17 @@ import math
 import os
 import json
 import platform
+from typing import Optional
 from Agilebot.IR.A.arm import Arm
 from Agilebot.IR.A.status_code import StatusCodeEnum
-from Agilebot.IR.A.sdk_types import CoordinateSystemType
+from Agilebot.IR.A.sdk_types import CoordinateSystemType, SignalType, SignalValue
+from Agilebot.IR.A.sdk_classes import PoseRegister, Posture, PoseType
 
 # 获取插件端口号，无未提供，默认5000
 PORT = os.getenv("PORT", "5000")
 
 app = Flask(__name__)
-robot_arm = None
+robot_arm: Optional[Arm] = None
 def calculate_bounding_box(vertices):
     """计算给定顶点的最小外接矩形"""
     x_cords = [v[0] for v in vertices]
@@ -685,7 +687,11 @@ def calculate():
 @app.route('/connect_robot', methods=['POST'])
 def connect_robot():
     global robot_arm
-    data = request.json
+    data = request.get_json()  # 使用get_json()替代request.json
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
+        
     robot_ip = data.get('robot_ip')
 
     if not robot_ip:
@@ -723,15 +729,15 @@ def connect_robot():
             return jsonify({'error': error_msg}), 400
 
         # 获取型号
-        ret, model_info = robot_arm.get_arm_model_info()
+        model_info, ret = robot_arm.get_arm_model_info()
         if ret != StatusCodeEnum.OK:
             # 获取型号失败时，清理连接状态
             robot_arm.disconnect()
             robot_arm = None
             return jsonify({'error': '获取型号失败: ' + ret.errmsg}), 400
 
-        # 获取控制柜版本
-        ret, version_info = robot_arm.get_version()
+        # 获取控制柜版本 - 使用新版本SDK的接口
+        version_info, ret = robot_arm.get_version()
         if ret != StatusCodeEnum.OK:
             # 获取版本失败时，清理连接状态
             robot_arm.disconnect()
@@ -765,7 +771,11 @@ def disconnect_robot_route():
 @app.route('/get_p_data', methods=['POST'])
 def get_p_data():
     global robot_arm
-    data = request.json
+    data = request.get_json()  # 使用get_json()替代request.json
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
+        
     program_name = data.get('program_name')
 
     if not program_name:
@@ -776,6 +786,7 @@ def get_p_data():
 
     try:
         # 读取所有位姿
+        assert robot_arm is not None  # 类型检查器断言
         poses, ret = robot_arm.program_pose.read_all_poses(program_name)
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '读取P点数据失败'}), 400
@@ -813,7 +824,11 @@ def get_p_data():
 @app.route('/write_p_data', methods=['POST'])
 def write_p_data():
     global robot_arm
-    data = request.json
+    data = request.get_json()  # 使用get_json()替代request.json
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
+        
     program_name = data.get('program_name')
     p_data = data.get('p_data')
 
@@ -825,7 +840,7 @@ def write_p_data():
 
     try:
         # 检查机器人状态
-        ret, state = robot_arm.get_robot_status()
+        state, ret = robot_arm.get_robot_status()
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '获取机器人状态失败'}), 400
 
@@ -845,6 +860,9 @@ def write_p_data():
             left_right = int(p.get('left_right', 1))  # 确保坐标系方向是整数
 
             # 读取当前P点的位姿数据
+            if robot_arm is None:
+                return jsonify({'error': '机器人连接已断开'}), 400
+            assert robot_arm is not None  # 类型检查器断言
             pose, ret = robot_arm.program_pose.read(program_name, pose_id)
             if ret != StatusCodeEnum.OK:
                 return jsonify({'error': f'读取P点 {pose_id} 数据失败'}), 400
@@ -859,6 +877,8 @@ def write_p_data():
             pose.poseData.cartData.baseCart.posture.arm_left_right = left_right  # 更新坐标系方向值
 
             # 将修改后的位姿数据写回
+            if robot_arm is None:
+                return jsonify({'error': '机器人连接已断开'}), 400
             ret = robot_arm.program_pose.write(program_name, pose_id, pose)
             if ret != StatusCodeEnum.OK:
                 return jsonify({'error': f'写入P点 {pose_id} 数据失败'}), 400
@@ -871,7 +891,11 @@ def write_p_data():
 @app.route('/read_pr_register', methods=['POST'])
 def read_pr_register():
     global robot_arm
-    data = request.json
+    data = request.get_json()  # 使用get_json()替代request.json
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
+        
     pr_register_id = data.get('pr_register_id')
     print(f"读取PR寄存器 {pr_register_id} 的C值")  # 打印调试信息
 
@@ -887,8 +911,11 @@ def read_pr_register():
         return jsonify({'error': '未连接机器人'}), 400
 
     try:
-        # 读取位姿寄存器
-        pose_register, ret = robot_arm.pose_register.read(pr_register_id)
+        # 读取位姿寄存器 - 使用新版本SDK的接口
+        if robot_arm is None:
+            return jsonify({'error': '机器人连接已断开'}), 400
+        assert robot_arm is not None  # 类型检查器断言
+        pose_register, ret = robot_arm.register.read_PR(pr_register_id)
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '读取PR寄存器失败'}), 400
 
@@ -908,7 +935,10 @@ def read_pr_register():
 # 新增：写入R寄存器的路由
 @app.route('/write_r_registers', methods=['POST'])
 def write_r_registers():
-    data = request.json
+    data = request.get_json()  # 使用get_json()替代request.json
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
 
     # 获取前端传入的值
     frame_length = data.get('frame_length')
@@ -930,111 +960,89 @@ def write_r_registers():
 
     try:
 
-        # 写入R1寄存器（图形高度）
-        register, ret = robot_arm.register.read(1)  # 先读取当前寄存器
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '读取R1寄存器失败'}), 400
-        register.value = float(shape_height)  # 更新值
-        ret = robot_arm.register.write(1, register)  # 写回寄存器
+        # 写入R1寄存器（图形高度）- 使用新版本SDK的接口
+        if robot_arm is None:
+            return jsonify({'error': '机器人连接已断开'}), 400
+        assert robot_arm is not None  # 类型检查器断言
+        ret = robot_arm.register.write_R(1, float(shape_height))
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '写入R1寄存器失败'}), 400
 
         # 写入R2寄存器（包材厚度）
-        register, ret = robot_arm.register.read(2)  # 先读取当前寄存器
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '读取R2寄存器失败'}), 400
-        register.value = float(material_thickness)  # 更新值
-        ret = robot_arm.register.write(2, register)  # 写回寄存器
+        if robot_arm is None:
+            return jsonify({'error': '机器人连接已断开'}), 400
+        assert robot_arm is not None  # 类型检查器断言
+        ret = robot_arm.register.write_R(2, float(material_thickness))
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '写入R2寄存器失败'}), 400
 
         # 写入R3寄存器（摆放层数）
-        register, ret = robot_arm.register.read(3)  # 先读取当前寄存器
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '读取R3寄存器失败'}), 400
-        register.value = int(placement_layers)  # 更新值
-        ret = robot_arm.register.write(3, register)  # 写回寄存器
+        if robot_arm is None:
+            return jsonify({'error': '机器人连接已断开'}), 400
+        ret = robot_arm.register.write_R(3, int(placement_layers))
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '写入R3寄存器失败'}), 400
 
          # 写入R4寄存器（填充数量）
-        register, ret = robot_arm.register.read(4)  # 先读取当前寄存器
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '读取R4寄存器失败'}), 400
-        register.value = int(total_shapes)  # 更新值
-        ret = robot_arm.register.write(4, register)  # 写回寄存器
+        if robot_arm is None:
+            return jsonify({'error': '机器人连接已断开'}), 400
+        ret = robot_arm.register.write_R(4, int(total_shapes))
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '写入R4寄存器失败'}), 400
 
         # 写入R5寄存器（工具数量）
-        register, ret = robot_arm.register.read(5)  # 先读取当前寄存器
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '读取R5寄存器失败'}), 400
-        register.value = int(tool_count)  # 更新值
-        ret = robot_arm.register.write(5, register)  # 写回寄存器
+        if robot_arm is None:
+            return jsonify({'error': '机器人连接已断开'}), 400
+        ret = robot_arm.register.write_R(5, int(tool_count))
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '写入R5寄存器失败'}), 400
 
         # 写入R6寄存器（边框深度）
-        register, ret = robot_arm.register.read(6)  # 先读取当前寄存器
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '读取R6寄存器失败'}), 400
-        register.value = float(frame_depth)  # 更新值
-        ret = robot_arm.register.write(6, register)  # 写回寄存器
+        if robot_arm is None:
+            return jsonify({'error': '机器人连接已断开'}), 400
+        ret = robot_arm.register.write_R(6, float(frame_depth))
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '写入R6寄存器失败'}), 400
 
         # 写入R7寄存器（料框长度）
-        register, ret = robot_arm.register.read(7)  # 先读取当前寄存器
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '读取R7寄存器失败'}), 400
-        register.value = int(frame_length)  # 更新值
-        ret = robot_arm.register.write(7, register)  # 写回寄存器
+        if robot_arm is None:
+            return jsonify({'error': '机器人连接已断开'}), 400
+        ret = robot_arm.register.write_R(7, int(frame_length))
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '写入R7寄存器失败'}), 400
 
         # 写入R8寄存器（料框宽度）
-        register, ret = robot_arm.register.read(8)  # 先读取当前寄存器
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '读取R8寄存器失败'}), 400
-        register.value = int(frame_width)  # 更新值
-        ret = robot_arm.register.write(8, register)  # 写回寄存器
+        if robot_arm is None:
+            return jsonify({'error': '机器人连接已断开'}), 400
+        ret = robot_arm.register.write_R(8, int(frame_width))
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '写入R8寄存器失败'}), 400
 
         # 写入R9寄存器（前端下料数量）
-        register, ret = robot_arm.register.read(9)  # 先读取当前寄存器
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '读取R9寄存器失败'}), 400
-        register.value = int(drop_Count)  # 更新值
-        ret = robot_arm.register.write(9, register)  # 写回寄存器
+        if robot_arm is None:
+            return jsonify({'error': '机器人连接已断开'}), 400
+        ret = robot_arm.register.write_R(9, int(drop_Count))
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '写入R9寄存器失败'}), 400
 
          # 写入R10寄存器（单行列数量）
-        register, ret = robot_arm.register.read(10)  # 先读取当前寄存器
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '读取R10寄存器失败'}), 400
-        register.value = int(numofsingle_row_columns)  # 更新值
-        ret = robot_arm.register.write(10, register)  # 写回寄存器
+        if robot_arm is None:
+            return jsonify({'error': '机器人连接已断开'}), 400
+        ret = robot_arm.register.write_R(10, int(numofsingle_row_columns))
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '写入R10寄存器失败'}), 400
 
         # 写入R11寄存器（行数）
-        register, ret = robot_arm.register.read(11)  # 先读取当前寄存器
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '读取R11寄存器失败'}), 400
-        register.value = int(rows)  # 更新值
-        ret = robot_arm.register.write(11, register)  # 写回寄存器
+        if robot_arm is None:
+            return jsonify({'error': '机器人连接已断开'}), 400
+        ret = robot_arm.register.write_R(11, int(rows))
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '写入R11寄存器失败'}), 400
 
          # 写入R12寄存器（列数）
-        register, ret = robot_arm.register.read(12)  # 先读取当前寄存器
-        if ret != StatusCodeEnum.OK:
-            return jsonify({'error': '读取R12寄存器失败'}), 400
-        register.value = int(cols)  # 更新值
-        ret = robot_arm.register.write(12, register)  # 写回寄存器
+        if robot_arm is None:
+            return jsonify({'error': '机器人连接已断开'}), 400
+        ret = robot_arm.register.write_R(12, int(cols))
         if ret != StatusCodeEnum.OK:
             return jsonify({'error': '写入R12寄存器失败'}), 400
 
@@ -1046,7 +1054,11 @@ def write_r_registers():
 @app.route('/get_tf_data', methods=['POST'])
 def get_tf_data():
     global robot_arm
-    data = request.json
+    data = request.get_json()  # 使用get_json()替代request.json
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
+        
     tf_id = data.get('tf_id')
 
     if tf_id is None:
@@ -1099,7 +1111,11 @@ def get_tf_data():
 @app.route('/update_tf_data', methods=['POST'])
 def update_tf_data():
     global robot_arm
-    data = request.json
+    data = request.get_json()  # 使用get_json()替代request.json
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
+        
     tf_updates = data.get('tf_updates')
 
     if not tf_updates:
@@ -1150,7 +1166,11 @@ def update_tf_data():
 # 仿形计算器
 @app.route('/get_pr_data', methods=['POST'])
 def get_pr_data():
-    data = request.json
+    data = request.get_json()  # 使用get_json()替代request.json
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
+        
     shape_type = data.get('shape_type')
     diameter = data.get('diameter')
     length = data.get('length')
@@ -1159,14 +1179,28 @@ def get_pr_data():
     if not shape_type:
         return jsonify({'error': '缺少仿形形状类型'}), 400
 
-    try:
-        # 读取PR寄存器的值
-        pr1, ret1 = robot_arm.pose_register.read(1)
-        pr2, ret2 = robot_arm.pose_register.read(2)
-        pr3, ret3 = robot_arm.pose_register.read(3)
+    if robot_arm is None:
+        return jsonify({'error': '未连接机器人'}), 400
 
-        if ret1 != StatusCodeEnum.OK or ret2 != StatusCodeEnum.OK or ret3 != StatusCodeEnum.OK:
-            return jsonify({'error': '读取PR寄存器失败'}), 400
+    try:
+        # 读取PR寄存器的值 - 使用新版本SDK的接口
+        if robot_arm is None:
+            return jsonify({'error': '机器人连接已断开'}), 400
+        pr1, ret1 = robot_arm.register.read_PR(1)
+        if ret1 != StatusCodeEnum.OK:
+            return jsonify({'error': '读取PR1寄存器失败'}), 400
+            
+        if robot_arm is None:
+            return jsonify({'error': '机器人连接已断开'}), 400
+        pr2, ret2 = robot_arm.register.read_PR(2)
+        if ret2 != StatusCodeEnum.OK:
+            return jsonify({'error': '读取PR2寄存器失败'}), 400
+            
+        if robot_arm is None:
+            return jsonify({'error': '机器人连接已断开'}), 400
+        pr3, ret3 = robot_arm.register.read_PR(3)
+        if ret3 != StatusCodeEnum.OK:
+            return jsonify({'error': '读取PR3寄存器失败'}), 400
 
         # 获取PR寄存器的X和Y值
         pr1_x = pr1.poseRegisterData.cartData.position.x
@@ -1220,7 +1254,10 @@ def get_pr_data():
 
 @app.route('/save_recipe', methods=['POST'])
 def save_recipe():
-    data = request.json
+    data = request.get_json()  # 使用get_json()替代request.json
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
 
     try:
         # 获取配方名和配方编号
@@ -1322,7 +1359,10 @@ def save_recipe():
 
 @app.route('/check_recipe', methods=['POST'])
 def check_recipe():
-    data = request.json
+    data = request.get_json()  # 使用get_json()替代request.json
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
 
     try:
         # 获取配方名和配方编号
@@ -1386,7 +1426,11 @@ def get_recipe_list():
 @app.route('/get_recipe', methods=['POST'])
 def get_recipe():
     """获取指定配方的详细信息"""
-    data = request.json
+    data = request.get_json()  # 使用get_json()替代request.json
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
+        
     recipe_name = data.get('recipeName')
 
     if not recipe_name:
@@ -1406,7 +1450,11 @@ def get_recipe():
 @app.route('/delete_recipe', methods=['POST'])
 def delete_recipe():
     """删除指定配方"""
-    data = request.json
+    data = request.get_json()  # 使用get_json()替代request.json
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
+        
     recipe_name = data.get('recipeName')
 
     if not recipe_name:
@@ -1419,6 +1467,273 @@ def delete_recipe():
 
         os.remove(recipe_file_path)
         return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+# 读取DI信号状态
+@app.route('/read_di_signal', methods=['POST'])
+def read_di_signal():
+    global robot_arm
+    data = request.get_json()
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
+        
+    di_number = data.get('di_number')
+
+    if di_number is None:
+        return jsonify({'error': '缺少DI信号编号'}), 400
+
+    if robot_arm is None:
+        return jsonify({'error': '未连接机器人'}), 400
+
+    try:
+        # 读取指定DI信号的状态
+        di_value, ret = robot_arm.signals.read(SignalType.DI, int(di_number))
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取DI信号失败'}), 400
+
+        # 打印DI信号状态
+        print(f"DI{di_number} 信号状态: {di_value}")
+
+        return jsonify({
+            'di_value': di_value
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+# 读取MH寄存器值
+@app.route('/read_mh_register', methods=['POST'])
+def read_mh_register():
+    global robot_arm
+    data = request.get_json()
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
+        
+    mh_number = data.get('mh_number')
+
+    if mh_number is None:
+        return jsonify({'error': '缺少MH寄存器编号'}), 400
+
+    if robot_arm is None:
+        return jsonify({'error': '未连接机器人'}), 400
+
+    try:
+        # 读取指定MH寄存器的值
+        mh_value, ret = robot_arm.register.read_MH(int(mh_number))
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取MH寄存器失败'}), 400
+
+        # 打印MH寄存器值
+        print(f"MH{mh_number} 寄存器值: {mh_value}")
+
+        return jsonify({
+            'mh_value': mh_value
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+# 外部调用监控
+@app.route('/start_external_call_monitor', methods=['POST'])
+def start_external_call_monitor():
+    global robot_arm
+    data = request.get_json()
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
+        
+    mh_number = data.get('mh_number')
+    di_number = data.get('di_number')
+
+    if mh_number is None or di_number is None:
+        return jsonify({'error': '缺少MH编号或DI编号'}), 400
+
+    if robot_arm is None:
+        return jsonify({'error': '未连接机器人'}), 400
+
+    try:
+        # 读取指定DI信号的状态
+        di_value, ret = robot_arm.signals.read(SignalType.DI, int(di_number))
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '读取DI信号失败'}), 400
+
+        # 打印DI信号状态
+        print(f"监控 - DI{di_number} 信号状态: {di_value}")
+
+        # 如果DI信号为1，则读取MH寄存器值
+        if di_value == 1:
+            mh_value, ret = robot_arm.register.read_MH(int(mh_number))
+            if ret != StatusCodeEnum.OK:
+                return jsonify({'error': '读取MH寄存器失败'}), 400
+
+            # 打印MH寄存器值
+            print(f"监控 - DI{di_number} 触发，MH{mh_number} 寄存器值: {mh_value}")
+
+            return jsonify({
+                'di_value': di_value,
+                'mh_value': mh_value,
+                'triggered': True
+            }), 200
+        else:
+            return jsonify({
+                'di_value': di_value,
+                'triggered': False
+            }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+# 检查机器人状态
+@app.route('/check_robot_status', methods=['POST'])
+def check_robot_status():
+    global robot_arm
+    
+    if robot_arm is None:
+        return jsonify({'error': '未连接机器人'}), 400
+
+    try:
+        # 获取机器人运行状态
+        state, ret = robot_arm.get_robot_status()
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '获取机器人状态失败'}), 400
+
+        # 打印机器人状态
+        print(f"机器人运行状态：{state.msg}")
+
+        # 检查是否为空闲状态
+        is_idle = state.msg == "机器人空闲"
+
+        return jsonify({
+            'status': state.msg,
+            'is_idle': is_idle
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+# 检查运行中的程序
+@app.route('/check_running_programs', methods=['POST'])
+def check_running_programs():
+    global robot_arm
+    
+    if robot_arm is None:
+        return jsonify({'error': '未连接机器人'}), 400
+
+    try:
+        # 获取所有正在运行的程序
+        programs_list, ret = robot_arm.execution.all_running_programs()
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '获取运行程序列表失败'}), 400
+
+        # 打印运行中的程序
+        running_programs = []
+        for program in programs_list:
+            running_programs.append(program.program_name)
+            print(f"正在运行的程序名：{program.program_name}")
+
+        # 检查是否有程序在运行
+        has_running_programs = len(running_programs) > 0
+
+        return jsonify({
+            'running_programs': running_programs,
+            'has_running_programs': has_running_programs
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+# 自动写入配方到机器人
+@app.route('/auto_write_recipe', methods=['POST'])
+def auto_write_recipe():
+    global robot_arm
+    data = request.get_json()
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
+        
+    recipe_name = data.get('recipe_name')
+
+    if not recipe_name:
+        return jsonify({'error': '缺少配方名称'}), 400
+
+    if robot_arm is None:
+        return jsonify({'error': '未连接机器人'}), 400
+
+    try:
+        # 1. 检查机器人状态
+        state, ret = robot_arm.get_robot_status()
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '获取机器人状态失败'}), 400
+
+        if state.msg != "机器人空闲":
+            return jsonify({'error': f'机器人当前状态：{state.msg}，无法自动写入'}), 400
+
+        # 2. 检查运行中的程序
+        programs_list, ret = robot_arm.execution.all_running_programs()
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '获取运行程序列表失败'}), 400
+
+        if len(programs_list) > 0:
+            running_programs = [p.program_name for p in programs_list]
+            return jsonify({'error': f'当前有程序在运行：{running_programs}，无法自动写入'}), 400
+
+        # 3. 读取配方数据
+        recipe_file_path = f'data/{recipe_name}.json'
+        if not os.path.exists(recipe_file_path):
+            return jsonify({'error': '配方不存在'}), 404
+
+        with open(recipe_file_path, 'r') as f:
+            recipe_data = json.load(f)
+
+        # 4. 获取程序名称（假设程序名称与配方名称相同）
+        program_name = recipe_name
+
+        # 5. 获取配方中的P点数据
+        table_data = recipe_data.get('tableData', [])
+        if not table_data:
+            return jsonify({'error': '配方中没有P点数据'}), 400
+
+        # 6. 批量写入P点数据
+        for p in table_data:
+            pose_id = p['pId']  # 使用pId而不是id
+            x = float(p['x'])
+            y = float(p['y'])
+            z = float(p.get('z', 0))  # 添加默认值，因为配方数据中可能没有z字段
+            c = float(p['c'])
+            uf = int(p.get('uf', 1))  # 使用默认值1
+            tf = int(p.get('tf', 1))  # 使用默认值1
+            left_right = int(p.get('left_right', 1))  # 使用默认值1
+
+            print(f"正在写入P点 {pose_id}: x={x}, y={y}, z={z}, c={c}, uf={uf}, tf={tf}, left_right={left_right}")
+
+            # 读取当前P点的位姿数据
+            assert robot_arm is not None  # 类型检查器断言
+            pose, ret = robot_arm.program_pose.read(program_name, pose_id)
+            if ret != StatusCodeEnum.OK:
+                return jsonify({'error': f'读取P点 {pose_id} 数据失败'}), 400
+
+            # 修改位姿数据
+            pose.poseData.cartData.baseCart.position.x = x
+            pose.poseData.cartData.baseCart.position.y = y
+            pose.poseData.cartData.baseCart.position.z = z
+            pose.poseData.cartData.baseCart.position.c = c
+            pose.poseData.cartData.uf = uf
+            pose.poseData.cartData.tf = tf
+            pose.poseData.cartData.baseCart.posture.arm_left_right = left_right
+
+            # 将修改后的位姿数据写回
+            assert robot_arm is not None  # 类型检查器断言
+            ret = robot_arm.program_pose.write(program_name, pose_id, pose)
+            if ret != StatusCodeEnum.OK:
+                return jsonify({'error': f'写入P点 {pose_id} 数据失败'}), 400
+
+        print(f"自动写入配方 {recipe_name} 成功")
+
+        return jsonify({'message': f'配方 {recipe_name} 自动写入成功'}), 200
+
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
