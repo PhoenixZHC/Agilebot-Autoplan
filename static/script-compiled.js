@@ -105,6 +105,12 @@ document.addEventListener('DOMContentLoaded', function () {
     callSignalInput.addEventListener('input', updateExternalCallVisibility);
   }
 
+  // 添加完成信号DO输入框的事件监听器
+  var finishSignalInput = document.getElementById('finish-signal');
+  if (finishSignalInput) {
+    finishSignalInput.addEventListener('input', updateExternalCallVisibility);
+  }
+
   // 初始化显示状态
   updateExternalCallVisibility();
 
@@ -118,14 +124,51 @@ document.addEventListener('DOMContentLoaded', function () {
   window.addEventListener('beforeunload', function () {
     stopExternalCallMonitor();
   });
+
+  // 在示教器环境中自动获取机器人IP并连接
+  if (isExtension) {
+    gbtExtension.enableShortcut();
+    autoConnectRobot();
+  }
 });
+
+// 自动连接机器人函数
+function autoConnectRobot() {
+  console.log('检测到示教器环境，开始自动获取机器人IP...');
+
+  // 获取机器人IP地址
+  fetch('/get_robot_ip', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }).then(function (response) {
+    return response.json();
+  }).then(function (data) {
+    if (data.success && data.robot_ip) {
+      console.log('自动获取到机器人IP:', data.robot_ip);
+
+      // 将IP地址填入输入框
+      document.getElementById('robot_ip').value = data.robot_ip;
+
+      // 自动点击连接按钮
+      console.log('自动连接机器人...');
+      document.getElementById('robot_connect_button').click();
+    } else {
+      console.log('无法自动获取机器人IP，需要手动输入:', data.message);
+    }
+  }).catch(function (error) {
+    console.error('自动获取机器人IP失败:', error);
+  });
+}
 
 // 处理外部调用选择框变化
 function handleExternalCallChange() {
   var externalCallValue = document.getElementById('external-call').value;
   var recipeNumber = document.getElementById('recipe-number').value;
   var callSignal = document.getElementById('call-signal').value;
-  if (externalCallValue === '1' && recipeNumber && callSignal) {
+  var finishSignal = document.getElementById('finish-signal').value;
+  if (externalCallValue === '1' && recipeNumber && callSignal && finishSignal) {
     // 开启外部调用监控
     startExternalCallMonitor();
   } else {
@@ -148,8 +191,9 @@ function startExternalCallMonitor() {
   }
   var recipeNumber = document.getElementById('recipe-number').value;
   var callSignal = document.getElementById('call-signal').value;
-  if (!recipeNumber || !callSignal) {
-    alertError('请先输入配方号MH和调用信号DI');
+  var finishSignal = document.getElementById('finish-signal').value;
+  if (!recipeNumber || !callSignal || !finishSignal) {
+    alertError('请先输入配方号MH、调用信号DI和完成信号DO');
     return;
   }
   isMonitoring = true;
@@ -178,6 +222,7 @@ function stopExternalCallMonitor() {
 function checkExternalCall() {
   var recipeNumber = document.getElementById('recipe-number').value;
   var callSignal = document.getElementById('call-signal').value;
+  var finishSignal = document.getElementById('finish-signal').value;
 
   // 如果正在自动写入，则跳过此次检查
   if (isAutoWriting) {
@@ -192,7 +237,8 @@ function checkExternalCall() {
     },
     body: JSON.stringify({
       mh_number: recipeNumber,
-      di_number: callSignal
+      di_number: callSignal,
+      do_number: finishSignal
     })
   }).then(function (response) {
     return response.json();
@@ -443,6 +489,9 @@ function performAutoWrite(recipeName) {
       updateStatusDisplay("\u914D\u65B9 ".concat(recipeName, " \u81EA\u52A8\u5199\u5165\u5B8C\u6210"), 'success');
       alertSuccess("\u914D\u65B9 ".concat(recipeName, " \u81EA\u52A8\u5199\u5165\u6210\u529F\uFF01"));
       isAutoWriting = false; // 重置写入状态
+
+      // 自动写入完成后，触发DO信号
+      triggerFinishSignal();
     }).catch(function (error) {
       console.error('自动写入过程出错:', error);
       updateStatusDisplay("\u81EA\u52A8\u5199\u5165\u5931\u8D25: ".concat(error.message), 'error');
@@ -2145,12 +2194,13 @@ function loadRecipeToPlanning(recipeName) {
 function updateExternalCallVisibility() {
   var recipeNumber = document.getElementById('recipe-number').value;
   var callSignal = document.getElementById('call-signal').value;
+  var finishSignal = document.getElementById('finish-signal').value;
   var externalCallContainer = document.getElementById('external-call-container');
   var autoWriteContainer = document.getElementById('auto-write-container');
   var externalCallStatus = document.getElementById('external-call-status');
 
-  // 只有当配方号和调用信号DI都输入了值时才显示选择框
-  if (recipeNumber && callSignal) {
+  // 只有当配方号、调用信号DI、完成信号DO都输入了值时才显示选择框
+  if (recipeNumber && callSignal && finishSignal) {
     externalCallContainer.style.display = 'block';
     autoWriteContainer.style.display = 'block';
     externalCallStatus.style.display = 'block';
@@ -2188,4 +2238,66 @@ function updateStatusDisplay(message) {
       statusContainer.classList.add('success');
     }
   }
+}
+
+// 触发完成信号
+function triggerFinishSignal() {
+  var finishSignal = document.getElementById('finish-signal').value;
+  if (!finishSignal) {
+    console.log('未设置完成信号DO，跳过DO信号触发');
+    return;
+  }
+  console.log("\u81EA\u52A8\u5199\u5165\u5B8C\u6210\uFF0C\u5F00\u59CB\u89E6\u53D1DO".concat(finishSignal, "\u4FE1\u53F7"));
+
+  // 设置DO信号为1
+  fetch('/set_do_signal', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      do_number: finishSignal,
+      do_value: 1
+    })
+  }).then(function (response) {
+    return response.json();
+  }).then(function (data) {
+    if (data.success) {
+      console.log("DO".concat(finishSignal, "\u4FE1\u53F7\u8BBE\u7F6E\u4E3A1\u6210\u529F"));
+      updateStatusDisplay("DO".concat(finishSignal, "\u4FE1\u53F7\u5DF2\u8BBE\u7F6E\u4E3A1\uFF0C1\u79D2\u540E\u5C06\u91CD\u7F6E\u4E3A0"), 'processing');
+
+      // 1秒后将DO信号设为0
+      setTimeout(function () {
+        fetch('/set_do_signal', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            do_number: finishSignal,
+            do_value: 0
+          })
+        }).then(function (response) {
+          return response.json();
+        }).then(function (data) {
+          if (data.success) {
+            console.log("DO".concat(finishSignal, "\u4FE1\u53F7\u91CD\u7F6E\u4E3A0\u6210\u529F"));
+            updateStatusDisplay("DO".concat(finishSignal, "\u4FE1\u53F7\u5DF2\u91CD\u7F6E\u4E3A0\uFF0C\u81EA\u52A8\u5199\u5165\u6D41\u7A0B\u5B8C\u6210"), 'success');
+          } else {
+            console.error("DO".concat(finishSignal, "\u4FE1\u53F7\u91CD\u7F6E\u4E3A0\u5931\u8D25:"), data.error);
+            updateStatusDisplay("DO".concat(finishSignal, "\u4FE1\u53F7\u91CD\u7F6E\u5931\u8D25: ").concat(data.error), 'error');
+          }
+        }).catch(function (error) {
+          console.error("DO".concat(finishSignal, "\u4FE1\u53F7\u91CD\u7F6E\u4E3A0\u8BF7\u6C42\u5931\u8D25:"), error);
+          updateStatusDisplay("DO".concat(finishSignal, "\u4FE1\u53F7\u91CD\u7F6E\u8BF7\u6C42\u5931\u8D25: ").concat(error.message), 'error');
+        });
+      }, 1000); // 1秒延迟
+    } else {
+      console.error("DO".concat(finishSignal, "\u4FE1\u53F7\u8BBE\u7F6E\u4E3A1\u5931\u8D25:"), data.error);
+      updateStatusDisplay("DO".concat(finishSignal, "\u4FE1\u53F7\u8BBE\u7F6E\u5931\u8D25: ").concat(data.error), 'error');
+    }
+  }).catch(function (error) {
+    console.error("DO".concat(finishSignal, "\u4FE1\u53F7\u8BBE\u7F6E\u4E3A1\u8BF7\u6C42\u5931\u8D25:"), error);
+    updateStatusDisplay("DO".concat(finishSignal, "\u4FE1\u53F7\u8BBE\u7F6E\u8BF7\u6C42\u5931\u8D25: ").concat(error.message), 'error');
+  });
 }

@@ -935,7 +935,7 @@ input[type="number"] {
     margin-bottom: 10px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 5px; /* 从10px减少到5px */
     width: 100%; /* 修改为100%宽度 */
     flex-wrap: nowrap; /* 防止换行 */
 }
@@ -961,7 +961,8 @@ input[type="number"] {
 
 /* 为配方号MH和调用信号DI设置特殊宽度 */
 #recipe-number,
-#call-signal {
+#call-signal,
+#finish-signal {
     width: 45px; /* 与补偿值输入框宽度一致 */
 }
 
@@ -1179,7 +1180,8 @@ input[type="number"] {
 #auto-write-container {
     display: inline-flex;
     align-items: center;
-    margin-left: 10px;
+    margin-left: 2px; /* 进一步减少间距到2px */
+    flex-shrink: 0; /* 防止收缩 */
 }
 
 #external-call-container label,

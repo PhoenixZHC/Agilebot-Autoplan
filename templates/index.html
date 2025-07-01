@@ -13,7 +13,7 @@
             <img src="{{ url_for('static', filename='logo.png')  }}" alt="Logo">
         </div>
         <div class="title">捷勃特智能摆盘规划系统</div>
-        <div class="version">V6.0_20250628</div>
+        <div class="version">V6.1_20250701</div>
     </div>
 
     <!-- 主容器 -->
@@ -491,6 +491,9 @@
                         <label for="call-signal">调用信号DI:</label>
                         <input type="number" id="call-signal" min="1" placeholder="输入调用信号DI">
 
+                        <label for="finish-signal">完成信号DO:</label>
+                        <input type="number" id="finish-signal" min="1" placeholder="输入完成信号DO">
+
                         <!-- 允许外部调用选择框 - 默认隐藏 -->
                         <div id="external-call-container" style="display: none;">
                             <label for="external-call">允许外部调用:</label>
@@ -498,9 +501,7 @@
                                 <option value="0">关闭</option>
                                 <option value="1">开启</option>
                             </select>
-                        </div>
-
-                        <!-- 自动写入选择框 - 默认隐藏 -->
+                        </div><!-- 自动写入选择框 - 默认隐藏 -->
                         <div id="auto-write-container" style="display: none;">
                             <label for="auto-write">自动写入:</label>
                             <select id="auto-write">
@@ -508,8 +509,9 @@
                                 <option value="1">开启</option>
                             </select>
                         </div>
-                        
-                        <!-- 外部调用状态显示 -->
+                        <!-- 监控状态单独一行 -->
+                    </div>
+                    <div style="width:auto; display:inline-block;">
                         <div id="external-call-status" style="display: none; margin-top: 10px; padding: 5px; background-color: #f0f0f0; border-radius: 3px;">
                             <span id="status-text">监控状态: 未启动</span>
                         </div>

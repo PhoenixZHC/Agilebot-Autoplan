@@ -1,6 +1,7 @@
 #转译命令
 #先pnpm i
 #然后再pnpm build
+#插件包版本如果更新需要pnpm copy
 #打包命令
 #pyinstaller --onefile --add-data "templates;templates" --add-data "static;static" -i C:\Users\Phoenix\Documents\AUTOPLAN\AUTOPLAN_V3.3\static\favicon.ico --name 启动系统 app.py
 
@@ -19,6 +20,7 @@ from Agilebot.IR.A.arm import Arm
 from Agilebot.IR.A.status_code import StatusCodeEnum
 from Agilebot.IR.A.sdk_types import CoordinateSystemType, SignalType, SignalValue
 from Agilebot.IR.A.sdk_classes import PoseRegister, Posture, PoseType
+from Agilebot.IR.A.extension import Extension
 
 # 获取插件端口号，无未提供，默认5000
 PORT = os.getenv("PORT", "5000")
@@ -1733,6 +1735,69 @@ def auto_write_recipe():
         print(f"自动写入配方 {recipe_name} 成功")
 
         return jsonify({'message': f'配方 {recipe_name} 自动写入成功'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/get_robot_ip', methods=['GET'])
+def get_robot_ip():
+    """获取机器人IP地址"""
+    try:
+        extension = Extension()
+        robot_ip = extension.get_robot_ip()
+        
+        # 如果获取到IP地址，返回成功
+        if robot_ip:
+            return jsonify({
+                'success': True,
+                'robot_ip': robot_ip
+            }), 200
+        else:
+            # 如果没有获取到IP地址（比如在电脑上运行），返回None
+            return jsonify({
+                'success': False,
+                'robot_ip': None,
+                'message': '无法获取机器人IP地址'
+            }), 200
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'robot_ip': None,
+            'error': str(e)
+        }), 400
+
+# 设置DO信号值
+@app.route('/set_do_signal', methods=['POST'])
+def set_do_signal():
+    global robot_arm
+    data = request.get_json()
+    
+    if data is None:
+        return jsonify({'error': '无效的请求数据'}), 400
+        
+    do_number = data.get('do_number')
+    do_value = data.get('do_value')
+
+    if do_number is None or do_value is None:
+        return jsonify({'error': '缺少DO编号或DO值'}), 400
+
+    if robot_arm is None:
+        return jsonify({'error': '未连接机器人'}), 400
+
+    try:
+        # 设置指定DO信号的值
+        ret = robot_arm.signals.write(SignalType.DO, int(do_number), int(do_value))
+        if ret != StatusCodeEnum.OK:
+            return jsonify({'error': '设置DO信号失败'}), 400
+
+        # 打印DO信号设置状态
+        print(f"DO{do_number} 信号设置为: {do_value}")
+
+        return jsonify({
+            'success': True,
+            'message': f'DO{do_number} 信号设置为 {do_value}'
+        }), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 400

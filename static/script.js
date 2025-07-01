@@ -105,6 +105,12 @@ document.addEventListener('DOMContentLoaded', function () {
         callSignalInput.addEventListener('input', updateExternalCallVisibility);
     }
     
+    // 添加完成信号DO输入框的事件监听器
+    const finishSignalInput = document.getElementById('finish-signal');
+    if (finishSignalInput) {
+        finishSignalInput.addEventListener('input', updateExternalCallVisibility);
+    }
+    
     // 初始化显示状态
     updateExternalCallVisibility();
     
@@ -118,15 +124,53 @@ document.addEventListener('DOMContentLoaded', function () {
     window.addEventListener('beforeunload', function() {
         stopExternalCallMonitor();
     });
+
+    // 在示教器环境中自动获取机器人IP并连接
+    if (isExtension) {
+        gbtExtension.enableShortcut();
+        autoConnectRobot();
+    }
 });
+
+// 自动连接机器人函数
+function autoConnectRobot() {
+    console.log('检测到示教器环境，开始自动获取机器人IP...');
+    
+    // 获取机器人IP地址
+    fetch('/get_robot_ip', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.robot_ip) {
+            console.log('自动获取到机器人IP:', data.robot_ip);
+            
+            // 将IP地址填入输入框
+            document.getElementById('robot_ip').value = data.robot_ip;
+            
+            // 自动点击连接按钮
+            console.log('自动连接机器人...');
+            document.getElementById('robot_connect_button').click();
+        } else {
+            console.log('无法自动获取机器人IP，需要手动输入:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('自动获取机器人IP失败:', error);
+    });
+}
 
 // 处理外部调用选择框变化
 function handleExternalCallChange() {
     const externalCallValue = document.getElementById('external-call').value;
     const recipeNumber = document.getElementById('recipe-number').value;
     const callSignal = document.getElementById('call-signal').value;
+    const finishSignal = document.getElementById('finish-signal').value;
     
-    if (externalCallValue === '1' && recipeNumber && callSignal) {
+    if (externalCallValue === '1' && recipeNumber && callSignal && finishSignal) {
         // 开启外部调用监控
         startExternalCallMonitor();
     } else {
@@ -150,9 +194,10 @@ function startExternalCallMonitor() {
     
     const recipeNumber = document.getElementById('recipe-number').value;
     const callSignal = document.getElementById('call-signal').value;
+    const finishSignal = document.getElementById('finish-signal').value;
     
-    if (!recipeNumber || !callSignal) {
-        alertError('请先输入配方号MH和调用信号DI');
+    if (!recipeNumber || !callSignal || !finishSignal) {
+        alertError('请先输入配方号MH、调用信号DI和完成信号DO');
         return;
     }
     
@@ -182,6 +227,7 @@ function stopExternalCallMonitor() {
 function checkExternalCall() {
     const recipeNumber = document.getElementById('recipe-number').value;
     const callSignal = document.getElementById('call-signal').value;
+    const finishSignal = document.getElementById('finish-signal').value;
     
     // 如果正在自动写入，则跳过此次检查
     if (isAutoWriting) {
@@ -197,7 +243,8 @@ function checkExternalCall() {
         },
         body: JSON.stringify({
             mh_number: recipeNumber,
-            di_number: callSignal
+            di_number: callSignal,
+            do_number: finishSignal
         }),
     })
     .then(response => response.json())
@@ -453,6 +500,9 @@ function performAutoWrite(recipeName) {
             updateStatusDisplay(`配方 ${recipeName} 自动写入完成`, 'success');
             alertSuccess(`配方 ${recipeName} 自动写入成功！`);
             isAutoWriting = false; // 重置写入状态
+            
+            // 自动写入完成后，触发DO信号
+            triggerFinishSignal();
         })
         .catch(error => {
             console.error('自动写入过程出错:', error);
@@ -2160,12 +2210,13 @@ function loadRecipeToPlanning(recipeName) {
 function updateExternalCallVisibility() {
     const recipeNumber = document.getElementById('recipe-number').value;
     const callSignal = document.getElementById('call-signal').value;
+    const finishSignal = document.getElementById('finish-signal').value;
     const externalCallContainer = document.getElementById('external-call-container');
     const autoWriteContainer = document.getElementById('auto-write-container');
     const externalCallStatus = document.getElementById('external-call-status');
     
-    // 只有当配方号和调用信号DI都输入了值时才显示选择框
-    if (recipeNumber && callSignal) {
+    // 只有当配方号、调用信号DI、完成信号DO都输入了值时才显示选择框
+    if (recipeNumber && callSignal && finishSignal) {
         externalCallContainer.style.display = 'block';
         autoWriteContainer.style.display = 'block';
         externalCallStatus.style.display = 'block';
@@ -2204,4 +2255,71 @@ function updateStatusDisplay(message, type = 'normal') {
             statusContainer.classList.add('success');
         }
     }
+}
+
+// 触发完成信号
+function triggerFinishSignal() {
+    const finishSignal = document.getElementById('finish-signal').value;
+    
+    if (!finishSignal) {
+        console.log('未设置完成信号DO，跳过DO信号触发');
+        return;
+    }
+    
+    console.log(`自动写入完成，开始触发DO${finishSignal}信号`);
+    
+    // 设置DO信号为1
+    fetch('/set_do_signal', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            do_number: finishSignal,
+            do_value: 1
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log(`DO${finishSignal}信号设置为1成功`);
+            updateStatusDisplay(`DO${finishSignal}信号已设置为1，1秒后将重置为0`, 'processing');
+            
+            // 1秒后将DO信号设为0
+            setTimeout(() => {
+                fetch('/set_do_signal', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        do_number: finishSignal,
+                        do_value: 0
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log(`DO${finishSignal}信号重置为0成功`);
+                        updateStatusDisplay(`DO${finishSignal}信号已重置为0，自动写入流程完成`, 'success');
+                    } else {
+                        console.error(`DO${finishSignal}信号重置为0失败:`, data.error);
+                        updateStatusDisplay(`DO${finishSignal}信号重置失败: ${data.error}`, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error(`DO${finishSignal}信号重置为0请求失败:`, error);
+                    updateStatusDisplay(`DO${finishSignal}信号重置请求失败: ${error.message}`, 'error');
+                });
+            }, 1000); // 1秒延迟
+            
+        } else {
+            console.error(`DO${finishSignal}信号设置为1失败:`, data.error);
+            updateStatusDisplay(`DO${finishSignal}信号设置失败: ${data.error}`, 'error');
+        }
+    })
+    .catch(error => {
+        console.error(`DO${finishSignal}信号设置为1请求失败:`, error);
+        updateStatusDisplay(`DO${finishSignal}信号设置请求失败: ${error.message}`, 'error');
+    });
 }
