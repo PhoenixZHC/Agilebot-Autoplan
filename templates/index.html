@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智能摆盘规划系统</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css')  }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css')  }}">
 </head>
 <body>
     <!-- 标题栏 -->
     <div class="header">
         <div class="logo">
-            <img src="{{ url_for('static', filename='logo.png')  }}" alt="Logo">
+            <img src="{{ url_for('static', path='logo.png')  }}" alt="Logo">
         </div>
         <div class="title">捷勃特智能摆盘规划系统</div>
-        <div class="version">V6.1_20250701</div>
+        <div class="version">{{ version }}</div>
     </div>
 
     <!-- 主容器 -->
@@ -21,23 +21,23 @@
         <!-- 左侧菜单栏 -->
         <div class="sidebar">
             <button id="robot-settings-btn" class="active">
-                <img src="{{ url_for('static', filename='icons/robot.svg')  }}" alt="机器人设置" class="icon">
+                <img src="{{ url_for('static', path='icons/robot.svg')  }}" alt="机器人设置" class="icon">
                 <span>机器人设置</span>
             </button>
             <button id="smart-planning-btn">
-                <img src="{{ url_for('static', filename='icons/planning.svg')  }}" alt="智能规划" class="icon">
+                <img src="{{ url_for('static', path='icons/planning.svg')  }}" alt="智能规划" class="icon">
                 <span>智能规划</span>
             </button>
             <button id="data-list-btn">
-                <img src="{{ url_for('static', filename='icons/list.svg')  }}" alt="数据清单" class="icon">
+                <img src="{{ url_for('static', path='icons/list.svg')  }}" alt="数据清单" class="icon">
                 <span>数据清单</span>
             </button>
             <button id="interval-calculator-btn">
-                <img src="{{ url_for('static', filename='icons/calculator.svg') }}" alt="仿形间隔计算器" class="icon">
+                <img src="{{ url_for('static', path='icons/calculator.svg') }}" alt="仿形间隔计算器" class="icon">
                 <span>间隔计算器</span>
             </button>
             <button id="recipe-library-btn">
-                <img src="{{ url_for('static', filename='icons/library.svg') }}" alt="配方库" class="icon">
+                <img src="{{ url_for('static', path='icons/library.svg') }}" alt="配方库" class="icon">
                 <span>配方库</span>
             </button>
         </div>
@@ -664,7 +664,7 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='extension-runtime.js')  }}"></script>
-    <script src="{{ url_for('static', filename='script-compiled.js')  }}"></script>
+    <script src="{{ url_for('static', path='extension-runtime.js')  }}"></script>
+    <script src="{{ url_for('static', path='script-compiled.js')  }}"></script>
 </body>
 </html>
