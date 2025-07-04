@@ -776,12 +776,13 @@ input[type="number"] {
 
 /* 配方列表样式 */
 .recipe-list-container {
-    width: 30%; /* 从50%减小到40% */
-    max-height: 500px;
-    overflow-y: auto;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 50%;
+    height: 100%;
+    background-color: #fff;
     padding: 5px;
     border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
 }
 
 .recipe-list {
@@ -789,48 +790,58 @@ input[type="number"] {
     padding: 0;
     margin: 0;
     width: 100%;
-    border: 1px solid #eee;
 }
 
 /* 每个配方项的样式 */
 .recipe-list li {
-    display: flex; /* 使用 Flex 布局 */
-    align-items: center; /* 垂直居中 */
-    justify-content: space-between; /* 将内容分布到两端 */
-    padding: 10px; /* 内边距 */
-    border-bottom: 1px solid #ddd; /* 底部边框 */
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px;
+    border-bottom: 1px solid #ddd;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+}
+
+.recipe-list li:hover {
+    background-color: #f8f9fa;
 }
 
 /* 配方编号的样式 */
 .recipe-list li .recipe-id {
+    flex-shrink: 0;
+    width: 25px;
+    font-size: 10px;
+    color: #666;
     font-weight: bold;
-    margin-right: 10px; /* 与配方名的间距 */
-    min-width: 30px; /* 固定宽度 */
+    margin: 0;
 }
 
 /* 配方名的样式 */
 .recipe-list li .recipe-name {
     flex: 1;
+    min-width: 0;
+    font-size: 10px;
+    color: #333;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 80px; /* 从100px减小到80px */
-    margin-right: 10px;
+    margin: 0;
 }
 
-/* 读取按钮的样式 */
-.recipe-list li button:nth-child(3) {
+/* 读取按钮的样式 - 通用选择器 */
+.recipe-list li button:first-of-type {
     margin-right: 10px; /* 与删除按钮的间距 */
     padding: 5px 10px;
-    background-color: #007bff;
-    color: #fff;
+    background-color: #007bff; /* 蓝色背景 */
+    color: #fff; /* 白色文字 */
     border: none;
     border-radius: 4px;
     cursor: pointer;
 }
 
-/* 删除按钮的样式 */
-.recipe-list li button:nth-child(4) {
+/* 删除按钮的样式 - 通用选择器 */
+.recipe-list li button:last-of-type {
     padding: 5px 10px;
     background-color: #dc3545;
     color: #fff;
@@ -840,13 +851,13 @@ input[type="number"] {
 }
 
 /* 按钮悬停效果 */
-.recipe-list li button:hover {
+.recipe-list li button:hover, .recipe-action-button:hover {
     opacity: 0.9; /* 悬停时稍微降低透明度 */
 }
 
 /* 配方预览区域 */
 .recipe-preview {
-    flex: 1;
+    width: 50%;
     height: 100%;
     background-color: #fff;
     padding: 0; /* 移除内边距 */
@@ -1236,7 +1247,504 @@ input[type="number"] {
 }
 
 #external-call-status.success {
+    background-color: #d4edda;
+    color: #155724;
+    border-color: #c3e6cb;
+}
+
+/* 配方操作按钮样式 */
+.recipe-operations {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+    padding: 5px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.recipe-select-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.recipe-button-row {
+    display: flex;
+    align-items: center;
+}
+
+.recipe-button-row button:last-child {
+    margin-left: 10px;
+}
+
+.select-all-checkbox {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.select-all-checkbox:indeterminate {
+    background-color: #007bff;
+    border-color: #007bff;
+    opacity: 0.8;
+}
+
+.select-all-checkbox:indeterminate::before {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 2px;
+    background-color: white;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.recipe-operations label {
+    font-size: 10px;
+    font-weight: bold;
+    color: #555;
+    cursor: pointer;
+    margin: 0;
+}
+
+/* 移除旧的按钮样式 */
+.export-button, .import-button, .recipe-operation-button {
+    display: none;
+}
+
+/* 导出和导入按钮样式 */
+#export-selected-recipes, #import-recipes {
+    padding: 3px 6px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    font-size: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    height: 25px;
+    box-sizing: border-box;
+}
+
+#export-selected-recipes:hover, #import-recipes:hover {
+    background-color: #0056b3;
+}
+
+/* 勾选框样式 */
+.recipe-checkbox {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+/* 配方项按钮容器 */
+.recipe-list li button {
+    padding: 3px 6px;
+    margin-left: 5px;
+    border: none;
+    border-radius: 3px;
+    font-size: 9px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* 模态框样式 */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 90%;
+    max-height: 90%;
+    width: 500px;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.show .modal-content {
+    transform: scale(1);
+}
+
+.modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 3px;
+}
+
+.close-modal:hover {
+    background-color: #e9ecef;
+    color: #333;
+}
+
+.modal-body {
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+    background-color: #f8f9fa;
+    border-radius: 0 0 8px 8px;
+}
+
+.modal-footer .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.3s ease;
+}
+
+.modal-footer .btn:not(:last-child){
+    margin-right: 10px;
+}
+
+.modal-footer .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.modal-footer .btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+.modal-footer .btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.modal-footer .btn-primary:hover {
+    background-color: #0056b3;
+}
+
+/* 导入对话框特定样式 */
+.import-dialog {
+    width: 600px;
+}
+
+.import-recipe-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.import-info {
+    font-size: 12px;
+    color: #666;
+}
+
+.import-recipe-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.import-recipe-item {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    background-color: #fafafa;
+}
+
+.import-recipe-item .checkbox-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.import-recipe-item input[type="checkbox"] {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.import-recipe-item input[type="checkbox"]:disabled {
+    opacity: 0.5;
+}
+
+.recipe-info {
+    flex: 1;
+}
+
+.recipe-name {
+    font-size: 13px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.recipe-details {
+    font-size: 11px;
+    color: #666;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.recipe-id {
+    color: #007bff;
+}
+
+.file-info {
+    color: #888;
+}
+
+.error-text {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* 冲突对话框样式 */
+.conflict-dialog {
+    width: 700px;
+    max-width: 95%;
+}
+
+.conflict-message {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+.conflict-list {
+    max-height: 350px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+.conflict-item {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    background-color: white;
+    margin-bottom: 1px;
+}
+
+.conflict-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.conflict-info {
+    margin-bottom: 8px;
+}
+
+.conflict-info strong {
+    color: #dc3545;
+    font-size: 13px;
+}
+
+.conflict-type {
+    font-size: 12px;
+    color: #666;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.conflict-comparison {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-left: 10px;
+    border-left: 3px solid #dc3545;
+}
+
+.usb-recipe, .local-recipe {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+}
+
+.usb-recipe .label, .local-recipe .label {
+    font-weight: bold;
+    min-width: 80px;
+    color: #555;
+}
+
+.usb-recipe .recipe-name, .local-recipe .recipe-name {
+    font-weight: bold;
+    color: #333;
+}
+
+.usb-recipe .recipe-id, .local-recipe .recipe-id {
+    color: #666;
+    font-style: italic;
+}
+
+.usb-recipe {
+    background-color: #fff3cd;
+    padding: 4px 8px;
+    border-radius: 3px;
+    border-left: 3px solid #ffc107;
+}
+
+.local-recipe {
     background-color: #d1ecf1;
-    border-color: #17a2b8;
-    color: #0c5460;
+    padding: 4px 8px;
+    border-radius: 3px;
+    border-left: 3px solid #17a2b8;
+}
+
+.modal-footer .btn-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.modal-footer .btn-warning:hover {
+    background-color: #e0a800;
+}
+
+.modal-footer .btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.modal-footer .btn-danger:hover {
+    background-color: #c82333;
+}
+
+/* 小按钮样式 */
+.modal-footer .btn-sm {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    margin: 0 2px;
+}
+
+.modal-footer hr {
+    border: none;
+    border-top: 1px solid #ddd;
+    margin: 10px 0;
+}
+
+/* 冲突提示注意事项样式 */
+.conflict-note {
+    background-color: #e3f2fd;
+    border: 1px solid #2196f3;
+    border-radius: 4px;
+    padding: 10px;
+    margin: 10px 0;
+}
+
+.conflict-note p {
+    margin: 0;
+    color: #1976d2;
+    font-size: 0.9em;
+}
+
+/* 时间目录选择样式 */
+.timestamp-list {
+    max-height: 350px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+.timestamp-item {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    background-color: white;
+    margin-bottom: 1px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.timestamp-item:hover {
+    background-color: #e3f2fd;
+}
+
+.timestamp-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.timestamp-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.timestamp-display {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+}
+
+.timestamp-details {
+    display: flex;
+    gap: 15px;
+    font-size: 12px;
+    color: #666;
+}
+
+.recipe-count {
+    color: #007bff;
+    font-weight: bold;
+}
+
+.export-date {
+    color: #28a745;
 }

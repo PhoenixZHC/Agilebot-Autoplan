@@ -1,5 +1,8 @@
 // 判断当前环境是否运行在插件中，选择不同的提示框
 const isExtension = gbtExtension.isInExtension();
+// 是否处在TP中，两种情况，1. 插件环境 2. 直接访问此插件的端口
+const isTP = window.isTP;
+
 // TP插件环境中，alert无法使用
 const alertSuccess =
   !isExtension
@@ -9,6 +12,10 @@ const alertError =
   !isExtension
     ? alert
     : gbtExtension.rtmNotification.error;
+const alertInfo =
+  !isExtension
+    ? alert
+    : gbtExtension.rtmNotification.info;
 // TP插件环境中，confirm无法使用
 const myConfirm = function(message) {
     if (!isExtension) {
@@ -98,28 +105,28 @@ document.addEventListener('DOMContentLoaded', function () {
     if (recipeNumberInput) {
         recipeNumberInput.addEventListener('input', updateExternalCallVisibility);
     }
-    
+
     // 添加调用信号DI输入框的事件监听器
     const callSignalInput = document.getElementById('call-signal');
     if (callSignalInput) {
         callSignalInput.addEventListener('input', updateExternalCallVisibility);
     }
-    
+
     // 添加完成信号DO输入框的事件监听器
     const finishSignalInput = document.getElementById('finish-signal');
     if (finishSignalInput) {
         finishSignalInput.addEventListener('input', updateExternalCallVisibility);
     }
-    
+
     // 初始化显示状态
     updateExternalCallVisibility();
-    
+
     // 添加外部调用选择框的事件监听器
     const externalCallSelect = document.getElementById('external-call');
     if (externalCallSelect) {
         externalCallSelect.addEventListener('change', handleExternalCallChange);
     }
-    
+
     // 页面卸载时清理监控
     window.addEventListener('beforeunload', function() {
         stopExternalCallMonitor();
@@ -130,12 +137,15 @@ document.addEventListener('DOMContentLoaded', function () {
         gbtExtension.enableShortcut();
         autoConnectRobot();
     }
+
+    // 添加配方操作按钮事件监听器
+    setupRecipeOperationListeners();
 });
 
 // 自动连接机器人函数
 function autoConnectRobot() {
     console.log('检测到示教器环境，开始自动获取机器人IP...');
-    
+
     // 获取机器人IP地址
     fetch('/get_robot_ip', {
         method: 'GET',
@@ -147,10 +157,10 @@ function autoConnectRobot() {
     .then(data => {
         if (data.success && data.robot_ip) {
             console.log('自动获取到机器人IP:', data.robot_ip);
-            
+
             // 将IP地址填入输入框
             document.getElementById('robot_ip').value = data.robot_ip;
-            
+
             // 自动点击连接按钮
             console.log('自动连接机器人...');
             document.getElementById('robot_connect_button').click();
@@ -169,7 +179,7 @@ function handleExternalCallChange() {
     const recipeNumber = document.getElementById('recipe-number').value;
     const callSignal = document.getElementById('call-signal').value;
     const finishSignal = document.getElementById('finish-signal').value;
-    
+
     if (externalCallValue === '1' && recipeNumber && callSignal && finishSignal) {
         // 开启外部调用监控
         startExternalCallMonitor();
@@ -191,20 +201,20 @@ function startExternalCallMonitor() {
     if (isMonitoring) {
         return; // 已经在监控中
     }
-    
+
     const recipeNumber = document.getElementById('recipe-number').value;
     const callSignal = document.getElementById('call-signal').value;
     const finishSignal = document.getElementById('finish-signal').value;
-    
+
     if (!recipeNumber || !callSignal || !finishSignal) {
         alertError('请先输入配方号MH、调用信号DI和完成信号DO');
         return;
     }
-    
+
     isMonitoring = true;
     console.log('开始外部调用监控...');
     updateStatusDisplay(`监控状态: 正在监控 DI${callSignal} 信号，等待触发...`, 'monitoring');
-    
+
     // 每0.3秒检查一次DI信号
     externalCallInterval = setInterval(() => {
         checkExternalCall();
@@ -228,14 +238,14 @@ function checkExternalCall() {
     const recipeNumber = document.getElementById('recipe-number').value;
     const callSignal = document.getElementById('call-signal').value;
     const finishSignal = document.getElementById('finish-signal').value;
-    
+
     // 如果正在自动写入，则跳过此次检查
     if (isAutoWriting) {
         console.log('正在自动写入中，跳过此次配方调用检查');
         updateStatusDisplay('正在自动写入中，暂停接收新的配方调用...', 'processing');
         return;
     }
-    
+
     fetch('/start_external_call_monitor', {
         method: 'POST',
         headers: {
@@ -255,34 +265,34 @@ function checkExternalCall() {
             stopExternalCallMonitor();
             return;
         }
-        
+
         // 打印DI信号状态
         console.log(`DI${callSignal} 信号状态: ${data.di_value}`);
-        
+
         if (data.triggered) {
             // 再次检查是否正在自动写入（双重保险）
             if (isAutoWriting) {
                 console.log('正在自动写入中，忽略此次触发');
                 return;
             }
-            
+
             // 检查是否在冷却时间内
             const currentTime = Date.now();
             if (currentTime - lastTriggerTime < TRIGGER_COOLDOWN) {
                 console.log('触发信号在冷却时间内，忽略此次触发');
                 return;
             }
-            
+
             // 更新触发时间
             lastTriggerTime = currentTime;
-            
+
             // DI信号为1，读取到MH值，加载对应配方
             console.log(`检测到触发信号，MH${recipeNumber} 寄存器值: ${data.mh_value}`);
             updateStatusDisplay(`检测到触发信号，MH值: ${data.mh_value}，正在加载配方...`, 'triggered');
-            
+
             // 加载配方但不停止监控
             loadRecipeByMHValue(data.mh_value);
-            
+
             // 延迟一下再继续监控，避免重复触发
             setTimeout(() => {
                 if (isMonitoring) {
@@ -301,7 +311,7 @@ function checkExternalCall() {
 // 根据MH值加载配方
 function loadRecipeByMHValue(mhValue) {
     console.log('开始根据MH值加载配方，MH值:', mhValue);
-    
+
     // 首先获取所有配方列表
     fetch('/get_recipe_list', {
         method: 'GET',
@@ -313,31 +323,31 @@ function loadRecipeByMHValue(mhValue) {
             updateStatusDisplay(`获取配方列表失败: ${data.error}`, 'error');
             return;
         }
-        
+
         console.log('获取到的配方列表:', data.recipes);
-        
+
         // 查找配方编号匹配的配方
         const targetRecipe = data.recipes.find(recipe => {
             console.log('检查配方:', recipe.recipeName, '配方编号:', recipe.recipeId, '目标MH值:', mhValue);
             return recipe.recipeId == mhValue; // 使用==进行类型转换比较
         });
-        
+
         if (targetRecipe) {
             console.log('找到匹配的配方:', targetRecipe.recipeName, '配方编号:', targetRecipe.recipeId);
-            
+
             // 检查是否开启自动写入
             const autoWriteValue = document.getElementById('auto-write').value;
             console.log('自动写入设置:', autoWriteValue);
-            
+
             if (autoWriteValue === '1') {
                 // 自动写入模式：先跳转到数据清单页面，然后执行自动写入
                 console.log('执行自动写入模式，跳转到数据清单页面...');
                 updateStatusDisplay(`找到配方: ${targetRecipe.recipeName}，跳转到数据清单页面...`, 'processing');
-                
+
                 // 跳转到数据清单页面
                 showSection('data-list-content');
                 setActiveButton('data-list-btn');
-                
+
                 // 然后执行自动写入
                 performAutoWrite(targetRecipe.recipeName);
             } else {
@@ -371,24 +381,24 @@ let writeOperationResults = []; // 存储所有写入操作的结果
 // 执行自动写入功能
 function performAutoWrite(recipeName) {
     console.log('开始执行自动写入功能，配方名称:', recipeName);
-    
+
     // 设置正在自动写入标志
     isAutoWriting = true;
     updateStatusDisplay(`正在加载配方到数据清单页面...`, 'processing');
-    
+
     // 重置写入操作计数器
     writeOperationCount = 0;
     completedOperations = 0;
     writeOperationResults = [];
-    
+
     // 1. 首先加载配方到数据清单页面
     window.isFromExternalCall = true; // 设置标志位
     loadRecipeToPlanning(recipeName);
-    
+
     // 2. 等待页面加载完成后，检查机器人状态
     setTimeout(() => {
         updateStatusDisplay(`正在检查机器人状态...`, 'processing');
-        
+
         // 检查机器人状态
         fetch('/check_robot_status', {
             method: 'POST',
@@ -406,16 +416,16 @@ function performAutoWrite(recipeName) {
                 isAutoWriting = false; // 重置写入状态
                 throw new Error(data.error);
             }
-            
+
             console.log('机器人状态:', data.status, '是否空闲:', data.is_idle);
-            
+
             if (!data.is_idle) {
                 updateStatusDisplay(`机器人当前状态: ${data.status}，无法自动写入`, 'error');
                 alertError(`机器人当前状态: ${data.status}，无法自动写入`);
                 isAutoWriting = false; // 重置写入状态
                 throw new Error(`机器人当前状态: ${data.status}，无法自动写入`);
             }
-            
+
             // 3. 检查运行中的程序
             updateStatusDisplay(`机器人状态正常，检查运行中的程序...`, 'processing');
             return fetch('/check_running_programs', {
@@ -435,46 +445,46 @@ function performAutoWrite(recipeName) {
                 isAutoWriting = false; // 重置写入状态
                 throw new Error(data.error);
             }
-            
+
             console.log('运行中的程序:', data.running_programs, '是否有程序运行:', data.has_running_programs);
-            
+
             if (data.has_running_programs) {
                 updateStatusDisplay(`当前有程序在运行: ${data.running_programs.join(', ')}，无法自动写入`, 'error');
                 alertError(`当前有程序在运行: ${data.running_programs.join(', ')}，无法自动写入`);
                 isAutoWriting = false; // 重置写入状态
                 throw new Error(`当前有程序在运行: ${data.running_programs.join(', ')}，无法自动写入`);
             }
-            
+
             // 4. 状态检查通过，开始写入P点操作
             updateStatusDisplay(`状态检查通过，开始自动写入P点...`, 'processing');
-            
+
             // 确保程序名称输入框有值
             const programNameInput = document.getElementById('write_program_name');
             if (!programNameInput.value) {
                 programNameInput.value = recipeName; // 使用配方名称作为程序名称
             }
-            
+
             // 创建一个Promise来等待所有写入操作完成
             writeOperationPromise = new Promise((resolve, reject) => {
                 // 设置写入操作完成后的回调
                 // 注意：P点写入和R寄存器写入总是会执行，TF写入只有在自动TF功能开启时才会执行
                 window.onWriteOperationComplete = (success, message, operationType) => {
                     console.log(`写入操作完成: ${operationType}, 成功: ${success}, 消息: ${message}`);
-                    
+
                     // 记录操作结果
                     writeOperationResults.push({
                         type: operationType,
                         success: success,
                         message: message
                     });
-                    
+
                     completedOperations++;
-                    
+
                     // 检查是否所有操作都完成了
                     if (completedOperations >= writeOperationCount) {
                         // 检查是否有失败的操作
                         const failedOperations = writeOperationResults.filter(op => !op.success);
-                        
+
                         if (failedOperations.length > 0) {
                             // 有失败的操作
                             const errorMessages = failedOperations.map(op => `${op.type}: ${op.message}`).join('; ');
@@ -486,12 +496,12 @@ function performAutoWrite(recipeName) {
                         }
                     }
                 };
-                
+
                 // 模拟点击写入P点按钮
                 console.log('模拟点击写入P点按钮');
                 document.getElementById('write_p_data_button').click();
             });
-            
+
             // 等待写入操作完成
             return writeOperationPromise;
         })
@@ -500,7 +510,7 @@ function performAutoWrite(recipeName) {
             updateStatusDisplay(`配方 ${recipeName} 自动写入完成`, 'success');
             alertSuccess(`配方 ${recipeName} 自动写入成功！`);
             isAutoWriting = false; // 重置写入状态
-            
+
             // 自动写入完成后，触发DO信号
             triggerFinishSignal();
         })
@@ -800,7 +810,7 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
         // 遍历所有图形中心位置，填充到表格中
         shapeCenters.forEach((center, index) => {
             const row = document.createElement('tr');
-            
+
             // 行号
             const cell1 = document.createElement('td');
             cell1.textContent = rowColInfoGlobal[index][0]; // 行号
@@ -1242,7 +1252,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .then(data => {
         console.log('P点数据写入成功');
         alertSuccess('P点数据写入成功');
-        
+
         // 如果有自动写入的回调函数，调用它
         if (window.onWriteOperationComplete) {
             window.onWriteOperationComplete(true, 'P点数据写入成功', 'P点写入');
@@ -1251,7 +1261,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .catch(error => {
         console.error('写入P点数据失败:', error.message);
         alertError('写入P点数据失败: ' + error.message);
-        
+
         // 如果有自动写入的回调函数，调用它
         if (window.onWriteOperationComplete) {
             window.onWriteOperationComplete(false, '写入P点数据失败: ' + error.message, 'P点写入');
@@ -1266,7 +1276,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         writeOperationCount++;
         console.log(`增加R寄存器写入操作计数器，当前总数: ${writeOperationCount}`);
     }
-    
+
     // 获取新增输入框的值
     const frame_length = document.getElementById('frame_length').value;
     const frame_width = document.getElementById('frame_width').value;
@@ -1317,7 +1327,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .then(data => {
         console.log('R寄存器写入成功');
         alertSuccess('R寄存器写入成功');
-        
+
         // 如果有自动写入的回调函数，调用它
         if (window.onWriteOperationComplete) {
             window.onWriteOperationComplete(true, 'R寄存器写入成功', 'R寄存器写入');
@@ -1326,7 +1336,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .catch(error => {
         console.error('写入R寄存器失败:', error.message);
         alertError('写入R寄存器失败: ' + error.message);
-        
+
         // 如果有自动写入的回调函数，调用它
         if (window.onWriteOperationComplete) {
             window.onWriteOperationComplete(false, '写入R寄存器失败: ' + error.message, 'R寄存器写入');
@@ -1484,7 +1494,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .then(data => {
         console.log('TF数据更新成功');
         alertSuccess('TF数据更新成功');
-        
+
         // 如果有自动写入的回调函数且自动TF功能开启，调用它
         if (window.onWriteOperationComplete && autoTF === 1) {
             window.onWriteOperationComplete(true, 'TF数据更新成功', 'TF写入');
@@ -1493,7 +1503,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .catch(error => {
         console.error('更新TF数据失败:', error.message);
         alertError('更新TF数据失败: ' + error.message);
-        
+
         // 如果有自动写入的回调函数且自动TF功能开启，调用它
         if (window.onWriteOperationComplete && autoTF === 1) {
             window.onWriteOperationComplete(false, '更新TF数据失败: ' + error.message, 'TF写入');
@@ -1644,24 +1654,33 @@ document.getElementById('save_recipe_button').addEventListener('click', function
         return response.json();
     })
     .then(async data => {
+        let finalRecipeName = recipeName;
+        let finalRecipeId = recipeId;
+
+        // 处理配方名冲突
         if (data.exists) {
-            // 如果配方文件已存在，弹出确认框
-            const confirmOverwrite = await myConfirm('配方名已存在，是否覆盖？');
-            if (!confirmOverwrite) {
-                return; // 用户取消覆盖，直接返回
+            const result = await showNameConflictDialog(recipeName);
+            if (result.cancelled) {
+                return; // 用户取消保存
             }
         }
 
+        // 处理配方ID冲突
         if (data.id_exists) {
-            // 如果配方编号已存在，弹出确认框
-            const confirmOverwriteId = await myConfirm('配方编号已存在，是否覆盖？');
-            if (!confirmOverwriteId) {
-                return; // 用户取消覆盖，直接返回
+            const result = await showIdConflictDialog(data);
+            if (result.cancelled) {
+                return; // 用户取消保存
+            }
+            
+            if (result.useNewId) {
+                finalRecipeId = result.newId;
+                // 更新界面上的配方ID显示
+                document.getElementById('recipe_id').value = finalRecipeId;
             }
         }
 
         // 继续保存配方的逻辑
-        saveRecipeData(recipeName, recipeId); // 将配方编号传递给保存函数
+        saveRecipeData(finalRecipeName, finalRecipeId);
     })
     .catch(error => {
         console.error('检查配方失败:', error.message);
@@ -1728,7 +1747,7 @@ function saveRecipeData(recipeName, recipeId) {
         return;
     }
     console.log('Saving recipe with base64 data:', plotImageBase64.substring(0, 50) + '...');
-    
+
     // 获取填充数量和单行/列数量
     const shapeCountValue = document.getElementById('shape-count-value')?.textContent || 0;
     const shapesPerRowOrColValue = document.getElementById('shapes-per-row-or-col-value')?.textContent || 0;
@@ -1788,7 +1807,13 @@ function saveRecipeData(recipeName, recipeId) {
     })
     .then(data => {
         console.log('配方保存成功');
-        alertSuccess('配方保存成功');
+        if (data.id_reassigned) {
+            // 如果有ID重新分配，更新界面上的配方ID显示
+            document.getElementById('recipe_id').value = data.new_id;
+            alertSuccess(data.message);
+        } else {
+            alertSuccess('配方保存成功');
+        }
     })
     .catch(error => {
         console.error('保存配方失败:', error.message);
@@ -1826,6 +1851,17 @@ function loadRecipeList(keyword = '') {
             filteredRecipes.forEach(recipe => {
                 const li = document.createElement('li');
 
+                // 创建勾选框（仅在插件环境中创建）
+                let checkbox = null;
+                checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'recipe-checkbox';
+                checkbox.value = recipe.recipeId;
+                checkbox.id = `recipe-${recipe.recipeName}`;
+
+                // 为每个配方复选框添加变更事件监听器
+                checkbox.addEventListener('change', updateSelectAllState);
+
                 // 创建 <span> 并设置配方编号和配方名
                 const recipeIdSpan = document.createElement('span');
                 recipeIdSpan.className = 'recipe-id'; // 添加类名
@@ -1835,7 +1871,10 @@ function loadRecipeList(keyword = '') {
                 recipeNameSpan.className = 'recipe-name'; // 添加类名
                 recipeNameSpan.textContent = recipe.recipeName; // 设置配方名
 
-                // 将 <span> 添加到 <li> 中
+                // 将勾选框和 <span> 添加到 <li> 中
+                if (checkbox) {
+                    li.appendChild(checkbox);
+                }
                 li.appendChild(recipeIdSpan);
                 li.appendChild(recipeNameSpan);
 
@@ -1863,7 +1902,11 @@ function loadRecipeList(keyword = '') {
                 recipeList.appendChild(li);
 
                 // 绑定点击事件到 <li>，点击配方名时触发预览
-                li.addEventListener('click', () => {
+                li.addEventListener('click', (e) => {
+                    // 如果点击的是勾选框，不触发预览（仅在插件环境中显示勾选框）
+                    if (isTP && e.target.type === 'checkbox') {
+                        return;
+                    }
                     previewRecipe(recipe.recipeName);
                 });
             });
@@ -2214,7 +2257,7 @@ function updateExternalCallVisibility() {
     const externalCallContainer = document.getElementById('external-call-container');
     const autoWriteContainer = document.getElementById('auto-write-container');
     const externalCallStatus = document.getElementById('external-call-status');
-    
+
     // 只有当配方号、调用信号DI、完成信号DO都输入了值时才显示选择框
     if (recipeNumber && callSignal && finishSignal) {
         externalCallContainer.style.display = 'block';
@@ -2233,15 +2276,15 @@ function updateExternalCallVisibility() {
 function updateStatusDisplay(message, type = 'normal') {
     const statusText = document.getElementById('status-text');
     const statusContainer = document.getElementById('external-call-status');
-    
+
     if (statusText) {
         statusText.textContent = message;
     }
-    
+
     if (statusContainer) {
         // 移除所有状态类
         statusContainer.classList.remove('monitoring', 'triggered', 'error', 'processing', 'success');
-        
+
         // 根据类型添加相应的类
         if (type === 'monitoring') {
             statusContainer.classList.add('monitoring');
@@ -2260,14 +2303,14 @@ function updateStatusDisplay(message, type = 'normal') {
 // 触发完成信号
 function triggerFinishSignal() {
     const finishSignal = document.getElementById('finish-signal').value;
-    
+
     if (!finishSignal) {
         console.log('未设置完成信号DO，跳过DO信号触发');
         return;
     }
-    
+
     console.log(`自动写入完成，开始触发DO${finishSignal}信号`);
-    
+
     // 设置DO信号为1
     fetch('/set_do_signal', {
         method: 'POST',
@@ -2284,7 +2327,7 @@ function triggerFinishSignal() {
         if (data.success) {
             console.log(`DO${finishSignal}信号设置为1成功`);
             updateStatusDisplay(`DO${finishSignal}信号已设置为1，1秒后将重置为0`, 'processing');
-            
+
             // 1秒后将DO信号设为0
             setTimeout(() => {
                 fetch('/set_do_signal', {
@@ -2312,7 +2355,7 @@ function triggerFinishSignal() {
                     updateStatusDisplay(`DO${finishSignal}信号重置请求失败: ${error.message}`, 'error');
                 });
             }, 1000); // 1秒延迟
-            
+
         } else {
             console.error(`DO${finishSignal}信号设置为1失败:`, data.error);
             updateStatusDisplay(`DO${finishSignal}信号设置失败: ${data.error}`, 'error');
@@ -2322,4 +2365,757 @@ function triggerFinishSignal() {
         console.error(`DO${finishSignal}信号设置为1请求失败:`, error);
         updateStatusDisplay(`DO${finishSignal}信号设置请求失败: ${error.message}`, 'error');
     });
+}
+
+
+// 配方操作相关函数
+function setupRecipeOperationListeners() {
+    // 全选/取消全选（仅在插件环境中显示和工作）
+    const selectAllCheckbox = document.getElementById('select-all-recipes');
+    const operateDiv = document.querySelector('.recipe-operations');
+
+    if (selectAllCheckbox) {
+        if (isTP) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const recipeCheckboxes = document.querySelectorAll('.recipe-checkbox');
+                recipeCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+            });
+        } else {
+            // 在非插件环境中隐藏全选勾选框
+            operateDiv.style.display = 'none';
+        }
+    }
+
+    // 导出选中配方
+    const exportButton = document.getElementById('export-selected-recipes');
+    if (exportButton) {
+        exportButton.addEventListener('click', exportSelectedRecipes);
+        // 如果不是在插件环境中，隐藏导出按钮
+        if (!isTP) {
+            exportButton.style.display = 'none';
+        }
+    }
+
+    // 导入配方
+    const importButton = document.getElementById('import-recipes');
+    if (importButton) {
+        importButton.addEventListener('click', importRecipes);
+        // 如果不是在插件环境中，隐藏导入按钮
+        if (!isTP) {
+            importButton.style.display = 'none';
+        }
+    }
+}
+
+// 获取选中的配方
+function getSelectedRecipes() {
+    const selectedCheckboxes = document.querySelectorAll('.recipe-checkbox:checked');
+    return Array.from(selectedCheckboxes).map(checkbox => checkbox.value);
+}
+
+// 导出选中的配方
+function exportSelectedRecipes() {
+    const selectedRecipes = getSelectedRecipes();
+
+    if (selectedRecipes.length === 0) {
+        alertError('请选择要导出的配方');
+        return;
+    }
+
+    console.log(selectedRecipes);
+    fetch('/export_recipe', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            recipe_ids: selectedRecipes
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alertError(`导出配方失败: ${data.error}`);
+            return;
+        }
+
+        // 导出成功
+        alertSuccess(data.message || `成功导出 ${selectedRecipes.length} 个配方到U盘`);
+    })
+    .catch(error => {
+        alertError(`导出配方失败: ${error.message}`);
+    });
+}
+
+// 导入配方
+function importRecipes() {
+    // 首先获取U盘中的备份时间目录列表
+    fetch('/get_backup_timestamps', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alertError(`读取U盘备份目录失败: ${data.error}`);
+            return;
+        }
+
+        if (data.count === 0) {
+            alertInfo('U盘中没有找到配方备份目录');
+            return;
+        }
+
+        // 显示时间目录选择对话框
+        showTimestampSelectionDialog(data.timestamps);
+    })
+    .catch(error => {
+        alertError(`读取U盘备份目录失败: ${error.message}`);
+    });
+}
+
+// 显示时间目录选择对话框
+function showTimestampSelectionDialog(timestamps) {
+    const dialog = document.createElement('div');
+    dialog.className = 'modal-overlay';
+    dialog.innerHTML = `
+        <div class="modal-content import-dialog">
+            <div class="modal-header">
+                <h3>选择备份时间</h3>
+                <button class="close-modal" onclick="closeImportDialog()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>请选择要导入的配方备份时间：</p>
+                <div class="timestamp-list">
+                    ${generateTimestampList(timestamps)}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeImportDialog()">取消</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(dialog);
+    dialog.classList.add('show');
+}
+
+// 生成时间目录列表HTML
+function generateTimestampList(timestamps) {
+    return timestamps.map(timestamp => {
+        return `
+            <div class="timestamp-item" onclick="selectTimestamp('${timestamp.timestamp}')">
+                <div class="timestamp-info">
+                    <div class="timestamp-display">${timestamp.display_time}</div>
+                    <div class="timestamp-details">
+                        <span class="recipe-count">${timestamp.recipe_count} 个配方</span>
+                        ${timestamp.export_date ? `<span class="export-date">导出时间: ${timestamp.export_date}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 选择时间戳并获取该目录下的配方
+function selectTimestamp(timestamp) {
+    // 获取指定时间目录中的配方列表
+    fetch('/get_usb_recipes', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            timestamp: timestamp
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alertError(`读取配方失败: ${data.error}`);
+            return;
+        }
+
+        if (data.count === 0) {
+            alertInfo('该时间目录中没有找到配方文件');
+            return;
+        }
+
+        // 关闭时间选择对话框，显示配方导入对话框
+        closeImportDialog();
+        showImportDialog(data.recipes, timestamp);
+    })
+    .catch(error => {
+        alertError(`读取配方失败: ${error.message}`);
+    });
+}
+
+// 显示导入对话框
+function showImportDialog(usbRecipes, timestamp) {
+    // 创建模态对话框
+    const dialog = document.createElement('div');
+    dialog.className = 'modal-overlay';
+    dialog.innerHTML = `
+        <div class="modal-content import-dialog">
+            <div class="modal-header">
+                <h3>从U盘导入配方</h3>
+                <button class="close-modal" onclick="closeImportDialog()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="import-recipe-controls">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" id="import-select-all" onchange="toggleAllImportRecipes()">
+                        <span class="checkbox-text">全选</span>
+                    </label>
+                    <div class="import-info">
+                        来源: ${timestamp} | 找到 ${usbRecipes.length} 个配方文件
+                    </div>
+                </div>
+                <div class="import-recipe-list" id="import-recipe-list">
+                    ${generateImportRecipeList(usbRecipes)}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeImportDialog()">取消</button>
+                <button class="btn btn-primary" onclick="confirmImportRecipes('${timestamp}')">导入选中配方</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(dialog);
+    dialog.classList.add('show');
+}
+
+// 生成导入配方列表HTML
+function generateImportRecipeList(usbRecipes) {
+    return usbRecipes.map(recipe => {
+        const errorText = recipe.error ? ` <span class="error-text">(${recipe.error})</span>` : '';
+
+        return `
+            <div class="import-recipe-item">
+                <label class="checkbox-wrapper">
+                    <input type="checkbox" class="import-recipe-checkbox" value="${recipe.filename}"
+                           onchange="updateImportSelectAllState()" ${recipe.error ? 'disabled' : ''}>
+                    <div class="recipe-info">
+                        <div class="recipe-name">${recipe.recipeName}${errorText}</div>
+                        <div class="recipe-details">
+                            <span class="recipe-id">ID: ${recipe.recipeId || '无'}</span>
+                        </div>
+                    </div>
+                </label>
+            </div>
+        `;
+    }).join('');
+}
+
+// 全选/取消全选导入配方
+function toggleAllImportRecipes() {
+    const selectAllCheckbox = document.getElementById('import-select-all');
+    const recipeCheckboxes = document.querySelectorAll('.import-recipe-checkbox:not(:disabled)');
+
+    recipeCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+}
+
+// 更新导入全选状态
+function updateImportSelectAllState() {
+    const selectAllCheckbox = document.getElementById('import-select-all');
+    const allRecipeCheckboxes = document.querySelectorAll('.import-recipe-checkbox:not(:disabled)');
+    const checkedRecipeCheckboxes = document.querySelectorAll('.import-recipe-checkbox:checked');
+
+    if (selectAllCheckbox) {
+        if (checkedRecipeCheckboxes.length === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (checkedRecipeCheckboxes.length === allRecipeCheckboxes.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+}
+
+// 确认导入配方
+async function confirmImportRecipes(timestamp) {
+    const selectedCheckboxes = document.querySelectorAll('.import-recipe-checkbox:checked');
+    const selectedFilenames = Array.from(selectedCheckboxes).map(cb => cb.value);
+
+    if (selectedFilenames.length === 0) {
+        alertError('请选择要导入的配方');
+        return;
+    }
+
+    // 确认导入
+    const confirmed = await myConfirm(`确认导入 ${selectedFilenames.length} 个配方？`);
+    if (confirmed) {
+        executeImport(selectedFilenames, timestamp);
+    }
+}
+
+// 执行导入操作
+async function executeImport(filenames, timestamp) {
+    try {
+        // 初始化跳过计数
+        window.manuallySkippedCount = 0;
+
+        // 1. 先检查重名冲突（配方号冲突会自动处理）
+        const conflictResult = await checkImportConflicts(filenames, timestamp);
+
+        let conflictAction = 'proceed'; // 默认继续导入
+
+        // 2. 如果有配方号重新分配的情况，先显示信息
+        if (conflictResult.hasIdReassignments) {
+            const continueImport = await showIdReassignmentDialog(conflictResult.idReassignments);
+            if (!continueImport) {
+                return; // 用户取消导入
+            }
+        }
+
+        // 3. 如果有重名冲突，逐个询问用户处理方式
+        if (conflictResult.hasNameConflicts) {
+            const resolvedConflicts = await resolveNameConflictsOneByOne(conflictResult.nameConflicts);
+
+            if (resolvedConflicts.cancelled) {
+                return; // 用户取消导入
+            }
+
+            // 根据用户的决定过滤要导入的文件
+            const originalFileCount = filenames.length;
+            const skippedConflicts = resolvedConflicts.decisions.filter(d => d.action === 'skip');
+
+            filenames = filenames.filter(filename => {
+                const conflict = resolvedConflicts.decisions.find(d => d.filename === filename);
+                return !conflict || conflict.action !== 'skip';
+            });
+
+            if (filenames.length === 0) {
+                alertInfo('所有配方都被跳过，导入已取消');
+                return;
+            }
+
+            conflictAction = 'overwrite'; // 剩余的文件都是要覆盖的
+
+            // 记录跳过的重名配方数量，用于最后的结果显示
+            window.manuallySkippedCount = skippedConflicts.length;
+        }
+
+        // 4. 执行实际导入
+        const response = await fetch('/import_recipes_from_usb', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                filenames: filenames,
+                timestamp: timestamp,
+                conflict_action: conflictAction
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            alertError(`导入失败: ${data.error}`);
+            return;
+        }
+
+        // 显示导入结果
+        let message = data.message;
+
+        // 添加手动跳过的重名配方信息
+        if (window.manuallySkippedCount && window.manuallySkippedCount > 0) {
+            const parts = message.split('成功导入');
+            if (parts.length === 2) {
+                message = parts[0] + `成功导入${parts[1].split('个配方')[0]}个配方，手动跳过 ${window.manuallySkippedCount} 个重名配方${parts[1].substring(parts[1].indexOf('个配方') + 3)}`;
+            }
+            delete window.manuallySkippedCount; // 清理全局变量
+        }
+
+        // 添加重新分配的配方号信息
+        if (data.reassigned_list && data.reassigned_list.length > 0) {
+            message += '\n\n配方号自动重新分配详情:\n' + data.reassigned_list.join('\n');
+        }
+
+        if (data.errors && data.errors.length > 0) {
+            message += '\n\n错误详情:\n' + data.errors.join('\n');
+        }
+
+        alertSuccess(message);
+        closeImportDialog();
+
+        // 刷新配方列表
+        loadRecipeList();
+
+    } catch (error) {
+        alertError(`导入失败: ${error.message}`);
+    }
+}
+
+// 检查导入冲突
+async function checkImportConflicts(filenames, timestamp) {
+    try {
+        const response = await fetch('/check_import_conflicts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                filenames: filenames,
+                timestamp: timestamp
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        return {
+            hasNameConflicts: data.hasNameConflicts,
+            hasIdReassignments: data.hasIdReassignments,
+            nameConflicts: data.nameConflicts,
+            idReassignments: data.idReassignments
+        };
+
+    } catch (error) {
+        console.error('检查导入冲突失败:', error);
+        return { hasNameConflicts: false, hasIdReassignments: false, nameConflicts: [], idReassignments: [] };
+    }
+}
+
+
+
+// 显示配方号重新分配确认对话框
+async function showIdReassignmentDialog(idReassignments) {
+    return new Promise((resolve) => {
+        const dialog = document.createElement('div');
+        dialog.className = 'modal-overlay';
+        dialog.innerHTML = `
+            <div class="modal-content conflict-dialog">
+                <div class="modal-header">
+                    <h3>配方号自动分配通知</h3>
+                    <button class="close-modal" onclick="resolveIdReassignment(false)">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p class="conflict-message">以下配方存在配方号重复，系统将自动分配新的配方号：</p>
+                    <div class="conflict-list">
+                        ${generateIdReassignmentList(idReassignments)}
+                    </div>
+                    <div class="conflict-note">
+                        <p><strong>说明：</strong>这些配方的内容不会改变，只是配方号会被重新分配到可用的号码。</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="resolveIdReassignment(false)">取消导入</button>
+                    <button class="btn btn-primary" onclick="resolveIdReassignment(true)">确认继续</button>
+                </div>
+            </div>
+        `;
+
+        // 添加全局解决函数
+        window.resolveIdReassignment = (proceed) => {
+            document.body.removeChild(dialog);
+            delete window.resolveIdReassignment;
+            resolve(proceed);
+        };
+
+        document.body.appendChild(dialog);
+        dialog.classList.add('show');
+    });
+}
+
+// 逐个解决重名冲突
+async function resolveNameConflictsOneByOne(nameConflicts) {
+    const decisions = [];
+
+    for (let i = 0; i < nameConflicts.length; i++) {
+        const conflict = nameConflicts[i];
+        const decision = await showSingleNameConflictDialog(conflict, i + 1, nameConflicts.length);
+
+        if (decision.action === 'cancel') {
+            return { cancelled: true, decisions: [] };
+        }
+
+        if (decision.action === 'skip_all') {
+            // 跳过所有剩余的重名配方
+            for (let j = i; j < nameConflicts.length; j++) {
+                decisions.push({
+                    filename: nameConflicts[j].filename,
+                    action: 'skip'
+                });
+            }
+            break;
+        }
+
+        if (decision.action === 'overwrite_all') {
+            // 覆盖所有剩余的重名配方
+            for (let j = i; j < nameConflicts.length; j++) {
+                decisions.push({
+                    filename: nameConflicts[j].filename,
+                    action: 'overwrite'
+                });
+            }
+            break;
+        }
+
+        decisions.push({
+            filename: conflict.filename,
+            action: decision.action
+        });
+    }
+
+    return { cancelled: false, decisions };
+}
+
+// 显示单个重名冲突确认对话框
+async function showSingleNameConflictDialog(conflict, current, total) {
+    return new Promise((resolve) => {
+        const dialog = document.createElement('div');
+        dialog.className = 'modal-overlay';
+        dialog.innerHTML = `
+            <div class="modal-content conflict-dialog">
+                <div class="modal-header">
+                    <h3>配方重名确认 (${current}/${total})</h3>
+                    <button class="close-modal" onclick="resolveSingleNameConflict('cancel')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p class="conflict-message">发现配方重名冲突，请选择处理方式：</p>
+                    <div class="conflict-list">
+                        ${generateSingleNameConflictInfo(conflict)}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="resolveSingleNameConflict('cancel')">取消导入</button>
+                    <button class="btn btn-warning" onclick="resolveSingleNameConflict('skip')">跳过此配方</button>
+                    <button class="btn btn-danger" onclick="resolveSingleNameConflict('overwrite')">覆盖此配方</button>
+                    ${total > 1 && current < total ? `
+                        <hr style="margin: 10px 0;">
+                        <button class="btn btn-warning btn-sm" onclick="resolveSingleNameConflict('skip_all')">跳过所有剩余</button>
+                        <button class="btn btn-danger btn-sm" onclick="resolveSingleNameConflict('overwrite_all')">覆盖所有剩余</button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+
+        // 添加全局解决函数
+        window.resolveSingleNameConflict = (action) => {
+            document.body.removeChild(dialog);
+            delete window.resolveSingleNameConflict;
+            resolve({ action });
+        };
+
+        document.body.appendChild(dialog);
+        dialog.classList.add('show');
+    });
+}
+
+// 生成单个重名冲突信息HTML
+function generateSingleNameConflictInfo(conflict) {
+    return `
+        <div class="conflict-item">
+            <div class="conflict-info">
+                <strong>文件：${conflict.filename}</strong>
+            </div>
+            <div class="conflict-details">
+                <span class="conflict-type">冲突类型：配方名称重复</span>
+                <div class="conflict-comparison">
+                    <div class="usb-recipe">
+                        <span class="label">U盘配方：</span>
+                        <span class="recipe-name">${conflict.usbRecipeName}</span>
+                        <span class="recipe-id">(ID: ${conflict.usbRecipeId || '无'})</span>
+                    </div>
+                    <div class="local-recipe">
+                        <span class="label">本地配方：</span>
+                        <span class="recipe-name">${conflict.localRecipeName}</span>
+                        <span class="recipe-id">(ID: ${conflict.localRecipeId || '无'})</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// 生成配方号重新分配列表HTML
+function generateIdReassignmentList(idReassignments) {
+    return idReassignments.map(reassignment => {
+        return `
+            <div class="conflict-item">
+                <div class="conflict-info">
+                    <strong>文件：${reassignment.filename}</strong>
+                </div>
+                <div class="conflict-details">
+                    <span class="conflict-type">配方：${reassignment.recipeName}</span>
+                    <div class="conflict-comparison">
+                        <div class="usb-recipe">
+                            <span class="label">原配方号：</span>
+                            <span class="recipe-id">${reassignment.originalId}</span>
+                        </div>
+                        <div class="local-recipe">
+                            <span class="label">新配方号：</span>
+                            <span class="recipe-id">${reassignment.newId}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+
+
+// 显示配方名冲突对话框（用于保存配方时）
+async function showNameConflictDialog(recipeName) {
+    return new Promise((resolve) => {
+        // 创建模态对话框
+        const dialog = document.createElement('div');
+        dialog.className = 'modal-overlay';
+        dialog.innerHTML = `
+            <div class="modal-content conflict-dialog">
+                <div class="modal-header">
+                    <h3>配方名称冲突</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="conflict-info">
+                        <p><strong>配方名称 "${recipeName}" 已存在</strong></p>
+                        <p>继续保存将覆盖现有的配方文件，请确认是否继续？</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancel-save">取消保存</button>
+                    <button class="btn btn-danger" id="overwrite-recipe">覆盖现有配方</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(dialog);
+        dialog.classList.add('show');
+
+        // 绑定事件
+        const cancelBtn = dialog.querySelector('#cancel-save');
+        const overwriteBtn = dialog.querySelector('#overwrite-recipe');
+
+        const cleanup = () => {
+            document.body.removeChild(dialog);
+        };
+
+        cancelBtn.onclick = () => {
+            cleanup();
+            resolve({ cancelled: true });
+        };
+
+        overwriteBtn.onclick = () => {
+            cleanup();
+            resolve({ cancelled: false });
+        };
+
+        // ESC键关闭
+        const handleEsc = (event) => {
+            if (event.key === 'Escape') {
+                cleanup();
+                document.removeEventListener('keydown', handleEsc);
+                resolve({ cancelled: true });
+            }
+        };
+        document.addEventListener('keydown', handleEsc);
+    });
+}
+
+// 显示ID冲突对话框（用于保存配方时）
+async function showIdConflictDialog(conflictData) {
+    return new Promise((resolve) => {
+        // 创建模态对话框
+        const dialog = document.createElement('div');
+        dialog.className = 'modal-overlay';
+        dialog.innerHTML = `
+            <div class="modal-content conflict-dialog">
+                <div class="modal-header">
+                    <h3>配方编号冲突</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="conflict-info">
+                        <p><strong>配方编号 ${conflictData.original_id} 已被配方 "${conflictData.conflicting_recipe_name}" 使用</strong></p>
+                        <p>系统建议使用新的配方编号：<strong>${conflictData.suggested_id}</strong></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancel-save">取消保存</button>
+                    <button class="btn btn-primary" id="use-new-id">使用新编号 ${conflictData.suggested_id}</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(dialog);
+        dialog.classList.add('show');
+
+        // 绑定事件
+        const cancelBtn = dialog.querySelector('#cancel-save');
+        const useNewIdBtn = dialog.querySelector('#use-new-id');
+
+        const cleanup = () => {
+            document.body.removeChild(dialog);
+        };
+
+        cancelBtn.onclick = () => {
+            cleanup();
+            resolve({ cancelled: true });
+        };
+
+        useNewIdBtn.onclick = () => {
+            cleanup();
+            resolve({ 
+                cancelled: false, 
+                useNewId: true, 
+                newId: conflictData.suggested_id 
+            });
+        };
+
+        // ESC键关闭
+        const handleEsc = (event) => {
+            if (event.key === 'Escape') {
+                cleanup();
+                document.removeEventListener('keydown', handleEsc);
+                resolve({ cancelled: true });
+            }
+        };
+        document.addEventListener('keydown', handleEsc);
+    });
+}
+
+// 关闭导入对话框
+function closeImportDialog() {
+    const dialog = document.querySelector('.modal-overlay');
+    if (dialog) {
+        dialog.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(dialog);
+        }, 300);
+    }
+}
+
+// 更新全选状态
+function updateSelectAllState() {
+    const selectAllCheckbox = document.getElementById('select-all-recipes');
+    const allRecipeCheckboxes = document.querySelectorAll('.recipe-checkbox');
+    const checkedRecipeCheckboxes = document.querySelectorAll('.recipe-checkbox:checked');
+
+    if (selectAllCheckbox) {
+        if (checkedRecipeCheckboxes.length === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (checkedRecipeCheckboxes.length === allRecipeCheckboxes.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
 }

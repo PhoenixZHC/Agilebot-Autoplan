@@ -520,6 +520,20 @@
                         <!-- 左侧配方列表 -->
                         <div class="recipe-list-container">
                             <h3>配方列表</h3>
+                            <!-- 配方操作按钮区域 -->
+                            {% if is_tp %}
+                                <div class="recipe-operations">
+                                    <div class="recipe-select-row">
+                                        <input type="checkbox" id="select-all-recipes" class="select-all-checkbox">
+                                        <label for="select-all-recipes">全选</label>
+                                    </div>
+                                    <div class="recipe-button-row">
+                                        <button id="export-selected-recipes">导出选中配方</button>
+                                        <button id="import-recipes">导入配方</button>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            <!-- 配方列表显示区域 -->
                             <ul id="recipe-list" class="recipe-list">
                                 <!-- 配方列表将动态填充到这里 -->
                             </ul>
@@ -664,6 +678,9 @@
         </div>
     </div>
 
+    <script>
+        window.isTP = {{ is_tp|tojson }};
+    </script>
     <script src="{{ url_for('static', path='extension-runtime.js')  }}"></script>
     <script src="{{ url_for('static', path='script-compiled.js')  }}"></script>
 </body>
