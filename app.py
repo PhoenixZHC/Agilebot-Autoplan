@@ -1582,6 +1582,88 @@ async def delete_recipe(request: Request):
     except Exception as e:
         return JSONResponse({'error': str(e)}, 400)
 
+def verify_udisk_mount(mount_path, mount_info):
+    """
+    验证挂载点是否确实是有效的U盘设备
+
+    Args:
+        mount_path: 挂载点路径
+        mount_info: mount命令输出的信息
+
+    Returns:
+        bool: True表示是有效的U盘，False表示无效
+    """
+    try:
+        print(f"开始验证挂载点: {mount_path}")
+
+        # 1. 检查挂载点目录是否可访问
+        if not os.path.exists(mount_path):
+            print(f"挂载点目录不存在: {mount_path}")
+            return False
+
+        if not os.path.ismount(mount_path):
+            print(f"目录不是挂载点: {mount_path}")
+            return False
+
+        # 2. 从mount信息中提取设备名
+        # mount_info格式类似: /dev/sda1 on /mnt/udisk type vfat (rw,relatime,...)
+        try:
+            device_name = mount_info.split()[0]  # 获取设备名，如 /dev/sda1
+            if not device_name.startswith('/dev/'):
+                print(f"无效的设备名: {device_name}")
+                return False
+
+            # 获取基础设备名（去掉分区号），如 sda1 -> sda
+            base_device = device_name.split('/')[-1]  # 获取 sda1
+            if base_device[-1].isdigit():
+                base_device = base_device.rstrip('0123456789')  # 去掉数字，得到 sda
+
+            print(f"检测到设备: {device_name}, 基础设备: {base_device}")
+
+        except Exception as e:
+            print(f"解析设备名失败: {e}")
+            return False
+
+        # 3. 检查该设备是否为可移动设备
+        lsblk_output = subprocess.getoutput('lsblk -o NAME,RM,TYPE')
+        print(f"验证lsblk输出:\n{lsblk_output}")
+
+        device_found = False
+        for line in lsblk_output.split('\n'):
+            parts = line.split()
+            if len(parts) >= 3:
+                name = parts[0].strip()
+                removable = parts[1].strip()
+                device_type = parts[2].strip()
+
+                # 检查是否匹配基础设备名且为可移动磁盘
+                if (name == base_device and removable == '1' and device_type == 'disk'):
+                    print(f"找到匹配的可移动设备: {line.strip()}")
+                    device_found = True
+                    break
+
+        if not device_found:
+            print(f"设备 {base_device} 不是可移动设备")
+            return False
+
+        # 4. 测试挂载点是否可写
+        try:
+            test_file = os.path.join(mount_path, '.test_write_access')
+            with open(test_file, 'w') as f:
+                f.write('test')
+            os.remove(test_file)
+            print("挂载点可写测试通过")
+        except Exception as e:
+            print(f"挂载点写入测试失败: {e}")
+            return False
+
+        print("U盘验证通过")
+        return True
+
+    except Exception as e:
+        print(f"验证U盘时发生错误: {e}")
+        return False
+
 def check_udisk():
     """
     检查是否插入了U盘（通过lsblk命令检查可移动存储设备）
@@ -1591,13 +1673,21 @@ def check_udisk():
         tuple: (bool, str) - (是否检测到U盘并已挂载, 实际挂载点路径)
     """
     try:
-        # 1. 先检查/mnt/udisk是否已经被系统自动挂载，如果有则直接使用
+        # 1. 先检查/mnt/udisk是否已经被系统自动挂载，如果有则验证是否为有效U盘
         print("检查/mnt/udisk是否已被挂载...")
         udisk_mount_check = subprocess.getoutput("mount | grep /mnt/udisk")
         if udisk_mount_check:
             print(f"检测到/mnt/udisk已被挂载: {udisk_mount_check}")
-            print("直接使用/mnt/udisk挂载点")
-            return (True, "/mnt/udisk")
+
+            # 验证/mnt/udisk确实是有效的U盘设备
+            if verify_udisk_mount("/mnt/udisk", udisk_mount_check):
+                print("验证通过，直接使用/mnt/udisk挂载点")
+                return (True, "/mnt/udisk")
+            else:
+                print("验证失败，/mnt/udisk不是有效的U盘，尝试卸载并重新检测...")
+                # 尝试卸载无效的挂载点
+                subprocess.getoutput("umount /mnt/udisk")
+                print("继续检测U盘设备...")
         else:
             print("/mnt/udisk未被挂载，继续检测U盘设备...")
 
