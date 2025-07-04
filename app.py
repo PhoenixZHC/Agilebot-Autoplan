@@ -21,6 +21,8 @@ import math
 import os
 import json
 import platform
+import subprocess
+import shutil
 from typing import Optional
 from Agilebot.IR.A.arm import Arm
 from Agilebot.IR.A.status_code import StatusCodeEnum
@@ -501,11 +503,13 @@ def index(request: Request):
     with open('config.json', 'r') as f:
         config = json.load(f)
     version = config['version']
+    is_tp = platform.system().lower() == 'linux'
 
     return templates.TemplateResponse(
         request=request, name="index.html",
         context={
-            'version': version
+            'version': version,
+            'is_tp': is_tp
         }
     )
 
@@ -714,10 +718,10 @@ async def calculate(request: Request):
 async def connect_robot(request: Request):
     global robot_arm
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
-        
+
     robot_ip = data.get('robot_ip')
 
     if not robot_ip:
@@ -798,10 +802,10 @@ async def disconnect_robot_route(request: Request):
 async def get_p_data(request: Request):
     global robot_arm
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
-        
+
     program_name = data.get('program_name')
 
     if not program_name:
@@ -851,10 +855,10 @@ async def get_p_data(request: Request):
 async def write_p_data(request: Request):
     global robot_arm
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
-        
+
     program_name = data.get('program_name')
     p_data = data.get('p_data')
 
@@ -918,10 +922,10 @@ async def write_p_data(request: Request):
 async def read_pr_register(request: Request):
     global robot_arm
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
-        
+
     pr_register_id = data.get('pr_register_id')
     print(f"读取PR寄存器 {pr_register_id} 的C值")  # 打印调试信息
 
@@ -962,7 +966,7 @@ async def read_pr_register(request: Request):
 @app.post('/write_r_registers')
 async def write_r_registers(request: Request):
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
 
@@ -1081,10 +1085,10 @@ async def write_r_registers(request: Request):
 async def get_tf_data(request: Request):
     global robot_arm
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
-        
+
     tf_id = data.get('tf_id')
 
     if tf_id is None:
@@ -1138,10 +1142,10 @@ async def get_tf_data(request: Request):
 async def update_tf_data(request: Request):
     global robot_arm
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
-        
+
     tf_updates = data.get('tf_updates')
 
     if not tf_updates:
@@ -1193,10 +1197,10 @@ async def update_tf_data(request: Request):
 @app.post('/get_pr_data')
 async def get_pr_data(request: Request):
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
-        
+
     shape_type = data.get('shape_type')
     diameter = data.get('diameter')
     length = data.get('length')
@@ -1215,13 +1219,13 @@ async def get_pr_data(request: Request):
         pr1, ret1 = robot_arm.register.read_PR(1)
         if ret1 != StatusCodeEnum.OK:
             return JSONResponse({'error': '读取PR1寄存器失败'}, 400)
-            
+
         if robot_arm is None:
             return JSONResponse({'error': '机器人连接已断开'}, 400)
         pr2, ret2 = robot_arm.register.read_PR(2)
         if ret2 != StatusCodeEnum.OK:
             return JSONResponse({'error': '读取PR2寄存器失败'}, 400)
-            
+
         if robot_arm is None:
             return JSONResponse({'error': '机器人连接已断开'}, 400)
         pr3, ret3 = robot_arm.register.read_PR(3)
@@ -1281,7 +1285,7 @@ async def get_pr_data(request: Request):
 @app.post('/save_recipe')
 async def save_recipe(request: Request):
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
 
@@ -1290,8 +1294,52 @@ async def save_recipe(request: Request):
         recipe_name = data.get('recipeName')
         recipe_id = data.get('recipeId')  # 获取配方编号
 
+        print(f"开始保存配方：名称={recipe_name}, ID={recipe_id} (类型: {type(recipe_id)})")
+
         if not recipe_name or not recipe_id:
             return JSONResponse({'error': '缺少配方名或配方编号'}, 400)
+
+        # 检查ID冲突并自动分配新ID
+        recipe_dir = 'data'
+        if not os.path.exists(recipe_dir):
+            os.makedirs(recipe_dir)
+
+        used_ids = set()
+        id_reassigned = False
+        original_id = recipe_id
+        id_conflict = False
+
+        # 第一步：收集所有已使用的ID
+        print(f"开始检查ID冲突，目标配方: {recipe_name}, 目标ID: {recipe_id}")
+        for f in os.listdir(recipe_dir):
+            if f.endswith('.json'):
+                existing_name, _ = os.path.splitext(f)  # 从文件名获取配方名
+                with open(os.path.join(recipe_dir, f), 'r') as file:
+                    existing_recipe_data = json.load(file)
+                    existing_id = existing_recipe_data.get('recipeId')
+
+                    print(f"检查现有配方: {existing_name}, ID: {existing_id} (类型: {type(existing_id)})")
+
+                    if existing_id is not None:
+                        used_ids.add(int(existing_id))
+
+                        # 检查ID冲突（排除同名配方的情况）
+                        if int(existing_id) == int(recipe_id) and existing_name != recipe_name:
+                            id_conflict = True
+                            print(f"检测到ID冲突：配方 {recipe_name} (ID:{recipe_id}) 与现有配方 {existing_name} (ID:{existing_id}) 冲突")
+
+        print(f"已使用的ID列表: {sorted(used_ids)}")
+        print(f"ID冲突状态: {id_conflict}")
+
+        # 第二步：如果有ID冲突，分配新ID
+        if id_conflict:
+            new_id = 1
+            while new_id in used_ids:
+                new_id += 1
+
+            recipe_id = new_id
+            id_reassigned = True
+            print(f"配方 {recipe_name} 的ID从 {original_id} 重新分配为 {new_id}")
 
         # 获取所有数据
         table_data = data.get('tableData')
@@ -1333,9 +1381,8 @@ async def save_recipe(request: Request):
         triangle_base_length = data.get('triangleBaseLength') if shape_type == 'triangle' else None
         triangle_orientation = data.get('triangleOrientation') if shape_type == 'triangle' else None
 
-        # 将数据保存到一个 JSON 文件中
+        # 将数据保存到一个 JSON 文件中（不再保存recipeName字段，因为文件名就是配方名）
         recipe_data = {
-            'recipeName': recipe_name,
             'recipeId': recipe_id,  # 保存配方编号
             'tableData': table_data,
             'frameLength': frame_length,
@@ -1371,13 +1418,27 @@ async def save_recipe(request: Request):
         }
 
         # 保存到文件
-        import json
         recipe_file_path = f'data/{recipe_name}.json'
         with open(recipe_file_path, 'w') as f:
             json.dump(recipe_data, f)
+        # 确保数据写入磁盘
+        os.system("sync")
+        os.system("sync")
+
         print(f'Recipe saved successfully to {recipe_file_path}')
 
-        return JSONResponse({'message': '配方保存成功'}, 200)
+        # 根据是否有ID重新分配返回不同的信息
+        if id_reassigned:
+            print(f"返回ID重新分配结果: 原ID={original_id}, 新ID={recipe_id}")
+            return JSONResponse({
+                'message': f'配方保存成功，配方ID已从 {original_id} 重新分配为 {recipe_id}',
+                'id_reassigned': True,
+                'original_id': int(original_id),
+                'new_id': int(recipe_id)
+            }, 200)
+        else:
+            print("返回普通保存成功结果")
+            return JSONResponse({'message': '配方保存成功'}, 200)
 
     except Exception as e:
         print(f'Error saving recipe: {str(e)}')
@@ -1386,7 +1447,7 @@ async def save_recipe(request: Request):
 @app.post('/check_recipe')
 async def check_recipe(request: Request):
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
 
@@ -1402,23 +1463,44 @@ async def check_recipe(request: Request):
         recipe_file_path = f'data/{recipe_name}.json'
         exists = os.path.exists(recipe_file_path)
 
-        # 检查配方编号是否重复
+        # 检查配方编号是否重复并获取所有已使用的ID
         recipe_dir = 'data'
         if not os.path.exists(recipe_dir):
             os.makedirs(recipe_dir)
 
+        used_ids = set()
         id_exists = False
+        conflicting_recipe_name = None
+
         for f in os.listdir(recipe_dir):
             if f.endswith('.json'):
+                existing_name, _ = os.path.splitext(f)  # 从文件名获取配方名
                 with open(os.path.join(recipe_dir, f), 'r') as file:
                     recipe_data = json.load(file)
-                    if recipe_data.get('recipeId') == recipe_id:
-                        id_exists = True
-                        break
+                    existing_id = recipe_data.get('recipeId')
+
+                    if existing_id is not None:
+                        used_ids.add(int(existing_id))
+
+                        # 检查ID冲突（排除同名配方的情况）
+                        if int(existing_id) == int(recipe_id) and existing_name != recipe_name:
+                            id_exists = True
+                            conflicting_recipe_name = existing_name
+
+        # 如果ID冲突，找到下一个可用的ID
+        suggested_id = None
+        if id_exists:
+            new_id = 1
+            while new_id in used_ids:
+                new_id += 1
+            suggested_id = new_id
 
         return JSONResponse({
             'exists': exists,  # 配方名是否存在
-            'id_exists': id_exists  # 配方编号是否存在
+            'id_exists': id_exists,  # 配方编号是否存在冲突
+            'conflicting_recipe_name': conflicting_recipe_name,  # 冲突的配方名
+            'suggested_id': suggested_id,  # 建议的新ID
+            'original_id': int(recipe_id)  # 原始ID
         }, 200)
 
     except Exception as e:
@@ -1434,12 +1516,17 @@ async def get_recipe_list(request: Request):
         recipes = []
         for f in os.listdir(recipe_dir):
             if f.endswith('.json'):
+                recipe_name, _ = os.path.splitext(f)
                 with open(os.path.join(recipe_dir, f), 'r') as file:
                     recipe_data = json.load(file)
                     recipes.append({
-                        'recipeName': recipe_data.get('recipeName'),
+                        'recipeName': recipe_name, # 确保配方名与文件名一致
                         'recipeId': recipe_data.get('recipeId')  # 确保返回 recipeId
                     })
+
+        # 按配方ID升序排序
+        recipes.sort(key=lambda x: int(x['recipeId']) if x['recipeId'] is not None else 0)
+
         return JSONResponse({'recipes': recipes}, 200)
     except Exception as e:
         return JSONResponse({'error': str(e)}, 400)
@@ -1448,10 +1535,10 @@ async def get_recipe_list(request: Request):
 async def get_recipe(request: Request):
     """获取指定配方的详细信息"""
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
-        
+
     recipe_name = data.get('recipeName')
 
     if not recipe_name:
@@ -1464,6 +1551,10 @@ async def get_recipe(request: Request):
 
         with open(recipe_file_path, 'r') as f:
             recipe_data = json.load(f)
+        # 确保配方名与文件名一致
+        recipe_name, _ = os.path.splitext(os.path.basename(recipe_file_path))
+        recipe_data['recipeName'] = recipe_name
+
         return JSONResponse(recipe_data, 200)
     except Exception as e:
         return JSONResponse({'error': str(e)}, 400)
@@ -1472,10 +1563,10 @@ async def get_recipe(request: Request):
 async def delete_recipe(request: Request):
     """删除指定配方"""
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
-        
+
     recipe_name = data.get('recipeName')
 
     if not recipe_name:
@@ -1491,15 +1582,654 @@ async def delete_recipe(request: Request):
     except Exception as e:
         return JSONResponse({'error': str(e)}, 400)
 
+def check_udisk():
+    """
+    检查是否插入了U盘（通过lsblk命令检查可移动存储设备）
+    如果存在且未挂载则自动创建设备节点并挂载
+
+    Returns:
+        bool: True表示检测到U盘并已挂载，False表示未检测到或挂载失败
+    """
+    try:
+        # 1. 首先执行lsblk命令检查可移动存储设备
+        output = subprocess.getoutput('lsblk -o NAME,MAJ:MIN,RM,SIZE,TYPE')
+        print("lsblk输出:")
+        print(output)
+
+        # 检查输出中是否包含可移动磁盘
+        usb_device = None
+        device_name = None
+        maj = None
+        min_num = None
+
+        output_lines = output.split('\n')
+        for line in output_lines:
+            parts = line.split()
+            if len(parts) >= 5:
+                name = parts[0].strip()
+                maj_min = parts[1].strip()
+                removable = parts[2].strip()
+                device_type = parts[4].strip()
+
+                # 检查是否为可移动磁盘且以sd开头
+                if (name.startswith('sd') and removable == '1' and device_type == 'disk'):
+                    print(f"检测到U盘设备: {line.strip()}")
+                    usb_device = line.strip()
+                    device_name = name
+                    maj, min_num = maj_min.split(':')
+                    print(f"设备名: {device_name}, 设备号: 主设备号={maj}, 次设备号={min_num}")
+                    break
+
+        # 2. 如果没有找到U盘设备，直接返回False
+        if not usb_device:
+            print("未检测到U盘设备")
+            return False
+
+        # 3. 设备存在，检查这个具体设备是否已经挂载
+        mount_check = subprocess.getoutput(f"mount | grep /dev/{device_name}")
+        if mount_check and "/mnt/usb" in mount_check:
+            print(f"U盘已挂载: {mount_check}")
+            return True
+
+        # 4. 设备存在但未挂载，执行挂载操作
+        if maj and min_num and device_name:
+            print("开始执行挂载操作...")
+
+            # 执行挂载命令
+            commands = [
+                f"mknod /dev/{device_name} b {maj} {min_num}",
+                f"chmod 660 /dev/{device_name}",
+                "mkdir -p /mnt/usb",
+                f"mount /dev/{device_name} /mnt/usb"
+            ]
+
+            for cmd in commands:
+                print(f"执行命令: {cmd}")
+                result = subprocess.getoutput(cmd)
+                if result:  # 如果有输出，通常表示有错误或警告
+                    print(f"命令输出: {result}")
+
+            # 5. 再次检查挂载是否成功
+            mount_check = subprocess.getoutput("mount | grep /mnt/usb")
+            if mount_check:
+                print(f"U盘挂载成功: {mount_check}")
+                return True
+            else:
+                print("U盘挂载失败")
+                return False
+        else:
+            print("设备号解析失败")
+            return False
+
+    except Exception as e:
+        print(f"检查U盘时发生错误: {e}")
+        return False
+
+def unmount_udisk():
+    """
+    卸载U盘，确保数据写入完成
+
+    Returns:
+        bool: True表示卸载成功，False表示卸载失败
+    """
+    try:
+        # 1. 检查U盘是否已挂载
+        mount_check = subprocess.getoutput("mount | grep /mnt/usb")
+        if not mount_check:
+            print("U盘未挂载，无需卸载")
+            return True
+
+        print(f"当前U盘挂载状态: {mount_check}")
+
+        # 2. 执行sync命令，确保所有数据写入磁盘
+        print("执行sync命令，确保数据写入...")
+        sync_result = subprocess.getoutput("sync")
+        if sync_result:
+            print(f"sync命令输出: {sync_result}")
+
+        # 3. 卸载U盘
+        print("开始卸载U盘...")
+        umount_result = subprocess.getoutput("umount /mnt/usb")
+        if umount_result:
+            print(f"卸载命令输出: {umount_result}")
+            # 如果有输出，可能是警告或错误，但不一定意味着失败
+
+        # 4. 检查是否卸载成功
+        mount_check_after = subprocess.getoutput("mount | grep /mnt/usb")
+        if not mount_check_after:
+            print("U盘卸载成功")
+            return True
+        else:
+            print(f"U盘卸载失败，仍然挂载: {mount_check_after}")
+            return False
+
+    except Exception as e:
+        print(f"卸载U盘时发生错误: {e}")
+        return False
+
+# 导出配方到U盘
+@app.post('/export_recipe')
+async def export_recipe(request: Request):
+    if platform.system().lower() == 'windows':
+        return JSONResponse({'error': '暂不支持PC版'}, 400)
+
+    data = await request.json()
+    recipe_ids = data.get('recipe_ids')
+    if not recipe_ids or len(recipe_ids) == 0:
+        return JSONResponse({'error': '缺少配方ID'}, 400)
+
+    try:
+        # 1. 检查U盘是否挂载
+        print("开始检查U盘状态...")
+        udisk_status = check_udisk()
+        if not udisk_status:
+            return JSONResponse({'error': 'U盘未插入或挂载失败，请插入U盘后重试'}, 400)
+
+        # 2. 创建autoplan_data目录
+        autoplan_data_path = "/mnt/usb/autoplan_data"
+        os.makedirs(autoplan_data_path, exist_ok=True)
+
+        # 3. 创建当前时间的目录
+        from datetime import datetime
+        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+        time_backup_path = os.path.join(autoplan_data_path, current_time)
+        os.makedirs(time_backup_path, exist_ok=True)
+        print(f"目标导出目录: {time_backup_path}")
+
+        # 4. 获取所有配方，建立ID到配方名的映射
+        recipe_dir = 'data'
+        id_to_name = {}
+        for f in os.listdir(recipe_dir):
+            if f.endswith('.json'):
+                with open(os.path.join(recipe_dir, f), 'r') as file:
+                    recipe_data = json.load(file)
+                    recipe_id = recipe_data.get('recipeId')
+                    # 确保配方名与文件名一致
+
+                    if recipe_id:
+                        recipe_name_from_file, _ = os.path.splitext(f)
+                        id_to_name[recipe_id] = recipe_name_from_file
+
+        # 5. 复制配方文件到时间目录
+        exported_count = 0
+        for recipe_id in recipe_ids:
+            recipe_name = id_to_name.get(recipe_id)
+            if recipe_name:
+                source_file = f"data/{recipe_name}.json"
+                target_file = f"{time_backup_path}/{recipe_name}.json"
+
+                # 使用Python的shutil复制文件
+                if os.path.exists(source_file):
+                    shutil.copy2(source_file, target_file)
+                    print(f"配方 {recipe_name}.json 复制成功")
+                    exported_count += 1
+                else:
+                    print(f"配方 {recipe_name}.json 源文件不存在")
+
+        # 6. 确保文件写入磁盘
+        os.system("sync")
+        os.system("sync")
+
+        # 7. 文件操作完成后，卸载U盘确保数据写入成功
+        print("文件导出完成，开始卸载U盘...")
+        unmount_success = unmount_udisk()
+        if not unmount_success:
+            print("警告：U盘卸载失败，但文件已导出完成")
+
+        return JSONResponse({
+            'message': f"成功导出 {exported_count} 个配方到U盘 ({current_time})",
+            'timestamp': current_time,
+            'backup_path': current_time,
+            'unmount_success': unmount_success
+        }, 200)
+
+    except Exception as e:
+        return JSONResponse({'error': f'导出失败: {str(e)}'}, 400)
+
+# 获取U盘中的备份时间目录列表
+@app.post('/get_backup_timestamps')
+async def get_backup_timestamps(request: Request):
+    """获取U盘中autoplan_data目录下的所有时间备份目录"""
+    if platform.system().lower() == 'windows':
+        return JSONResponse({'error': '暂不支持PC版'}, 400)
+
+    try:
+        # 1. 检查U盘是否挂载
+        print("开始检查U盘状态...")
+        udisk_status = check_udisk()
+        if not udisk_status:
+            return JSONResponse({'error': 'U盘未插入或挂载失败，请插入U盘后重试'}, 400)
+
+        # 2. 检查autoplan_data目录是否存在
+        autoplan_data_path = "/mnt/usb/autoplan_data"
+        if not os.path.exists(autoplan_data_path):
+            return JSONResponse({'error': 'U盘中未找到autoplan_data目录'}, 400)
+
+        # 3. 读取目录中的所有子目录（时间备份目录）
+        backup_timestamps = []
+        for item in os.listdir(autoplan_data_path):
+            item_path = os.path.join(autoplan_data_path, item)
+            if os.path.isdir(item_path):
+                # 检查是否包含配方文件（排除备份信息文件）
+                json_files = [f for f in os.listdir(item_path) if f.endswith('.json') and not f.startswith('_')]
+                if json_files:
+                    # 格式化时间显示
+                    display_time = item
+                    export_date = ""
+                    if len(item) == 15 and '_' in item:  # 格式：20231201_143059
+                        try:
+                            from datetime import datetime
+                            dt = datetime.strptime(item, "%Y%m%d_%H%M%S")
+                            display_time = dt.strftime("%Y年%m月%d日 %H:%M:%S")
+                            export_date = dt.strftime("%Y-%m-%d %H:%M:%S")
+                        except:
+                            pass
+
+                    backup_timestamps.append({
+                        'timestamp': item,
+                        'display_time': display_time,
+                        'export_date': export_date,
+                        'recipe_count': len(json_files)
+                    })
+
+        # 按时间戳降序排列（最新的在前面）
+        backup_timestamps.sort(key=lambda x: x['timestamp'], reverse=True)
+
+        print(f"在U盘中找到 {len(backup_timestamps)} 个备份目录")
+        return JSONResponse({
+            'timestamps': backup_timestamps,
+            'count': len(backup_timestamps)
+        }, 200)
+
+    except Exception as e:
+        return JSONResponse({'error': f'读取备份目录失败: {str(e)}'}, 400)
+
+# 获取U盘中的配方列表
+@app.post('/get_usb_recipes')
+async def get_usb_recipes(request: Request):
+    """获取U盘中指定时间目录下的所有配方文件"""
+    if platform.system().lower() == 'windows':
+        return JSONResponse({'error': '暂不支持PC版'}, 400)
+
+    data = await request.json()
+    timestamp = data.get('timestamp')  # 时间戳目录名
+    if not timestamp:
+        return JSONResponse({'error': '缺少时间戳参数'}, 400)
+
+    try:
+        # 1. 检查U盘是否挂载
+        print("开始检查U盘状态...")
+        udisk_status = check_udisk()
+        if not udisk_status:
+            return JSONResponse({'error': 'U盘未插入或挂载失败，请插入U盘后重试'}, 400)
+
+        # 2. 检查autoplan_data目录是否存在
+        autoplan_data_path = "/mnt/usb/autoplan_data"
+        if not os.path.exists(autoplan_data_path):
+            return JSONResponse({'error': 'U盘中未找到autoplan_data目录'}, 400)
+
+        # 3. 检查指定的时间目录是否存在
+        timestamp_path = os.path.join(autoplan_data_path, timestamp)
+        if not os.path.exists(timestamp_path):
+            return JSONResponse({'error': f'时间目录 {timestamp} 不存在'}, 400)
+
+        # 4. 读取时间目录中的所有json文件（排除备份信息文件）
+        usb_recipes = []
+        for filename in os.listdir(timestamp_path):
+            if filename.endswith('.json') and not filename.startswith('_'):
+                file_path = os.path.join(timestamp_path, filename)
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        recipe_data = json.load(f)
+                        recipe_name_from_file, _ = os.path.splitext(filename)  # 从文件名获取配方名
+                        usb_recipes.append({
+                            'filename': filename,
+                            'recipeName': recipe_name_from_file,
+                            'recipeId': recipe_data.get('recipeId', ''),
+                            'size': os.path.getsize(file_path)
+                        })
+                except Exception as e:
+                    print(f"读取配方文件 {filename} 失败: {e}")
+                    # 如果读取失败，仍然添加到列表中，但标记为有问题
+                    usb_recipes.append({
+                        'filename': filename,
+                        'recipeName': filename.replace('.json', ''),
+                        'recipeId': '',
+                        'size': os.path.getsize(file_path),
+                        'error': '文件读取失败'
+                    })
+
+        print(f"在U盘时间目录 {timestamp} 中找到 {len(usb_recipes)} 个配方文件")
+        return JSONResponse({
+            'recipes': usb_recipes,
+            'count': len(usb_recipes),
+            'timestamp': timestamp
+        }, 200)
+
+    except Exception as e:
+        return JSONResponse({'error': f'读取U盘配方失败: {str(e)}'}, 400)
+
+# 从U盘导入配方
+@app.post('/import_recipes_from_usb')
+async def import_recipes_from_usb(request: Request):
+    """从U盘导入选中的配方到本地data目录"""
+    if platform.system().lower() == 'windows':
+        return JSONResponse({'error': '暂不支持PC版'}, 400)
+
+    data = await request.json()
+    selected_filenames = data.get('filenames')
+    timestamp = data.get('timestamp')  # 时间戳目录名
+    conflict_action = data.get('conflict_action', 'ask')  # ask, skip, overwrite
+
+    if not selected_filenames or len(selected_filenames) == 0:
+        return JSONResponse({'error': '未选择要导入的配方'}, 400)
+    if not timestamp:
+        return JSONResponse({'error': '缺少时间戳参数'}, 400)
+
+    try:
+        # 1. 检查U盘是否挂载
+        print("开始检查U盘状态...")
+        udisk_status = check_udisk()
+        if not udisk_status:
+            return JSONResponse({'error': 'U盘未插入或挂载失败，请插入U盘后重试'}, 400)
+
+        # 2. 检查autoplan_data目录是否存在
+        autoplan_data_path = "/mnt/usb/autoplan_data"
+        if not os.path.exists(autoplan_data_path):
+            return JSONResponse({'error': 'U盘中未找到autoplan_data目录'}, 400)
+
+        # 3. 确保本地data目录存在
+        local_data_path = "data"
+        os.makedirs(local_data_path, exist_ok=True)
+
+        # 3. 检查指定的时间目录是否存在
+        timestamp_path = os.path.join(autoplan_data_path, timestamp)
+        if not os.path.exists(timestamp_path):
+            return JSONResponse({'error': f'时间目录 {timestamp} 不存在'}, 400)
+
+        # 4. 获取当前所有本地配方，用于检查冲突
+        local_recipes = []
+        for file in os.listdir(local_data_path):
+            if file.endswith('.json'):
+                try:
+                    recipe_name_from_file, _ = os.path.splitext(file)
+                    with open(os.path.join(local_data_path, file), 'r', encoding='utf-8') as f:
+                        recipe_data = json.load(f)
+                        local_recipes.append({
+                            'filename': file,
+                            'recipeName': recipe_name_from_file,
+                            'recipeId': recipe_data.get('recipeId')
+                        })
+                except:
+                    continue
+
+        # 5. 创建已使用ID集合，用于跟踪所有已分配的ID
+        used_ids = set(int(recipe['recipeId']) for recipe in local_recipes if recipe['recipeId'] is not None)
+
+        # 6. 逐个导入选中的配方
+        imported_count = 0
+        skipped_count = 0
+        id_reassigned_count = 0
+        error_list = []
+        reassigned_list = []
+
+        for filename in selected_filenames:
+            try:
+                source_file = os.path.join(timestamp_path, filename)
+
+                # 检查源文件是否存在
+                if not os.path.exists(source_file):
+                    error_list.append(f"{filename}: 源文件不存在")
+                    continue
+
+                # 读取要导入的配方数据
+                with open(source_file, 'r', encoding='utf-8') as f:
+                    import_data = json.load(f)
+
+                import_recipe_name, _ = os.path.splitext(filename)  # 从文件名获取配方名
+                import_recipe_id = import_data.get('recipeId')
+
+                # 检查重名冲突
+                name_conflict = any(recipe['recipeName'] == import_recipe_name for recipe in local_recipes)
+
+                # 检查配方号冲突
+                id_conflict = import_recipe_id is not None and int(import_recipe_id) in used_ids
+
+                # 处理重名冲突
+                if name_conflict:
+                    if conflict_action == 'skip':
+                        print(f"配方 {filename} 重名，跳过导入")
+                        skipped_count += 1
+                        continue
+                    elif conflict_action == 'ask':
+                        # 如果需要询问用户，返回冲突信息
+                        continue
+                    # 如果是 overwrite，继续处理
+
+                # 处理配方号冲突 - 自动分配新号码
+                if id_conflict and not name_conflict:  # 只有ID冲突但不重名时才自动分配
+                    # 找到下一个可用的配方号
+                    new_id = 1
+                    while new_id in used_ids:
+                        new_id += 1
+
+                    # 更新配方数据
+                    import_data['recipeId'] = new_id
+                    reassigned_list.append(f"{import_recipe_name}: {import_recipe_id} → {new_id}")
+                    id_reassigned_count += 1
+                    print(f"配方 {filename} 的ID从 {import_recipe_id} 重新分配为 {new_id}")
+
+                    # 将新分配的ID加入已使用列表，避免后续冲突
+                    used_ids.add(new_id)
+
+                # 确定目标文件名
+                target_file = os.path.join(local_data_path, filename)
+
+                # 写入文件
+                with open(target_file, 'w', encoding='utf-8') as f:
+                    json.dump(import_data, f, ensure_ascii=False, indent=2)
+
+                print(f"配方 {filename} 导入成功")
+                imported_count += 1
+
+                # 更新本地配方列表（为下一个配方检查做准备）
+                recipe_id = import_data.get('recipeId')
+                local_recipes.append({
+                    'filename': filename,
+                    'recipeName': import_recipe_name,  # 使用从文件名获取的配方名
+                    'recipeId': recipe_id
+                })
+
+                # 将导入的配方ID也加入已使用列表
+                if recipe_id is not None:
+                    used_ids.add(int(recipe_id))
+
+            except Exception as e:
+                error_msg = f"{filename}: {str(e)}"
+                print(f"导入配方 {filename} 失败: {e}")
+                error_list.append(error_msg)
+
+        # 6. 文件操作完成后，卸载U盘确保数据写入成功
+        print("文件导入完成，开始卸载U盘...")
+        unmount_success = unmount_udisk()
+        if not unmount_success:
+            print("警告：U盘卸载失败，但文件已导入完成")
+
+        # 7. 返回导入结果
+        result_msg = f"成功导入 {imported_count} 个配方"
+        if skipped_count > 0:
+            result_msg += f"，跳过 {skipped_count} 个重名配方"
+        if id_reassigned_count > 0:
+            result_msg += f"，{id_reassigned_count} 个配方重新分配了配方号"
+        if error_list:
+            result_msg += f"，{len(error_list)} 个配方导入失败"
+
+        return JSONResponse({
+            'message': result_msg,
+            'imported_count': imported_count,
+            'skipped_count': skipped_count,
+            'id_reassigned_count': id_reassigned_count,
+            'error_count': len(error_list),
+            'errors': error_list,
+            'reassigned_list': reassigned_list,
+            'unmount_success': unmount_success
+        }, 200)
+
+    except Exception as e:
+        return JSONResponse({'error': f'导入失败: {str(e)}'}, 400)
+
+@app.post('/check_import_conflicts')
+async def check_import_conflicts(request: Request):
+    """检查导入配方的冲突情况"""
+    if platform.system().lower() == 'windows':
+        return JSONResponse({'error': '暂不支持PC版'}, 400)
+
+    data = await request.json()
+    selected_filenames = data.get('filenames')
+    timestamp = data.get('timestamp')  # 时间戳目录名
+
+    if not selected_filenames or len(selected_filenames) == 0:
+        return JSONResponse({'error': '未选择要检查的配方'}, 400)
+    if not timestamp:
+        return JSONResponse({'error': '缺少时间戳参数'}, 400)
+
+    try:
+        # 1. 检查U盘是否挂载
+        udisk_status = check_udisk()
+        if not udisk_status:
+            return JSONResponse({'error': 'U盘未插入或挂载失败，请插入U盘后重试'}, 400)
+
+        # 2. 检查autoplan_data目录是否存在
+        autoplan_data_path = "/mnt/usb/autoplan_data"
+        if not os.path.exists(autoplan_data_path):
+            return JSONResponse({'error': 'U盘中未找到autoplan_data目录'}, 400)
+
+        # 3. 检查指定的时间目录是否存在
+        timestamp_path = os.path.join(autoplan_data_path, timestamp)
+        if not os.path.exists(timestamp_path):
+            return JSONResponse({'error': f'时间目录 {timestamp} 不存在'}, 400)
+
+        # 4. 确保本地data目录存在
+        local_data_path = "data"
+        os.makedirs(local_data_path, exist_ok=True)
+
+        # 5. 获取当前所有本地配方，用于检查冲突
+        local_recipes = []
+        for file in os.listdir(local_data_path):
+            if file.endswith('.json'):
+                try:
+                    recipe_name_from_file, _ = os.path.splitext(file)
+                    with open(os.path.join(local_data_path, file), 'r', encoding='utf-8') as f:
+                        recipe_data = json.load(f)
+                        local_recipes.append({
+                            'filename': file,
+                            'recipeName': recipe_name_from_file,
+                            'recipeId': recipe_data.get('recipeId')
+                        })
+                except:
+                    continue
+
+        # 6. 分析每个要导入的配方
+        name_conflicts = []
+        id_reassignments = []
+
+        used_ids = set(int(recipe['recipeId']) for recipe in local_recipes if recipe['recipeId'] is not None)
+
+        for filename in selected_filenames:
+            try:
+                source_file = os.path.join(timestamp_path, filename)
+
+                if not os.path.exists(source_file):
+                    continue
+
+                # 读取要导入的配方数据
+                with open(source_file, 'r', encoding='utf-8') as f:
+                    import_data = json.load(f)
+
+                import_recipe_name, _ = os.path.splitext(filename)  # 从文件名获取配方名
+                import_recipe_id = import_data.get('recipeId')
+
+                # 检查重名冲突
+                name_conflict = any(recipe['recipeName'] == import_recipe_name for recipe in local_recipes)
+
+                # 检查配方号冲突
+                id_conflict = import_recipe_id is not None and int(import_recipe_id) in used_ids
+
+                if name_conflict:
+                    # 找到重名的本地配方
+                    local_recipe = next(recipe for recipe in local_recipes if recipe['recipeName'] == import_recipe_name)
+                    name_conflicts.append({
+                        'filename': filename,
+                        'usbRecipeName': import_recipe_name,
+                        'usbRecipeId': import_recipe_id,
+                        'localRecipeName': local_recipe['recipeName'],
+                        'localRecipeId': local_recipe['recipeId']
+                    })
+                elif id_conflict:
+                    # 找到下一个可用的配方号
+                    new_id = 1
+                    while new_id in used_ids:
+                        new_id += 1
+
+                    id_reassignments.append({
+                        'filename': filename,
+                        'recipeName': import_recipe_name,
+                        'originalId': import_recipe_id,
+                        'newId': new_id
+                    })
+
+                    # 将新分配的ID加入已使用列表，避免后续冲突
+                    used_ids.add(new_id)
+
+            except Exception as e:
+                print(f"检查配方 {filename} 时出错: {e}")
+                continue
+
+        return JSONResponse({
+            'hasNameConflicts': len(name_conflicts) > 0,
+            'hasIdReassignments': len(id_reassignments) > 0,
+            'nameConflicts': name_conflicts,
+            'idReassignments': id_reassignments
+        }, 200)
+
+    except Exception as e:
+        return JSONResponse({'error': f'检查冲突失败: {str(e)}'}, 400)
+
+# 手动卸载U盘
+@app.post('/unmount_udisk')
+async def unmount_udisk_route(request: Request):
+    """手动卸载U盘，确保数据写入完成"""
+    if platform.system().lower() == 'windows':
+        return JSONResponse({'error': '暂不支持PC版'}, 400)
+
+    try:
+        # 执行U盘卸载操作
+        print("开始手动卸载U盘...")
+        unmount_success = unmount_udisk()
+
+        if unmount_success:
+            return JSONResponse({
+                'message': 'U盘卸载成功，可以安全拔出',
+                'unmount_success': True
+            }, 200)
+        else:
+            return JSONResponse({
+                'message': 'U盘卸载失败，请检查是否有程序正在使用U盘',
+                'unmount_success': False
+            }, 400)
+
+    except Exception as e:
+        return JSONResponse({'error': f'卸载U盘失败: {str(e)}'}, 400)
+
 # 读取DI信号状态
 @app.post('/read_di_signal')
 async def read_di_signal(request: Request):
     global robot_arm
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
-        
+
     di_number = data.get('di_number')
 
     if di_number is None:
@@ -1529,10 +2259,10 @@ async def read_di_signal(request: Request):
 async def read_mh_register(request: Request):
     global robot_arm
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
-        
+
     mh_number = data.get('mh_number')
 
     if mh_number is None:
@@ -1562,10 +2292,10 @@ async def read_mh_register(request: Request):
 async def start_external_call_monitor(request: Request):
     global robot_arm
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
-        
+
     mh_number = data.get('mh_number')
     di_number = data.get('di_number')
 
@@ -1611,7 +2341,7 @@ async def start_external_call_monitor(request: Request):
 @app.post('/check_robot_status')
 async def check_robot_status(request: Request):
     global robot_arm
-    
+
     if robot_arm is None:
         return JSONResponse({'error': '未连接机器人'}, 400)
 
@@ -1639,7 +2369,7 @@ async def check_robot_status(request: Request):
 @app.post('/check_running_programs')
 async def check_running_programs(request: Request):
     global robot_arm
-    
+
     if robot_arm is None:
         return JSONResponse({'error': '未连接机器人'}, 400)
 
@@ -1671,10 +2401,10 @@ async def check_running_programs(request: Request):
 async def auto_write_recipe(request: Request):
     global robot_arm
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
-        
+
     recipe_name = data.get('recipe_name')
 
     if not recipe_name:
@@ -1764,7 +2494,7 @@ async def get_robot_ip(request: Request):
     try:
         extension = Extension()
         robot_ip = extension.get_robot_ip()
-        
+
         # 如果获取到IP地址，返回成功
         if robot_ip:
             return JSONResponse({
@@ -1778,7 +2508,7 @@ async def get_robot_ip(request: Request):
                 'robot_ip': None,
                 'message': '无法获取机器人IP地址'
             }, 200)
-            
+
     except Exception as e:
         return JSONResponse({
             'success': False,
@@ -1791,10 +2521,10 @@ async def get_robot_ip(request: Request):
 async def set_do_signal(request: Request):
     global robot_arm
     data = await request.json()
-    
+
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
-        
+
     do_number = data.get('do_number')
     do_value = data.get('do_value')
 

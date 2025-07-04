@@ -10,9 +10,13 @@ function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" !=
 function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 // 判断当前环境是否运行在插件中，选择不同的提示框
 var isExtension = gbtExtension.isInExtension();
+// 是否处在TP中，两种情况，1. 插件环境 2. 直接访问此插件的端口
+var isTP = window.isTP;
+
 // TP插件环境中，alert无法使用
 var alertSuccess = !isExtension ? alert : gbtExtension.rtmNotification.success;
 var alertError = !isExtension ? alert : gbtExtension.rtmNotification.error;
+var alertInfo = !isExtension ? alert : gbtExtension.rtmNotification.info;
 // TP插件环境中，confirm无法使用
 var myConfirm = function myConfirm(message) {
   if (!isExtension) {
@@ -130,6 +134,9 @@ document.addEventListener('DOMContentLoaded', function () {
     gbtExtension.enableShortcut();
     autoConnectRobot();
   }
+
+  // 添加配方操作按钮事件监听器
+  setupRecipeOperationListeners();
 });
 
 // 自动连接机器人函数
@@ -1580,41 +1587,49 @@ document.getElementById('save_recipe_button').addEventListener('click', function
     return response.json();
   }).then(/*#__PURE__*/function () {
     var _ref = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(data) {
-      var confirmOverwrite, confirmOverwriteId;
+      var finalRecipeName, finalRecipeId, result, _result;
       return _regeneratorRuntime().wrap(function _callee$(_context) {
         while (1) switch (_context.prev = _context.next) {
           case 0:
+            finalRecipeName = recipeName;
+            finalRecipeId = recipeId; // 处理配方名冲突
             if (!data.exists) {
-              _context.next = 6;
+              _context.next = 8;
               break;
             }
-            _context.next = 3;
-            return myConfirm('配方名已存在，是否覆盖？');
-          case 3:
-            confirmOverwrite = _context.sent;
-            if (confirmOverwrite) {
-              _context.next = 6;
+            _context.next = 5;
+            return showNameConflictDialog(recipeName);
+          case 5:
+            result = _context.sent;
+            if (!result.cancelled) {
+              _context.next = 8;
               break;
             }
             return _context.abrupt("return");
-          case 6:
+          case 8:
             if (!data.id_exists) {
-              _context.next = 12;
+              _context.next = 15;
               break;
             }
-            _context.next = 9;
-            return myConfirm('配方编号已存在，是否覆盖？');
-          case 9:
-            confirmOverwriteId = _context.sent;
-            if (confirmOverwriteId) {
-              _context.next = 12;
+            _context.next = 11;
+            return showIdConflictDialog(data);
+          case 11:
+            _result = _context.sent;
+            if (!_result.cancelled) {
+              _context.next = 14;
               break;
             }
             return _context.abrupt("return");
-          case 12:
+          case 14:
+            if (_result.useNewId) {
+              finalRecipeId = _result.newId;
+              // 更新界面上的配方ID显示
+              document.getElementById('recipe_id').value = finalRecipeId;
+            }
+          case 15:
             // 继续保存配方的逻辑
-            saveRecipeData(recipeName, recipeId); // 将配方编号传递给保存函数
-          case 13:
+            saveRecipeData(finalRecipeName, finalRecipeId);
+          case 16:
           case "end":
             return _context.stop();
         }
@@ -1749,7 +1764,13 @@ function saveRecipeData(recipeName, recipeId) {
     return response.json();
   }).then(function (data) {
     console.log('配方保存成功');
-    alertSuccess('配方保存成功');
+    if (data.id_reassigned) {
+      // 如果有ID重新分配，更新界面上的配方ID显示
+      document.getElementById('recipe_id').value = data.new_id;
+      alertSuccess(data.message);
+    } else {
+      alertSuccess('配方保存成功');
+    }
   }).catch(function (error) {
     console.error('保存配方失败:', error.message);
     alertError('保存配方失败: ' + error.message);
@@ -1787,6 +1808,17 @@ function loadRecipeList() {
     filteredRecipes.forEach(function (recipe) {
       var li = document.createElement('li');
 
+      // 创建勾选框（仅在插件环境中创建）
+      var checkbox = null;
+      checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'recipe-checkbox';
+      checkbox.value = recipe.recipeId;
+      checkbox.id = "recipe-".concat(recipe.recipeName);
+
+      // 为每个配方复选框添加变更事件监听器
+      checkbox.addEventListener('change', updateSelectAllState);
+
       // 创建 <span> 并设置配方编号和配方名
       var recipeIdSpan = document.createElement('span');
       recipeIdSpan.className = 'recipe-id'; // 添加类名
@@ -1796,7 +1828,10 @@ function loadRecipeList() {
       recipeNameSpan.className = 'recipe-name'; // 添加类名
       recipeNameSpan.textContent = recipe.recipeName; // 设置配方名
 
-      // 将 <span> 添加到 <li> 中
+      // 将勾选框和 <span> 添加到 <li> 中
+      if (checkbox) {
+        li.appendChild(checkbox);
+      }
       li.appendChild(recipeIdSpan);
       li.appendChild(recipeNameSpan);
 
@@ -1824,7 +1859,11 @@ function loadRecipeList() {
       recipeList.appendChild(li);
 
       // 绑定点击事件到 <li>，点击配方名时触发预览
-      li.addEventListener('click', function () {
+      li.addEventListener('click', function (e) {
+        // 如果点击的是勾选框，不触发预览（仅在插件环境中显示勾选框）
+        if (isTP && e.target.type === 'checkbox') {
+          return;
+        }
         previewRecipe(recipe.recipeName);
       });
     });
@@ -2300,4 +2339,721 @@ function triggerFinishSignal() {
     console.error("DO".concat(finishSignal, "\u4FE1\u53F7\u8BBE\u7F6E\u4E3A1\u8BF7\u6C42\u5931\u8D25:"), error);
     updateStatusDisplay("DO".concat(finishSignal, "\u4FE1\u53F7\u8BBE\u7F6E\u8BF7\u6C42\u5931\u8D25: ").concat(error.message), 'error');
   });
+}
+
+// 配方操作相关函数
+function setupRecipeOperationListeners() {
+  // 全选/取消全选（仅在插件环境中显示和工作）
+  var selectAllCheckbox = document.getElementById('select-all-recipes');
+  var operateDiv = document.querySelector('.recipe-operations');
+  if (selectAllCheckbox) {
+    if (isTP) {
+      selectAllCheckbox.addEventListener('change', function () {
+        var _this = this;
+        var recipeCheckboxes = document.querySelectorAll('.recipe-checkbox');
+        recipeCheckboxes.forEach(function (checkbox) {
+          checkbox.checked = _this.checked;
+        });
+      });
+    } else {
+      // 在非插件环境中隐藏全选勾选框
+      operateDiv.style.display = 'none';
+    }
+  }
+
+  // 导出选中配方
+  var exportButton = document.getElementById('export-selected-recipes');
+  if (exportButton) {
+    exportButton.addEventListener('click', exportSelectedRecipes);
+    // 如果不是在插件环境中，隐藏导出按钮
+    if (!isTP) {
+      exportButton.style.display = 'none';
+    }
+  }
+
+  // 导入配方
+  var importButton = document.getElementById('import-recipes');
+  if (importButton) {
+    importButton.addEventListener('click', importRecipes);
+    // 如果不是在插件环境中，隐藏导入按钮
+    if (!isTP) {
+      importButton.style.display = 'none';
+    }
+  }
+}
+
+// 获取选中的配方
+function getSelectedRecipes() {
+  var selectedCheckboxes = document.querySelectorAll('.recipe-checkbox:checked');
+  return Array.from(selectedCheckboxes).map(function (checkbox) {
+    return checkbox.value;
+  });
+}
+
+// 导出选中的配方
+function exportSelectedRecipes() {
+  var selectedRecipes = getSelectedRecipes();
+  if (selectedRecipes.length === 0) {
+    alertError('请选择要导出的配方');
+    return;
+  }
+  console.log(selectedRecipes);
+  fetch('/export_recipe', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      recipe_ids: selectedRecipes
+    })
+  }).then(function (response) {
+    return response.json();
+  }).then(function (data) {
+    if (data.error) {
+      alertError("\u5BFC\u51FA\u914D\u65B9\u5931\u8D25: ".concat(data.error));
+      return;
+    }
+
+    // 导出成功
+    alertSuccess(data.message || "\u6210\u529F\u5BFC\u51FA ".concat(selectedRecipes.length, " \u4E2A\u914D\u65B9\u5230U\u76D8"));
+  }).catch(function (error) {
+    alertError("\u5BFC\u51FA\u914D\u65B9\u5931\u8D25: ".concat(error.message));
+  });
+}
+
+// 导入配方
+function importRecipes() {
+  // 首先获取U盘中的备份时间目录列表
+  fetch('/get_backup_timestamps', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }).then(function (response) {
+    return response.json();
+  }).then(function (data) {
+    if (data.error) {
+      alertError("\u8BFB\u53D6U\u76D8\u5907\u4EFD\u76EE\u5F55\u5931\u8D25: ".concat(data.error));
+      return;
+    }
+    if (data.count === 0) {
+      alertInfo('U盘中没有找到配方备份目录');
+      return;
+    }
+
+    // 显示时间目录选择对话框
+    showTimestampSelectionDialog(data.timestamps);
+  }).catch(function (error) {
+    alertError("\u8BFB\u53D6U\u76D8\u5907\u4EFD\u76EE\u5F55\u5931\u8D25: ".concat(error.message));
+  });
+}
+
+// 显示时间目录选择对话框
+function showTimestampSelectionDialog(timestamps) {
+  var dialog = document.createElement('div');
+  dialog.className = 'modal-overlay';
+  dialog.innerHTML = "\n        <div class=\"modal-content import-dialog\">\n            <div class=\"modal-header\">\n                <h3>\u9009\u62E9\u5907\u4EFD\u65F6\u95F4</h3>\n                <button class=\"close-modal\" onclick=\"closeImportDialog()\">&times;</button>\n            </div>\n            <div class=\"modal-body\">\n                <p>\u8BF7\u9009\u62E9\u8981\u5BFC\u5165\u7684\u914D\u65B9\u5907\u4EFD\u65F6\u95F4\uFF1A</p>\n                <div class=\"timestamp-list\">\n                    ".concat(generateTimestampList(timestamps), "\n                </div>\n            </div>\n            <div class=\"modal-footer\">\n                <button class=\"btn btn-secondary\" onclick=\"closeImportDialog()\">\u53D6\u6D88</button>\n            </div>\n        </div>\n    ");
+  document.body.appendChild(dialog);
+  dialog.classList.add('show');
+}
+
+// 生成时间目录列表HTML
+function generateTimestampList(timestamps) {
+  return timestamps.map(function (timestamp) {
+    return "\n            <div class=\"timestamp-item\" onclick=\"selectTimestamp('".concat(timestamp.timestamp, "')\">\n                <div class=\"timestamp-info\">\n                    <div class=\"timestamp-display\">").concat(timestamp.display_time, "</div>\n                    <div class=\"timestamp-details\">\n                        <span class=\"recipe-count\">").concat(timestamp.recipe_count, " \u4E2A\u914D\u65B9</span>\n                        ").concat(timestamp.export_date ? "<span class=\"export-date\">\u5BFC\u51FA\u65F6\u95F4: ".concat(timestamp.export_date, "</span>") : '', "\n                    </div>\n                </div>\n            </div>\n        ");
+  }).join('');
+}
+
+// 选择时间戳并获取该目录下的配方
+function selectTimestamp(timestamp) {
+  // 获取指定时间目录中的配方列表
+  fetch('/get_usb_recipes', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      timestamp: timestamp
+    })
+  }).then(function (response) {
+    return response.json();
+  }).then(function (data) {
+    if (data.error) {
+      alertError("\u8BFB\u53D6\u914D\u65B9\u5931\u8D25: ".concat(data.error));
+      return;
+    }
+    if (data.count === 0) {
+      alertInfo('该时间目录中没有找到配方文件');
+      return;
+    }
+
+    // 关闭时间选择对话框，显示配方导入对话框
+    closeImportDialog();
+    showImportDialog(data.recipes, timestamp);
+  }).catch(function (error) {
+    alertError("\u8BFB\u53D6\u914D\u65B9\u5931\u8D25: ".concat(error.message));
+  });
+}
+
+// 显示导入对话框
+function showImportDialog(usbRecipes, timestamp) {
+  // 创建模态对话框
+  var dialog = document.createElement('div');
+  dialog.className = 'modal-overlay';
+  dialog.innerHTML = "\n        <div class=\"modal-content import-dialog\">\n            <div class=\"modal-header\">\n                <h3>\u4ECEU\u76D8\u5BFC\u5165\u914D\u65B9</h3>\n                <button class=\"close-modal\" onclick=\"closeImportDialog()\">&times;</button>\n            </div>\n            <div class=\"modal-body\">\n                <div class=\"import-recipe-controls\">\n                    <label class=\"checkbox-wrapper\">\n                        <input type=\"checkbox\" id=\"import-select-all\" onchange=\"toggleAllImportRecipes()\">\n                        <span class=\"checkbox-text\">\u5168\u9009</span>\n                    </label>\n                    <div class=\"import-info\">\n                        \u6765\u6E90: ".concat(timestamp, " | \u627E\u5230 ").concat(usbRecipes.length, " \u4E2A\u914D\u65B9\u6587\u4EF6\n                    </div>\n                </div>\n                <div class=\"import-recipe-list\" id=\"import-recipe-list\">\n                    ").concat(generateImportRecipeList(usbRecipes), "\n                </div>\n            </div>\n            <div class=\"modal-footer\">\n                <button class=\"btn btn-secondary\" onclick=\"closeImportDialog()\">\u53D6\u6D88</button>\n                <button class=\"btn btn-primary\" onclick=\"confirmImportRecipes('").concat(timestamp, "')\">\u5BFC\u5165\u9009\u4E2D\u914D\u65B9</button>\n            </div>\n        </div>\n    ");
+  document.body.appendChild(dialog);
+  dialog.classList.add('show');
+}
+
+// 生成导入配方列表HTML
+function generateImportRecipeList(usbRecipes) {
+  return usbRecipes.map(function (recipe) {
+    var errorText = recipe.error ? " <span class=\"error-text\">(".concat(recipe.error, ")</span>") : '';
+    return "\n            <div class=\"import-recipe-item\">\n                <label class=\"checkbox-wrapper\">\n                    <input type=\"checkbox\" class=\"import-recipe-checkbox\" value=\"".concat(recipe.filename, "\"\n                           onchange=\"updateImportSelectAllState()\" ").concat(recipe.error ? 'disabled' : '', ">\n                    <div class=\"recipe-info\">\n                        <div class=\"recipe-name\">").concat(recipe.recipeName).concat(errorText, "</div>\n                        <div class=\"recipe-details\">\n                            <span class=\"recipe-id\">ID: ").concat(recipe.recipeId || '无', "</span>\n                        </div>\n                    </div>\n                </label>\n            </div>\n        ");
+  }).join('');
+}
+
+// 全选/取消全选导入配方
+function toggleAllImportRecipes() {
+  var selectAllCheckbox = document.getElementById('import-select-all');
+  var recipeCheckboxes = document.querySelectorAll('.import-recipe-checkbox:not(:disabled)');
+  recipeCheckboxes.forEach(function (checkbox) {
+    checkbox.checked = selectAllCheckbox.checked;
+  });
+}
+
+// 更新导入全选状态
+function updateImportSelectAllState() {
+  var selectAllCheckbox = document.getElementById('import-select-all');
+  var allRecipeCheckboxes = document.querySelectorAll('.import-recipe-checkbox:not(:disabled)');
+  var checkedRecipeCheckboxes = document.querySelectorAll('.import-recipe-checkbox:checked');
+  if (selectAllCheckbox) {
+    if (checkedRecipeCheckboxes.length === 0) {
+      selectAllCheckbox.checked = false;
+      selectAllCheckbox.indeterminate = false;
+    } else if (checkedRecipeCheckboxes.length === allRecipeCheckboxes.length) {
+      selectAllCheckbox.checked = true;
+      selectAllCheckbox.indeterminate = false;
+    } else {
+      selectAllCheckbox.checked = false;
+      selectAllCheckbox.indeterminate = true;
+    }
+  }
+}
+
+// 确认导入配方
+function confirmImportRecipes(_x3) {
+  return _confirmImportRecipes.apply(this, arguments);
+} // 执行导入操作
+function _confirmImportRecipes() {
+  _confirmImportRecipes = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee3(timestamp) {
+    var selectedCheckboxes, selectedFilenames, confirmed;
+    return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+      while (1) switch (_context3.prev = _context3.next) {
+        case 0:
+          selectedCheckboxes = document.querySelectorAll('.import-recipe-checkbox:checked');
+          selectedFilenames = Array.from(selectedCheckboxes).map(function (cb) {
+            return cb.value;
+          });
+          if (!(selectedFilenames.length === 0)) {
+            _context3.next = 5;
+            break;
+          }
+          alertError('请选择要导入的配方');
+          return _context3.abrupt("return");
+        case 5:
+          _context3.next = 7;
+          return myConfirm("\u786E\u8BA4\u5BFC\u5165 ".concat(selectedFilenames.length, " \u4E2A\u914D\u65B9\uFF1F"));
+        case 7:
+          confirmed = _context3.sent;
+          if (confirmed) {
+            executeImport(selectedFilenames, timestamp);
+          }
+        case 9:
+        case "end":
+          return _context3.stop();
+      }
+    }, _callee3);
+  }));
+  return _confirmImportRecipes.apply(this, arguments);
+}
+function executeImport(_x4, _x5) {
+  return _executeImport.apply(this, arguments);
+} // 检查导入冲突
+function _executeImport() {
+  _executeImport = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee4(filenames, timestamp) {
+    var conflictResult, conflictAction, continueImport, resolvedConflicts, originalFileCount, skippedConflicts, response, data, message, parts;
+    return _regeneratorRuntime().wrap(function _callee4$(_context4) {
+      while (1) switch (_context4.prev = _context4.next) {
+        case 0:
+          _context4.prev = 0;
+          // 初始化跳过计数
+          window.manuallySkippedCount = 0;
+
+          // 1. 先检查重名冲突（配方号冲突会自动处理）
+          _context4.next = 4;
+          return checkImportConflicts(filenames, timestamp);
+        case 4:
+          conflictResult = _context4.sent;
+          conflictAction = 'proceed'; // 默认继续导入
+          // 2. 如果有配方号重新分配的情况，先显示信息
+          if (!conflictResult.hasIdReassignments) {
+            _context4.next = 12;
+            break;
+          }
+          _context4.next = 9;
+          return showIdReassignmentDialog(conflictResult.idReassignments);
+        case 9:
+          continueImport = _context4.sent;
+          if (continueImport) {
+            _context4.next = 12;
+            break;
+          }
+          return _context4.abrupt("return");
+        case 12:
+          if (!conflictResult.hasNameConflicts) {
+            _context4.next = 26;
+            break;
+          }
+          _context4.next = 15;
+          return resolveNameConflictsOneByOne(conflictResult.nameConflicts);
+        case 15:
+          resolvedConflicts = _context4.sent;
+          if (!resolvedConflicts.cancelled) {
+            _context4.next = 18;
+            break;
+          }
+          return _context4.abrupt("return");
+        case 18:
+          // 根据用户的决定过滤要导入的文件
+          originalFileCount = filenames.length;
+          skippedConflicts = resolvedConflicts.decisions.filter(function (d) {
+            return d.action === 'skip';
+          });
+          filenames = filenames.filter(function (filename) {
+            var conflict = resolvedConflicts.decisions.find(function (d) {
+              return d.filename === filename;
+            });
+            return !conflict || conflict.action !== 'skip';
+          });
+          if (!(filenames.length === 0)) {
+            _context4.next = 24;
+            break;
+          }
+          alertInfo('所有配方都被跳过，导入已取消');
+          return _context4.abrupt("return");
+        case 24:
+          conflictAction = 'overwrite'; // 剩余的文件都是要覆盖的
+
+          // 记录跳过的重名配方数量，用于最后的结果显示
+          window.manuallySkippedCount = skippedConflicts.length;
+        case 26:
+          _context4.next = 28;
+          return fetch('/import_recipes_from_usb', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              filenames: filenames,
+              timestamp: timestamp,
+              conflict_action: conflictAction
+            })
+          });
+        case 28:
+          response = _context4.sent;
+          _context4.next = 31;
+          return response.json();
+        case 31:
+          data = _context4.sent;
+          if (!data.error) {
+            _context4.next = 35;
+            break;
+          }
+          alertError("\u5BFC\u5165\u5931\u8D25: ".concat(data.error));
+          return _context4.abrupt("return");
+        case 35:
+          // 显示导入结果
+          message = data.message; // 添加手动跳过的重名配方信息
+          if (window.manuallySkippedCount && window.manuallySkippedCount > 0) {
+            parts = message.split('成功导入');
+            if (parts.length === 2) {
+              message = parts[0] + "\u6210\u529F\u5BFC\u5165".concat(parts[1].split('个配方')[0], "\u4E2A\u914D\u65B9\uFF0C\u624B\u52A8\u8DF3\u8FC7 ").concat(window.manuallySkippedCount, " \u4E2A\u91CD\u540D\u914D\u65B9").concat(parts[1].substring(parts[1].indexOf('个配方') + 3));
+            }
+            delete window.manuallySkippedCount; // 清理全局变量
+          }
+
+          // 添加重新分配的配方号信息
+          if (data.reassigned_list && data.reassigned_list.length > 0) {
+            message += '\n\n配方号自动重新分配详情:\n' + data.reassigned_list.join('\n');
+          }
+          if (data.errors && data.errors.length > 0) {
+            message += '\n\n错误详情:\n' + data.errors.join('\n');
+          }
+          alertSuccess(message);
+          closeImportDialog();
+
+          // 刷新配方列表
+          loadRecipeList();
+          _context4.next = 47;
+          break;
+        case 44:
+          _context4.prev = 44;
+          _context4.t0 = _context4["catch"](0);
+          alertError("\u5BFC\u5165\u5931\u8D25: ".concat(_context4.t0.message));
+        case 47:
+        case "end":
+          return _context4.stop();
+      }
+    }, _callee4, null, [[0, 44]]);
+  }));
+  return _executeImport.apply(this, arguments);
+}
+function checkImportConflicts(_x6, _x7) {
+  return _checkImportConflicts.apply(this, arguments);
+} // 显示配方号重新分配确认对话框
+function _checkImportConflicts() {
+  _checkImportConflicts = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee5(filenames, timestamp) {
+    var response, data;
+    return _regeneratorRuntime().wrap(function _callee5$(_context5) {
+      while (1) switch (_context5.prev = _context5.next) {
+        case 0:
+          _context5.prev = 0;
+          _context5.next = 3;
+          return fetch('/check_import_conflicts', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              filenames: filenames,
+              timestamp: timestamp
+            })
+          });
+        case 3:
+          response = _context5.sent;
+          _context5.next = 6;
+          return response.json();
+        case 6:
+          data = _context5.sent;
+          if (!data.error) {
+            _context5.next = 9;
+            break;
+          }
+          throw new Error(data.error);
+        case 9:
+          return _context5.abrupt("return", {
+            hasNameConflicts: data.hasNameConflicts,
+            hasIdReassignments: data.hasIdReassignments,
+            nameConflicts: data.nameConflicts,
+            idReassignments: data.idReassignments
+          });
+        case 12:
+          _context5.prev = 12;
+          _context5.t0 = _context5["catch"](0);
+          console.error('检查导入冲突失败:', _context5.t0);
+          return _context5.abrupt("return", {
+            hasNameConflicts: false,
+            hasIdReassignments: false,
+            nameConflicts: [],
+            idReassignments: []
+          });
+        case 16:
+        case "end":
+          return _context5.stop();
+      }
+    }, _callee5, null, [[0, 12]]);
+  }));
+  return _checkImportConflicts.apply(this, arguments);
+}
+function showIdReassignmentDialog(_x8) {
+  return _showIdReassignmentDialog.apply(this, arguments);
+} // 逐个解决重名冲突
+function _showIdReassignmentDialog() {
+  _showIdReassignmentDialog = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee6(idReassignments) {
+    return _regeneratorRuntime().wrap(function _callee6$(_context6) {
+      while (1) switch (_context6.prev = _context6.next) {
+        case 0:
+          return _context6.abrupt("return", new Promise(function (resolve) {
+            var dialog = document.createElement('div');
+            dialog.className = 'modal-overlay';
+            dialog.innerHTML = "\n            <div class=\"modal-content conflict-dialog\">\n                <div class=\"modal-header\">\n                    <h3>\u914D\u65B9\u53F7\u81EA\u52A8\u5206\u914D\u901A\u77E5</h3>\n                    <button class=\"close-modal\" onclick=\"resolveIdReassignment(false)\">&times;</button>\n                </div>\n                <div class=\"modal-body\">\n                    <p class=\"conflict-message\">\u4EE5\u4E0B\u914D\u65B9\u5B58\u5728\u914D\u65B9\u53F7\u91CD\u590D\uFF0C\u7CFB\u7EDF\u5C06\u81EA\u52A8\u5206\u914D\u65B0\u7684\u914D\u65B9\u53F7\uFF1A</p>\n                    <div class=\"conflict-list\">\n                        ".concat(generateIdReassignmentList(idReassignments), "\n                    </div>\n                    <div class=\"conflict-note\">\n                        <p><strong>\u8BF4\u660E\uFF1A</strong>\u8FD9\u4E9B\u914D\u65B9\u7684\u5185\u5BB9\u4E0D\u4F1A\u6539\u53D8\uFF0C\u53EA\u662F\u914D\u65B9\u53F7\u4F1A\u88AB\u91CD\u65B0\u5206\u914D\u5230\u53EF\u7528\u7684\u53F7\u7801\u3002</p>\n                    </div>\n                </div>\n                <div class=\"modal-footer\">\n                    <button class=\"btn btn-secondary\" onclick=\"resolveIdReassignment(false)\">\u53D6\u6D88\u5BFC\u5165</button>\n                    <button class=\"btn btn-primary\" onclick=\"resolveIdReassignment(true)\">\u786E\u8BA4\u7EE7\u7EED</button>\n                </div>\n            </div>\n        ");
+
+            // 添加全局解决函数
+            window.resolveIdReassignment = function (proceed) {
+              document.body.removeChild(dialog);
+              delete window.resolveIdReassignment;
+              resolve(proceed);
+            };
+            document.body.appendChild(dialog);
+            dialog.classList.add('show');
+          }));
+        case 1:
+        case "end":
+          return _context6.stop();
+      }
+    }, _callee6);
+  }));
+  return _showIdReassignmentDialog.apply(this, arguments);
+}
+function resolveNameConflictsOneByOne(_x9) {
+  return _resolveNameConflictsOneByOne.apply(this, arguments);
+} // 显示单个重名冲突确认对话框
+function _resolveNameConflictsOneByOne() {
+  _resolveNameConflictsOneByOne = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee7(nameConflicts) {
+    var decisions, i, conflict, decision, j, _j;
+    return _regeneratorRuntime().wrap(function _callee7$(_context7) {
+      while (1) switch (_context7.prev = _context7.next) {
+        case 0:
+          decisions = [];
+          i = 0;
+        case 2:
+          if (!(i < nameConflicts.length)) {
+            _context7.next = 19;
+            break;
+          }
+          conflict = nameConflicts[i];
+          _context7.next = 6;
+          return showSingleNameConflictDialog(conflict, i + 1, nameConflicts.length);
+        case 6:
+          decision = _context7.sent;
+          if (!(decision.action === 'cancel')) {
+            _context7.next = 9;
+            break;
+          }
+          return _context7.abrupt("return", {
+            cancelled: true,
+            decisions: []
+          });
+        case 9:
+          if (!(decision.action === 'skip_all')) {
+            _context7.next = 12;
+            break;
+          }
+          // 跳过所有剩余的重名配方
+          for (j = i; j < nameConflicts.length; j++) {
+            decisions.push({
+              filename: nameConflicts[j].filename,
+              action: 'skip'
+            });
+          }
+          return _context7.abrupt("break", 19);
+        case 12:
+          if (!(decision.action === 'overwrite_all')) {
+            _context7.next = 15;
+            break;
+          }
+          // 覆盖所有剩余的重名配方
+          for (_j = i; _j < nameConflicts.length; _j++) {
+            decisions.push({
+              filename: nameConflicts[_j].filename,
+              action: 'overwrite'
+            });
+          }
+          return _context7.abrupt("break", 19);
+        case 15:
+          decisions.push({
+            filename: conflict.filename,
+            action: decision.action
+          });
+        case 16:
+          i++;
+          _context7.next = 2;
+          break;
+        case 19:
+          return _context7.abrupt("return", {
+            cancelled: false,
+            decisions: decisions
+          });
+        case 20:
+        case "end":
+          return _context7.stop();
+      }
+    }, _callee7);
+  }));
+  return _resolveNameConflictsOneByOne.apply(this, arguments);
+}
+function showSingleNameConflictDialog(_x10, _x11, _x12) {
+  return _showSingleNameConflictDialog.apply(this, arguments);
+} // 生成单个重名冲突信息HTML
+function _showSingleNameConflictDialog() {
+  _showSingleNameConflictDialog = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee8(conflict, current, total) {
+    return _regeneratorRuntime().wrap(function _callee8$(_context8) {
+      while (1) switch (_context8.prev = _context8.next) {
+        case 0:
+          return _context8.abrupt("return", new Promise(function (resolve) {
+            var dialog = document.createElement('div');
+            dialog.className = 'modal-overlay';
+            dialog.innerHTML = "\n            <div class=\"modal-content conflict-dialog\">\n                <div class=\"modal-header\">\n                    <h3>\u914D\u65B9\u91CD\u540D\u786E\u8BA4 (".concat(current, "/").concat(total, ")</h3>\n                    <button class=\"close-modal\" onclick=\"resolveSingleNameConflict('cancel')\">&times;</button>\n                </div>\n                <div class=\"modal-body\">\n                    <p class=\"conflict-message\">\u53D1\u73B0\u914D\u65B9\u91CD\u540D\u51B2\u7A81\uFF0C\u8BF7\u9009\u62E9\u5904\u7406\u65B9\u5F0F\uFF1A</p>\n                    <div class=\"conflict-list\">\n                        ").concat(generateSingleNameConflictInfo(conflict), "\n                    </div>\n                </div>\n                <div class=\"modal-footer\">\n                    <button class=\"btn btn-secondary\" onclick=\"resolveSingleNameConflict('cancel')\">\u53D6\u6D88\u5BFC\u5165</button>\n                    <button class=\"btn btn-warning\" onclick=\"resolveSingleNameConflict('skip')\">\u8DF3\u8FC7\u6B64\u914D\u65B9</button>\n                    <button class=\"btn btn-danger\" onclick=\"resolveSingleNameConflict('overwrite')\">\u8986\u76D6\u6B64\u914D\u65B9</button>\n                    ").concat(total > 1 && current < total ? "\n                        <hr style=\"margin: 10px 0;\">\n                        <button class=\"btn btn-warning btn-sm\" onclick=\"resolveSingleNameConflict('skip_all')\">\u8DF3\u8FC7\u6240\u6709\u5269\u4F59</button>\n                        <button class=\"btn btn-danger btn-sm\" onclick=\"resolveSingleNameConflict('overwrite_all')\">\u8986\u76D6\u6240\u6709\u5269\u4F59</button>\n                    " : '', "\n                </div>\n            </div>\n        ");
+
+            // 添加全局解决函数
+            window.resolveSingleNameConflict = function (action) {
+              document.body.removeChild(dialog);
+              delete window.resolveSingleNameConflict;
+              resolve({
+                action: action
+              });
+            };
+            document.body.appendChild(dialog);
+            dialog.classList.add('show');
+          }));
+        case 1:
+        case "end":
+          return _context8.stop();
+      }
+    }, _callee8);
+  }));
+  return _showSingleNameConflictDialog.apply(this, arguments);
+}
+function generateSingleNameConflictInfo(conflict) {
+  return "\n        <div class=\"conflict-item\">\n            <div class=\"conflict-info\">\n                <strong>\u6587\u4EF6\uFF1A".concat(conflict.filename, "</strong>\n            </div>\n            <div class=\"conflict-details\">\n                <span class=\"conflict-type\">\u51B2\u7A81\u7C7B\u578B\uFF1A\u914D\u65B9\u540D\u79F0\u91CD\u590D</span>\n                <div class=\"conflict-comparison\">\n                    <div class=\"usb-recipe\">\n                        <span class=\"label\">U\u76D8\u914D\u65B9\uFF1A</span>\n                        <span class=\"recipe-name\">").concat(conflict.usbRecipeName, "</span>\n                        <span class=\"recipe-id\">(ID: ").concat(conflict.usbRecipeId || '无', ")</span>\n                    </div>\n                    <div class=\"local-recipe\">\n                        <span class=\"label\">\u672C\u5730\u914D\u65B9\uFF1A</span>\n                        <span class=\"recipe-name\">").concat(conflict.localRecipeName, "</span>\n                        <span class=\"recipe-id\">(ID: ").concat(conflict.localRecipeId || '无', ")</span>\n                    </div>\n                </div>\n            </div>\n        </div>\n    ");
+}
+
+// 生成配方号重新分配列表HTML
+function generateIdReassignmentList(idReassignments) {
+  return idReassignments.map(function (reassignment) {
+    return "\n            <div class=\"conflict-item\">\n                <div class=\"conflict-info\">\n                    <strong>\u6587\u4EF6\uFF1A".concat(reassignment.filename, "</strong>\n                </div>\n                <div class=\"conflict-details\">\n                    <span class=\"conflict-type\">\u914D\u65B9\uFF1A").concat(reassignment.recipeName, "</span>\n                    <div class=\"conflict-comparison\">\n                        <div class=\"usb-recipe\">\n                            <span class=\"label\">\u539F\u914D\u65B9\u53F7\uFF1A</span>\n                            <span class=\"recipe-id\">").concat(reassignment.originalId, "</span>\n                        </div>\n                        <div class=\"local-recipe\">\n                            <span class=\"label\">\u65B0\u914D\u65B9\u53F7\uFF1A</span>\n                            <span class=\"recipe-id\">").concat(reassignment.newId, "</span>\n                        </div>\n                    </div>\n                </div>\n            </div>\n        ");
+  }).join('');
+}
+
+// 显示配方名冲突对话框（用于保存配方时）
+function showNameConflictDialog(_x13) {
+  return _showNameConflictDialog.apply(this, arguments);
+} // 显示ID冲突对话框（用于保存配方时）
+function _showNameConflictDialog() {
+  _showNameConflictDialog = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee9(recipeName) {
+    return _regeneratorRuntime().wrap(function _callee9$(_context9) {
+      while (1) switch (_context9.prev = _context9.next) {
+        case 0:
+          return _context9.abrupt("return", new Promise(function (resolve) {
+            // 创建模态对话框
+            var dialog = document.createElement('div');
+            dialog.className = 'modal-overlay';
+            dialog.innerHTML = "\n            <div class=\"modal-content conflict-dialog\">\n                <div class=\"modal-header\">\n                    <h3>\u914D\u65B9\u540D\u79F0\u51B2\u7A81</h3>\n                </div>\n                <div class=\"modal-body\">\n                    <div class=\"conflict-info\">\n                        <p><strong>\u914D\u65B9\u540D\u79F0 \"".concat(recipeName, "\" \u5DF2\u5B58\u5728</strong></p>\n                        <p>\u7EE7\u7EED\u4FDD\u5B58\u5C06\u8986\u76D6\u73B0\u6709\u7684\u914D\u65B9\u6587\u4EF6\uFF0C\u8BF7\u786E\u8BA4\u662F\u5426\u7EE7\u7EED\uFF1F</p>\n                    </div>\n                </div>\n                <div class=\"modal-footer\">\n                    <button class=\"btn btn-secondary\" id=\"cancel-save\">\u53D6\u6D88\u4FDD\u5B58</button>\n                    <button class=\"btn btn-danger\" id=\"overwrite-recipe\">\u8986\u76D6\u73B0\u6709\u914D\u65B9</button>\n                </div>\n            </div>\n        ");
+            document.body.appendChild(dialog);
+            dialog.classList.add('show');
+
+            // 绑定事件
+            var cancelBtn = dialog.querySelector('#cancel-save');
+            var overwriteBtn = dialog.querySelector('#overwrite-recipe');
+            var cleanup = function cleanup() {
+              document.body.removeChild(dialog);
+            };
+            cancelBtn.onclick = function () {
+              cleanup();
+              resolve({
+                cancelled: true
+              });
+            };
+            overwriteBtn.onclick = function () {
+              cleanup();
+              resolve({
+                cancelled: false
+              });
+            };
+
+            // ESC键关闭
+            var _handleEsc = function handleEsc(event) {
+              if (event.key === 'Escape') {
+                cleanup();
+                document.removeEventListener('keydown', _handleEsc);
+                resolve({
+                  cancelled: true
+                });
+              }
+            };
+            document.addEventListener('keydown', _handleEsc);
+          }));
+        case 1:
+        case "end":
+          return _context9.stop();
+      }
+    }, _callee9);
+  }));
+  return _showNameConflictDialog.apply(this, arguments);
+}
+function showIdConflictDialog(_x14) {
+  return _showIdConflictDialog.apply(this, arguments);
+} // 关闭导入对话框
+function _showIdConflictDialog() {
+  _showIdConflictDialog = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee10(conflictData) {
+    return _regeneratorRuntime().wrap(function _callee10$(_context10) {
+      while (1) switch (_context10.prev = _context10.next) {
+        case 0:
+          return _context10.abrupt("return", new Promise(function (resolve) {
+            // 创建模态对话框
+            var dialog = document.createElement('div');
+            dialog.className = 'modal-overlay';
+            dialog.innerHTML = "\n            <div class=\"modal-content conflict-dialog\">\n                <div class=\"modal-header\">\n                    <h3>\u914D\u65B9\u7F16\u53F7\u51B2\u7A81</h3>\n                </div>\n                <div class=\"modal-body\">\n                    <div class=\"conflict-info\">\n                        <p><strong>\u914D\u65B9\u7F16\u53F7 ".concat(conflictData.original_id, " \u5DF2\u88AB\u914D\u65B9 \"").concat(conflictData.conflicting_recipe_name, "\" \u4F7F\u7528</strong></p>\n                        <p>\u7CFB\u7EDF\u5EFA\u8BAE\u4F7F\u7528\u65B0\u7684\u914D\u65B9\u7F16\u53F7\uFF1A<strong>").concat(conflictData.suggested_id, "</strong></p>\n                    </div>\n                </div>\n                <div class=\"modal-footer\">\n                    <button class=\"btn btn-secondary\" id=\"cancel-save\">\u53D6\u6D88\u4FDD\u5B58</button>\n                    <button class=\"btn btn-primary\" id=\"use-new-id\">\u4F7F\u7528\u65B0\u7F16\u53F7 ").concat(conflictData.suggested_id, "</button>\n                </div>\n            </div>\n        ");
+            document.body.appendChild(dialog);
+            dialog.classList.add('show');
+
+            // 绑定事件
+            var cancelBtn = dialog.querySelector('#cancel-save');
+            var useNewIdBtn = dialog.querySelector('#use-new-id');
+            var cleanup = function cleanup() {
+              document.body.removeChild(dialog);
+            };
+            cancelBtn.onclick = function () {
+              cleanup();
+              resolve({
+                cancelled: true
+              });
+            };
+            useNewIdBtn.onclick = function () {
+              cleanup();
+              resolve({
+                cancelled: false,
+                useNewId: true,
+                newId: conflictData.suggested_id
+              });
+            };
+
+            // ESC键关闭
+            var _handleEsc2 = function handleEsc(event) {
+              if (event.key === 'Escape') {
+                cleanup();
+                document.removeEventListener('keydown', _handleEsc2);
+                resolve({
+                  cancelled: true
+                });
+              }
+            };
+            document.addEventListener('keydown', _handleEsc2);
+          }));
+        case 1:
+        case "end":
+          return _context10.stop();
+      }
+    }, _callee10);
+  }));
+  return _showIdConflictDialog.apply(this, arguments);
+}
+function closeImportDialog() {
+  var dialog = document.querySelector('.modal-overlay');
+  if (dialog) {
+    dialog.classList.remove('show');
+    setTimeout(function () {
+      document.body.removeChild(dialog);
+    }, 300);
+  }
+}
+
+// 更新全选状态
+function updateSelectAllState() {
+  var selectAllCheckbox = document.getElementById('select-all-recipes');
+  var allRecipeCheckboxes = document.querySelectorAll('.recipe-checkbox');
+  var checkedRecipeCheckboxes = document.querySelectorAll('.recipe-checkbox:checked');
+  if (selectAllCheckbox) {
+    if (checkedRecipeCheckboxes.length === 0) {
+      selectAllCheckbox.checked = false;
+      selectAllCheckbox.indeterminate = false;
+    } else if (checkedRecipeCheckboxes.length === allRecipeCheckboxes.length) {
+      selectAllCheckbox.checked = true;
+      selectAllCheckbox.indeterminate = false;
+    } else {
+      selectAllCheckbox.checked = false;
+      selectAllCheckbox.indeterminate = true;
+    }
+  }
 }
