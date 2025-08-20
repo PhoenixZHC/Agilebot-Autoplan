@@ -1582,16 +1582,116 @@ async def delete_recipe(request: Request):
     except Exception as e:
         return JSONResponse({'error': str(e)}, 400)
 
+def verify_udisk_mount(mount_path, mount_info):
+    """
+    验证挂载点是否确实是有效的U盘设备
+
+    Args:
+        mount_path: 挂载点路径
+        mount_info: mount命令输出的信息
+
+    Returns:
+        bool: True表示是有效的U盘，False表示无效
+    """
+    try:
+        print(f"开始验证挂载点: {mount_path}")
+
+        # 1. 检查挂载点目录是否可访问
+        if not os.path.exists(mount_path):
+            print(f"挂载点目录不存在: {mount_path}")
+            return False
+
+        if not os.path.ismount(mount_path):
+            print(f"目录不是挂载点: {mount_path}")
+            return False
+
+        # 2. 从mount信息中提取设备名
+        # mount_info格式类似: /dev/sda1 on /mnt/udisk type vfat (rw,relatime,...)
+        try:
+            device_name = mount_info.split()[0]  # 获取设备名，如 /dev/sda1
+            if not device_name.startswith('/dev/'):
+                print(f"无效的设备名: {device_name}")
+                return False
+
+            # 获取基础设备名（去掉分区号），如 sda1 -> sda
+            base_device = device_name.split('/')[-1]  # 获取 sda1
+            if base_device[-1].isdigit():
+                base_device = base_device.rstrip('0123456789')  # 去掉数字，得到 sda
+
+            print(f"检测到设备: {device_name}, 基础设备: {base_device}")
+
+        except Exception as e:
+            print(f"解析设备名失败: {e}")
+            return False
+
+        # 3. 检查该设备是否为可移动设备
+        lsblk_output = subprocess.getoutput('lsblk -o NAME,RM,TYPE')
+        print(f"验证lsblk输出:\n{lsblk_output}")
+
+        device_found = False
+        for line in lsblk_output.split('\n'):
+            parts = line.split()
+            if len(parts) >= 3:
+                name = parts[0].strip()
+                removable = parts[1].strip()
+                device_type = parts[2].strip()
+
+                # 检查是否匹配基础设备名且为可移动磁盘
+                if (name == base_device and removable == '1' and device_type == 'disk'):
+                    print(f"找到匹配的可移动设备: {line.strip()}")
+                    device_found = True
+                    break
+
+        if not device_found:
+            print(f"设备 {base_device} 不是可移动设备")
+            return False
+
+        # 4. 测试挂载点是否可写
+        try:
+            test_file = os.path.join(mount_path, '.test_write_access')
+            with open(test_file, 'w') as f:
+                f.write('test')
+            os.remove(test_file)
+            print("挂载点可写测试通过")
+        except Exception as e:
+            print(f"挂载点写入测试失败: {e}")
+            return False
+
+        print("U盘验证通过")
+        return True
+
+    except Exception as e:
+        print(f"验证U盘时发生错误: {e}")
+        return False
+
 def check_udisk():
     """
     检查是否插入了U盘（通过lsblk命令检查可移动存储设备）
     如果存在且未挂载则自动创建设备节点并挂载
 
     Returns:
-        bool: True表示检测到U盘并已挂载，False表示未检测到或挂载失败
+        tuple: (bool, str) - (是否检测到U盘并已挂载, 实际挂载点路径)
     """
     try:
-        # 1. 首先执行lsblk命令检查可移动存储设备
+        # 1. 先检查/mnt/udisk是否已经被系统自动挂载，如果有则验证是否为有效U盘
+        print("检查/mnt/udisk是否已被挂载...")
+        udisk_mount_check = subprocess.getoutput("mount | grep /mnt/udisk")
+        if udisk_mount_check:
+            print(f"检测到/mnt/udisk已被挂载: {udisk_mount_check}")
+
+            # 验证/mnt/udisk确实是有效的U盘设备
+            if verify_udisk_mount("/mnt/udisk", udisk_mount_check):
+                print("验证通过，直接使用/mnt/udisk挂载点")
+                return (True, "/mnt/udisk")
+            else:
+                print("验证失败，/mnt/udisk不是有效的U盘，尝试卸载并重新检测...")
+                # 尝试卸载无效的挂载点
+                subprocess.getoutput("umount /mnt/udisk")
+                print("继续检测U盘设备...")
+        else:
+            print("/mnt/udisk未被挂载，继续检测U盘设备...")
+
+        # 2. 首先执行lsblk命令检查可移动存储设备
         output = subprocess.getoutput('lsblk -o NAME,MAJ:MIN,RM,SIZE,TYPE')
         print("lsblk输出:")
         print(output)
@@ -1620,18 +1720,18 @@ def check_udisk():
                     print(f"设备名: {device_name}, 设备号: 主设备号={maj}, 次设备号={min_num}")
                     break
 
-        # 2. 如果没有找到U盘设备，直接返回False
+        # 3. 如果没有找到U盘设备，直接返回False
         if not usb_device:
             print("未检测到U盘设备")
-            return False
+            return (False, None)
 
-        # 3. 设备存在，检查这个具体设备是否已经挂载
+        # 4. 设备存在，检查这个具体设备是否已经挂载
         mount_check = subprocess.getoutput(f"mount | grep /dev/{device_name}")
         if mount_check and "/mnt/usb" in mount_check:
             print(f"U盘已挂载: {mount_check}")
-            return True
+            return (True, "/mnt/usb")
 
-        # 4. 设备存在但未挂载，执行挂载操作
+        # 5. 设备存在但未挂载，执行挂载操作
         if maj and min_num and device_name:
             print("开始执行挂载操作...")
 
@@ -1649,55 +1749,73 @@ def check_udisk():
                 if result:  # 如果有输出，通常表示有错误或警告
                     print(f"命令输出: {result}")
 
-            # 5. 再次检查挂载是否成功
+            # 6. 再次检查挂载是否成功
             mount_check = subprocess.getoutput("mount | grep /mnt/usb")
             if mount_check:
                 print(f"U盘挂载成功: {mount_check}")
-                return True
+                return (True, "/mnt/usb")
             else:
                 print("U盘挂载失败")
-                return False
+                return (False, None)
         else:
             print("设备号解析失败")
-            return False
+            return (False, None)
 
     except Exception as e:
         print(f"检查U盘时发生错误: {e}")
-        return False
+        return (False, None)
 
-def unmount_udisk():
+def unmount_udisk(mount_path=None):
     """
     卸载U盘，确保数据写入完成
+
+    Args:
+        mount_path: 挂载点路径，如果为None则自动检测
 
     Returns:
         bool: True表示卸载成功，False表示卸载失败
     """
     try:
-        # 1. 检查U盘是否已挂载
-        mount_check = subprocess.getoutput("mount | grep /mnt/usb")
+        # 1. 如果没有指定挂载点，自动检测
+        if mount_path is None:
+            # 检查/mnt/udisk
+            udisk_check = subprocess.getoutput("mount | grep /mnt/udisk")
+            # 检查/mnt/usb
+            usb_check = subprocess.getoutput("mount | grep /mnt/usb")
+
+            if udisk_check:
+                mount_path = "/mnt/udisk"
+            elif usb_check:
+                mount_path = "/mnt/usb"
+            else:
+                print("U盘未挂载，无需卸载")
+                return True
+
+        # 2. 检查指定挂载点是否已挂载
+        mount_check = subprocess.getoutput(f"mount | grep {mount_path}")
         if not mount_check:
-            print("U盘未挂载，无需卸载")
+            print(f"{mount_path} 未挂载，无需卸载")
             return True
 
         print(f"当前U盘挂载状态: {mount_check}")
 
-        # 2. 执行sync命令，确保所有数据写入磁盘
+        # 3. 执行sync命令，确保所有数据写入磁盘
         print("执行sync命令，确保数据写入...")
         sync_result = subprocess.getoutput("sync")
         if sync_result:
             print(f"sync命令输出: {sync_result}")
 
-        # 3. 卸载U盘
-        print("开始卸载U盘...")
-        umount_result = subprocess.getoutput("umount /mnt/usb")
+        # 4. 卸载U盘
+        print(f"开始卸载U盘: {mount_path}")
+        umount_result = subprocess.getoutput(f"umount {mount_path}")
         if umount_result:
             print(f"卸载命令输出: {umount_result}")
             # 如果有输出，可能是警告或错误，但不一定意味着失败
 
-        # 4. 检查是否卸载成功
-        mount_check_after = subprocess.getoutput("mount | grep /mnt/usb")
+        # 5. 检查是否卸载成功
+        mount_check_after = subprocess.getoutput(f"mount | grep {mount_path}")
         if not mount_check_after:
-            print("U盘卸载成功")
+            print(f"U盘卸载成功: {mount_path}")
             return True
         else:
             print(f"U盘卸载失败，仍然挂载: {mount_check_after}")
@@ -1721,12 +1839,12 @@ async def export_recipe(request: Request):
     try:
         # 1. 检查U盘是否挂载
         print("开始检查U盘状态...")
-        udisk_status = check_udisk()
+        udisk_status, mount_point = check_udisk()
         if not udisk_status:
             return JSONResponse({'error': 'U盘未插入或挂载失败，请插入U盘后重试'}, 400)
 
         # 2. 创建autoplan_data目录
-        autoplan_data_path = "/mnt/usb/autoplan_data"
+        autoplan_data_path = f"{mount_point}/autoplan_data"
         os.makedirs(autoplan_data_path, exist_ok=True)
 
         # 3. 创建当前时间的目录
@@ -1748,12 +1866,12 @@ async def export_recipe(request: Request):
 
                     if recipe_id:
                         recipe_name_from_file, _ = os.path.splitext(f)
-                        id_to_name[recipe_id] = recipe_name_from_file
+                        id_to_name[int(recipe_id)] = recipe_name_from_file
 
         # 5. 复制配方文件到时间目录
         exported_count = 0
         for recipe_id in recipe_ids:
-            recipe_name = id_to_name.get(recipe_id)
+            recipe_name = id_to_name.get(int(recipe_id))
             if recipe_name:
                 source_file = f"data/{recipe_name}.json"
                 target_file = f"{time_backup_path}/{recipe_name}.json"
@@ -1771,16 +1889,16 @@ async def export_recipe(request: Request):
         os.system("sync")
 
         # 7. 文件操作完成后，卸载U盘确保数据写入成功
-        print("文件导出完成，开始卸载U盘...")
-        unmount_success = unmount_udisk()
-        if not unmount_success:
-            print("警告：U盘卸载失败，但文件已导出完成")
+        # print("文件导出完成，开始卸载U盘...")
+        # unmount_success = unmount_udisk(mount_point)
+        # if not unmount_success:
+        #     print("警告：U盘卸载失败，但文件已导出完成")
 
         return JSONResponse({
             'message': f"成功导出 {exported_count} 个配方到U盘 ({current_time})",
             'timestamp': current_time,
             'backup_path': current_time,
-            'unmount_success': unmount_success
+            # 'unmount_success': unmount_success
         }, 200)
 
     except Exception as e:
@@ -1796,12 +1914,12 @@ async def get_backup_timestamps(request: Request):
     try:
         # 1. 检查U盘是否挂载
         print("开始检查U盘状态...")
-        udisk_status = check_udisk()
+        udisk_status, mount_point = check_udisk()
         if not udisk_status:
             return JSONResponse({'error': 'U盘未插入或挂载失败，请插入U盘后重试'}, 400)
 
         # 2. 检查autoplan_data目录是否存在
-        autoplan_data_path = "/mnt/usb/autoplan_data"
+        autoplan_data_path = f"{mount_point}/autoplan_data"
         if not os.path.exists(autoplan_data_path):
             return JSONResponse({'error': 'U盘中未找到autoplan_data目录'}, 400)
 
@@ -1859,12 +1977,12 @@ async def get_usb_recipes(request: Request):
     try:
         # 1. 检查U盘是否挂载
         print("开始检查U盘状态...")
-        udisk_status = check_udisk()
+        udisk_status, mount_point = check_udisk()
         if not udisk_status:
             return JSONResponse({'error': 'U盘未插入或挂载失败，请插入U盘后重试'}, 400)
 
         # 2. 检查autoplan_data目录是否存在
-        autoplan_data_path = "/mnt/usb/autoplan_data"
+        autoplan_data_path = f"{mount_point}/autoplan_data"
         if not os.path.exists(autoplan_data_path):
             return JSONResponse({'error': 'U盘中未找到autoplan_data目录'}, 400)
 
@@ -1929,12 +2047,12 @@ async def import_recipes_from_usb(request: Request):
     try:
         # 1. 检查U盘是否挂载
         print("开始检查U盘状态...")
-        udisk_status = check_udisk()
+        udisk_status, mount_point = check_udisk()
         if not udisk_status:
             return JSONResponse({'error': 'U盘未插入或挂载失败，请插入U盘后重试'}, 400)
 
         # 2. 检查autoplan_data目录是否存在
-        autoplan_data_path = "/mnt/usb/autoplan_data"
+        autoplan_data_path = f"{mount_point}/autoplan_data"
         if not os.path.exists(autoplan_data_path):
             return JSONResponse({'error': 'U盘中未找到autoplan_data目录'}, 400)
 
@@ -2051,9 +2169,9 @@ async def import_recipes_from_usb(request: Request):
 
         # 6. 文件操作完成后，卸载U盘确保数据写入成功
         print("文件导入完成，开始卸载U盘...")
-        unmount_success = unmount_udisk()
-        if not unmount_success:
-            print("警告：U盘卸载失败，但文件已导入完成")
+        # unmount_success = unmount_udisk(mount_point)
+        # if not unmount_success:
+        #     print("警告：U盘卸载失败，但文件已导入完成")
 
         # 7. 返回导入结果
         result_msg = f"成功导入 {imported_count} 个配方"
@@ -2072,7 +2190,7 @@ async def import_recipes_from_usb(request: Request):
             'error_count': len(error_list),
             'errors': error_list,
             'reassigned_list': reassigned_list,
-            'unmount_success': unmount_success
+            # 'unmount_success': unmount_success
         }, 200)
 
     except Exception as e:
@@ -2095,12 +2213,12 @@ async def check_import_conflicts(request: Request):
 
     try:
         # 1. 检查U盘是否挂载
-        udisk_status = check_udisk()
+        udisk_status, mount_point = check_udisk()
         if not udisk_status:
             return JSONResponse({'error': 'U盘未插入或挂载失败，请插入U盘后重试'}, 400)
 
         # 2. 检查autoplan_data目录是否存在
-        autoplan_data_path = "/mnt/usb/autoplan_data"
+        autoplan_data_path = f"{mount_point}/autoplan_data"
         if not os.path.exists(autoplan_data_path):
             return JSONResponse({'error': 'U盘中未找到autoplan_data目录'}, 400)
 
