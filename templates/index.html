@@ -6,7 +6,7 @@
     <title>智能摆盘规划系统</title>
     <link rel="stylesheet" href="{{ url_for('static', path='styles.css')  }}">
 </head>
-<body>
+<body data-is-tp="{{ 'true' if is_tp else 'false' }}">
     <!-- 标题栏 -->
     <div class="header">
         <div class="logo">
@@ -28,13 +28,13 @@
                 <img src="{{ url_for('static', path='icons/planning.svg')  }}" alt="智能规划" class="icon">
                 <span>智能规划</span>
             </button>
+            <button id="interval-calculator-btn">
+                <img src="{{ url_for('static', path='icons/calculator.svg') }}" alt="手动规划" class="icon">
+                <span>手动规划</span>
+            </button>
             <button id="data-list-btn">
                 <img src="{{ url_for('static', path='icons/list.svg')  }}" alt="数据清单" class="icon">
                 <span>数据清单</span>
-            </button>
-            <button id="interval-calculator-btn">
-                <img src="{{ url_for('static', path='icons/calculator.svg') }}" alt="仿形间隔计算器" class="icon">
-                <span>间隔计算器</span>
             </button>
             <button id="recipe-library-btn">
                 <img src="{{ url_for('static', path='icons/library.svg') }}" alt="配方库" class="icon">
@@ -423,58 +423,69 @@
                 </div>
             </div>
 
-            <!-- 间隔计算器 -->
+            <!-- 手动规划 -->
             <div id="interval-calculator-content" class="content-section">
                 <div class="input-container">
-                    <form id="interval-calculator-form">
-                        <h3>计算器使用说明</h3>
-                        <!-- 添加说明文字 -->
-                        <p>
-                            1，使用示教器，将三个参考位置的中心点示教记录到三个PR寄存器。<br>
-                            第一行第一列（PR1），第一行第二列(PR2)，第二行第一列(PR3)<br>
-                            2，选择仿形的形状并输入形状尺寸。<br>
-                            3，点击计算，则显示行间隔和列间隔的值，并显示三个寄存器的值。
-                        </p>
-                        <div class="input-section">
-                            <h3>仿形参数</h3>
-                            <div>
-                                <label for="shape_type_interval">仿形形状:</label>
-                                <select id="shape_type_interval" name="shape_type_interval">
-                                    <option value="circle">圆形</option>
-                                    <option value="rectangle">长方体</option>
-                                </select>
+                    <img src="{{ url_for('static', path='cankao.png') }}" alt="参考图片" style="width: 35%; height: auto;">
+                    
+                    <!-- 基本参数输入 -->
+                    <div class="input-section">
+                        <h4>网格参数</h4>
+                        <div class="grid-inputs">
+                            <div class="input-group">
+                                <label for="row_count">单行数量:</label>
+                                <input type="number" id="row_count" name="row_count" min="1" step="1" placeholder="输入行数">
                             </div>
-                            <!-- 圆形输入 -->
-                            <div id="circle_input_interval" class="shape-input-interval">
-                                <div>
-                                    <label for="circle_diameter_interval">圆形直径:</label>
-                                    <input type="number" id="circle_diameter_interval" name="circle_diameter_interval" step="0.1">
-                                </div>
-                            </div>
-                            <!-- 长方体输入 -->
-                            <div id="rectangle_input_interval" class="shape-input-interval">
-                                <div>
-                                    <label for="rectangle_length_interval">长方体长度:</label>
-                                    <input type="number" id="rectangle_length_interval" name="rectangle_length_interval" step="0.1">
-                                </div>
-                                <div>
-                                    <label for="rectangle_width_interval">长方体宽度:</label>
-                                    <input type="number" id="rectangle_width_interval" name="rectangle_width_interval" step="0.1">
-                                </div>
+                            <div class="input-group">
+                                <label for="col_count">单列数量:</label>
+                                <input type="number" id="col_count" name="col_count" min="1" step="1" placeholder="输入列数">
                             </div>
                         </div>
-                        <button type="submit">计算</button>
-                    </form>
-                </div>
+                        <button id="read_reference_points" class="primary-button">读取参考点</button>
+                    </div>
 
-                <!-- 显示计算结果 -->
-                <div id="interval-result" style="display: none; margin-top: 20px;">
-                    <h3>计算结果</h3>
-                    <div>行间距: <span id="row-spacing"></span></div>
-                    <div>列间距: <span id="col-spacing"></span></div>
-                    <div>PR1: X=<span id="pr1-x"></span>, Y=<span id="pr1-y"></span></div>
-                    <div>PR2: X=<span id="pr2-x"></span>, Y=<span id="pr2-y"></span></div>
-                    <div>PR3: X=<span id="pr3-x"></span>, Y=<span id="pr3-y"></span></div>
+                    <!-- 参考点显示表格 -->
+                    <div class="reference-points-section" style="display: none;">
+                        <h4>参考点坐标</h4>
+                        <table id="reference-points-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>参考点</th>
+                                    <th>X</th>
+                                    <th>Y</th>
+                                    <th>Z</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>PR1 (第一行第一列)</td>
+                                    <td id="pr1-x">-</td>
+                                    <td id="pr1-y">-</td>
+                                    <td id="pr1-z">-</td>
+                                </tr>
+                                <tr>
+                                    <td>PR2 (最后一行第一列)</td>
+                                    <td id="pr2-x">-</td>
+                                    <td id="pr2-y">-</td>
+                                    <td id="pr2-z">-</td>
+                                </tr>
+                                <tr>
+                                    <td>PR3 (第一行最后一列)</td>
+                                    <td id="pr3-x">-</td>
+                                    <td id="pr3-y">-</td>
+                                    <td id="pr3-z">-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button id="calculate_points" class="primary-button" disabled>计算所有点位</button>
+                    </div>
+
+                    <!-- 计算状态提示 -->
+                    <div id="calculation-status" style="display: none; margin-top: 20px;">
+                        <div class="status-message">
+                            <span id="status-text">正在计算...</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -674,12 +685,12 @@
                     </div>
                 </div>
             </div>
-            </div>
         </div>
     </div>
 
     <script>
-        window.isTP = {{ is_tp|tojson }};
+        // 从HTML data属性获取TP状态
+        window.isTP = document.body.dataset.isTp === 'true';
     </script>
     <script src="{{ url_for('static', path='extension-runtime.js')  }}"></script>
     <script src="{{ url_for('static', path='script-compiled.js')  }}"></script>

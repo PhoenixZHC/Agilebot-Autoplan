@@ -56,9 +56,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const shapeType = document.getElementById('shape_type').value;
     updateInputFields(shapeType);
 
-    // 初始化 shape_type_interval 输入框显示状态
-    const shapeTypeInterval = document.getElementById('shape_type_interval').value;
-    updateIntervalInputFields(shapeTypeInterval);
+
 
     // 初始化底边长输入框的显示状态
     const triangleType = document.getElementById('triangle_type').value;
@@ -70,6 +68,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     loadRecipeList(); // 初始加载所有配方
+    
+    // 重置配方预览状态，确保智能规划预览元素可见
+    resetRecipePreview();
+    
+    // 设置默认配方类型为智能规划
+    window.currentRecipeType = 'smart';
 
     const recipeListItems = document.querySelectorAll("#recipe-list li");
 
@@ -553,6 +557,11 @@ function showSection(sectionId) {
 
     // 显示选中的内容区域
     document.getElementById(sectionId).style.display = 'block';
+    
+    // 如果切换到配方库，重置预览状态
+    if (sectionId === 'recipe-library-content') {
+        resetRecipePreview();
+    }
 }
 
 // 设置当前选中的菜单按钮
@@ -578,23 +587,7 @@ document.getElementById('triangle_type').addEventListener('change', function () 
     }
 });
 
-// 动态显示或隐藏输入框
-document.getElementById('shape_type_interval').addEventListener('change', function () {
-    const shapeTypeInterval = this.value;
-    updateIntervalInputFields(shapeTypeInterval);
-});
 
-function updateIntervalInputFields(shapeTypeInterval) {
-    // 隐藏所有图形输入框
-    document.querySelectorAll('.shape-input-interval').forEach(div => div.style.display = 'none');
-
-    // 根据选择的图形类型显示对应的输入框
-    if (shapeTypeInterval === 'circle') {
-        document.getElementById('circle_input_interval').style.display = 'block';
-    } else if (shapeTypeInterval === 'rectangle') {
-        document.getElementById('rectangle_input_interval').style.display = 'block';
-    }
-}
 
 // 动态显示图形输入框
 document.getElementById('shape_type').addEventListener('change', function () {
@@ -1277,7 +1270,71 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         console.log(`增加R寄存器写入操作计数器，当前总数: ${writeOperationCount}`);
     }
 
-    // 获取新增输入框的值
+    // 检查当前配方类型
+    const currentRecipeType = window.currentRecipeType || 'smart'; // 默认为智能规划
+    
+    if (currentRecipeType === 'manual') {
+        // 手动规划配方：只写入三个基本参数
+        const tableBody = document.querySelector('#data-list-content table tbody');
+        const rows = tableBody.querySelectorAll('tr');
+        const totalPoints = rows.length; // 点位总数
+        
+        // 从手动规划信息中获取行数和列数
+        let rowCount = 0;
+        let colCount = 0;
+        
+        // 尝试从手动规划输入框获取行数和列数
+        const rowCountInput = document.getElementById('row_count');
+        const colCountInput = document.getElementById('col_count');
+        if (rowCountInput && colCountInput) {
+            rowCount = parseInt(rowCountInput.value) || 0;
+            colCount = parseInt(colCountInput.value) || 0;
+        }
+        
+        // 发送请求到后端写入R寄存器（手动规划模式）
+        fetch('/write_r_registers', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                recipe_type: 'manual',
+                total_points: totalPoints,  // R4寄存器：点位总数
+                row_count: rowCount,        // R11寄存器：行数
+                col_count: colCount         // R12寄存器：列数
+            }),
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.error || '写入R寄存器失败');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('手动规划R寄存器写入成功');
+            alertSuccess('手动规划R寄存器写入成功');
+
+            // 如果有自动写入的回调函数，调用它
+            if (window.onWriteOperationComplete) {
+                window.onWriteOperationComplete(true, '手动规划R寄存器写入成功', 'R寄存器写入');
+            }
+        })
+        .catch(error => {
+            console.error('手动规划R寄存器写入失败:', error.message);
+            alertError('手动规划R寄存器写入失败: ' + error.message);
+
+            // 如果有自动写入的回调函数，调用它
+            if (window.onWriteOperationComplete) {
+                window.onWriteOperationComplete(false, '手动规划R寄存器写入失败: ' + error.message, 'R寄存器写入');
+            }
+        });
+        
+        return; // 手动规划配方处理完毕，直接返回
+    }
+    
+    // 智能规划配方：写入所有参数
     const frame_length = document.getElementById('frame_length').value;
     const frame_width = document.getElementById('frame_width').value;
     const frameDepth = document.getElementById('frame_depth').value;
@@ -1295,13 +1352,14 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         return;
     }
 
-    // 发送请求到后端写入R寄存器
+    // 发送请求到后端写入R寄存器（智能规划模式）
     fetch('/write_r_registers', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+            recipe_type: 'smart',
             frame_length: frame_length,
             frame_width: frame_width,
             frame_depth: frameDepth,
@@ -1311,7 +1369,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
             total_shapes: shapeCountValue, // 填充数量
             tool_count: toolCount,         // 工具数量
             drop_Count: drop_Count,
-            numofsingle_row_columns: shapesPerRowOrColValue,
+            numofsingle_row_or_col_value: shapesPerRowOrColValue,
             rows: rows,  // 行数
             cols: cols   // 列数
         }),
@@ -1325,21 +1383,21 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         return response.json();
     })
     .then(data => {
-        console.log('R寄存器写入成功');
-        alertSuccess('R寄存器写入成功');
+        console.log('智能规划R寄存器写入成功');
+        alertSuccess('智能规划R寄存器写入成功');
 
         // 如果有自动写入的回调函数，调用它
         if (window.onWriteOperationComplete) {
-            window.onWriteOperationComplete(true, 'R寄存器写入成功', 'R寄存器写入');
+            window.onWriteOperationComplete(true, '智能规划R寄存器写入成功', 'R寄存器写入');
         }
     })
     .catch(error => {
-        console.error('写入R寄存器失败:', error.message);
-        alertError('写入R寄存器失败: ' + error.message);
+        console.error('智能规划R寄存器写入失败:', error.message);
+        alertError('智能规划R寄存器写入失败: ' + error.message);
 
         // 如果有自动写入的回调函数，调用它
         if (window.onWriteOperationComplete) {
-            window.onWriteOperationComplete(false, '写入R寄存器失败: ' + error.message, 'R寄存器写入');
+            window.onWriteOperationComplete(false, '智能规划R寄存器写入失败: ' + error.message, 'R寄存器写入');
         }
     });
 });
@@ -1511,76 +1569,249 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     });
 });
 
-// 表单提交事件
-document.getElementById('interval-calculator-form').addEventListener('submit', function (event) {
-    event.preventDefault();
+// 新的手动规划功能
+// 读取参考点按钮事件
+document.getElementById('read_reference_points').addEventListener('click', function () {
+    const rowCount = parseInt(document.getElementById('row_count').value, 10);
+    const colCount = parseInt(document.getElementById('col_count').value, 10);
 
-    const shapeType = document.getElementById('shape_type_interval').value;
-    let diameter, length, width;
-
-    if (shapeType === 'circle') {
-        diameter = parseFloat(document.getElementById('circle_diameter_interval').value);
-    } else if (shapeType === 'rectangle') {
-        length = parseFloat(document.getElementById('rectangle_length_interval').value);
-        width = parseFloat(document.getElementById('rectangle_width_interval').value);
+    if (isNaN(rowCount) || isNaN(colCount) || rowCount < 1 || colCount < 1) {
+        alertError('请输入有效的行数和列数（必须大于0）');
+        return;
     }
 
-    // 发送请求到后端读取PR寄存器的值
-    fetch('/get_pr_data', {
+    // 显示计算状态
+    document.getElementById('calculation-status').style.display = 'block';
+    document.getElementById('status-text').textContent = '正在读取参考点...';
+
+    // 读取PR1、PR2、PR3的值
+    Promise.all([
+        readPRRegister(1), // PR1
+        readPRRegister(2), // PR2
+        readPRRegister(3)  // PR3
+    ])
+    .then(([pr1, pr2, pr3]) => {
+        // 显示参考点坐标
+        document.getElementById('pr1-x').textContent = pr1.x.toFixed(2);
+        document.getElementById('pr1-y').textContent = pr1.y.toFixed(2);
+        document.getElementById('pr1-z').textContent = pr1.z.toFixed(2);
+        
+        document.getElementById('pr2-x').textContent = pr2.x.toFixed(2);
+        document.getElementById('pr2-y').textContent = pr2.y.toFixed(2);
+        document.getElementById('pr2-z').textContent = pr2.z.toFixed(2);
+        
+        document.getElementById('pr3-x').textContent = pr3.x.toFixed(2);
+        document.getElementById('pr3-y').textContent = pr3.y.toFixed(2);
+        document.getElementById('pr3-z').textContent = pr3.z.toFixed(2);
+
+        // 显示参考点表格和计算按钮
+        document.querySelector('.reference-points-section').style.display = 'block';
+        document.getElementById('calculate_points').disabled = false;
+        
+        // 隐藏计算状态
+        document.getElementById('calculation-status').style.display = 'none';
+        
+        // 存储参考点数据供后续计算使用（不包含行数和列数，这些值会在计算时实时读取）
+        window.referencePoints = { pr1, pr2, pr3 };
+        
+        // alertSuccess('参考点读取成功！'); // 已禁用成功提示弹窗
+    })
+    .catch(error => {
+        console.error('读取参考点失败:', error);
+        alertError('读取参考点失败: ' + error.message);
+        document.getElementById('calculation-status').style.display = 'none';
+    });
+});
+
+// 计算所有点位按钮事件
+document.getElementById('calculate_points').addEventListener('click', function () {
+    if (!window.referencePoints) {
+        alertError('请先读取参考点');
+        return;
+    }
+
+    // 重新读取当前输入框中的行数和列数
+    const currentRowCount = parseInt(document.getElementById('row_count').value, 10);
+    const currentColCount = parseInt(document.getElementById('col_count').value, 10);
+    
+    // 验证输入值
+    if (!currentRowCount || !currentColCount || currentRowCount < 1 || currentColCount < 1) {
+        alertError('请输入有效的行数和列数');
+        return;
+    }
+    
+    // 清除智能规划界面的所有参数和图片，防止保存时误判为智能规划配方
+    clearSmartPlanningInterface();
+    
+    // 设置当前配方类型为手动规划
+    window.currentRecipeType = 'manual';
+    
+    const { pr1, pr2, pr3 } = window.referencePoints;
+    
+    // 显示计算状态
+    document.getElementById('calculation-status').style.display = 'block';
+    document.getElementById('status-text').textContent = '正在计算所有点位...';
+
+    // 计算所有点的坐标（使用当前输入框中的最新值）
+    const allPoints = calculateAllPoints(pr1, pr2, pr3, currentRowCount, currentColCount);
+    
+    // 读取Z&C参考寄存器对应的PR寄存器的C值
+    const prRegisterId = parseInt(document.getElementById('pr_register_id').value, 10);
+    
+    readPRRegister(prRegisterId)
+    .then(prData => {
+        const cValue = prData.c;
+        
+        // 将计算结果填入数据清单表格
+        fillDataListTable(allPoints, cValue);
+        
+        // 隐藏计算状态
+        document.getElementById('calculation-status').style.display = 'none';
+        
+        // 切换到数据清单页面
+        showSection('data-list-content');
+        setActiveButton('data-list-btn');
+        
+        alertSuccess(`计算完成！共生成 ${allPoints.length} 个点位`);
+    })
+    .catch(error => {
+        console.error('读取C值失败:', error);
+        alertError('读取C值失败: ' + error.message);
+        document.getElementById('calculation-status').style.display = 'none';
+    });
+});
+
+// 读取PR寄存器的函数
+function readPRRegister(prId) {
+    return fetch('/read_pr_register', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            shape_type: shapeType,
-            diameter: diameter,
-            length: length,
-            width: width
+            pr_id: prId
         }),
     })
     .then(response => {
         if (!response.ok) {
             return response.json().then(err => {
-                throw new Error(err.error || '请求失败');
+                throw new Error(err.error || '读取PR寄存器失败');
             });
         }
         return response.json();
     })
     .then(data => {
-        const rowSpacing = data.row_spacing;
-        const colSpacing = data.col_spacing;
-        const pr1X = data.pr1_x;
-        const pr1Y = data.pr1_y;
-        const pr2X = data.pr2_x;
-        const pr2Y = data.pr2_y;
-        const pr3X = data.pr3_x;
-        const pr3Y = data.pr3_y;
-
-        // 检查行间距和列间距是否为负数
-        if (rowSpacing < 0 || colSpacing < 0) {
-            document.getElementById('row-spacing').textContent = '计算错误，请检查寄存器值';
-            document.getElementById('col-spacing').textContent = '计算错误，请检查寄存器值';
-        } else {
-            document.getElementById('row-spacing').textContent = rowSpacing.toFixed(2);
-            document.getElementById('col-spacing').textContent = colSpacing.toFixed(2);
-        }
-
-        // 显示PR寄存器的XY值
-        document.getElementById('pr1-x').textContent = pr1X.toFixed(2);
-        document.getElementById('pr1-y').textContent = pr1Y.toFixed(2);
-        document.getElementById('pr2-x').textContent = pr2X.toFixed(2);
-        document.getElementById('pr2-y').textContent = pr2Y.toFixed(2);
-        document.getElementById('pr3-x').textContent = pr3X.toFixed(2);
-        document.getElementById('pr3-y').textContent = pr3Y.toFixed(2);
-
-        // 显示计算结果
-        document.getElementById('interval-result').style.display = 'block';
-    })
-    .catch(error => {
-        console.error('请求失败:', error.message);
-        alertError('请求失败: ' + error.message);
+        return {
+            x: data.x,
+            y: data.y,
+            z: data.z,
+            c: data.c
+        };
     });
-});
+}
+
+// 计算所有点位的函数
+function calculateAllPoints(pr1, pr2, pr3, rowCount, colCount) {
+    const points = [];
+    
+    // 计算行间距和列间距
+    const rowSpacing = (pr2.y - pr1.y) / (rowCount - 1);
+    const colSpacing = (pr3.x - pr1.x) / (colCount - 1);
+    
+    // 生成所有点的坐标
+    for (let row = 1; row <= rowCount; row++) {
+        for (let col = 1; col <= colCount; col++) {
+            const x = pr1.x + (col - 1) * colSpacing;
+            const y = pr1.y + (row - 1) * rowSpacing;
+            const z = pr1.z; // Z值保持与PR1相同
+            
+            points.push({
+                row: row,
+                col: col,
+                x: x,
+                y: y,
+                z: z
+            });
+        }
+    }
+    
+    return points;
+}
+
+// 填充数据清单表格的函数
+function fillDataListTable(points, cValue) {
+    const tableBody = document.querySelector('#data-list-content table tbody');
+    tableBody.innerHTML = ''; // 清空现有数据
+    
+    points.forEach((point, index) => {
+        const row = document.createElement('tr');
+        
+        // 行号
+        const cell1 = document.createElement('td');
+        cell1.textContent = point.row;
+        cell1.style.border = '1px solid #ddd';
+        cell1.style.padding = '8px';
+        row.appendChild(cell1);
+        
+        // 列号
+        const cell2 = document.createElement('td');
+        cell2.textContent = point.col;
+        cell2.style.border = '1px solid #ddd';
+        cell2.style.padding = '8px';
+        row.appendChild(cell2);
+        
+        // P_ID (点位编号)
+        const cell3 = document.createElement('td');
+        cell3.textContent = index + 1;
+        cell3.style.border = '1px solid #ddd';
+        cell3.style.padding = '8px';
+        row.appendChild(cell3);
+        
+        // X值
+        const cell4 = document.createElement('td');
+        cell4.textContent = point.x.toFixed(2);
+        cell4.style.border = '1px solid #ddd';
+        cell4.style.padding = '8px';
+        row.appendChild(cell4);
+        
+        // X补偿 (初始为0)
+        const cell5 = document.createElement('td');
+        cell5.textContent = '0.00';
+        cell5.style.border = '1px solid #ddd';
+        cell5.style.padding = '8px';
+        row.appendChild(cell5);
+        
+        // Y值
+        const cell6 = document.createElement('td');
+        cell6.textContent = point.y.toFixed(2);
+        cell6.style.border = '1px solid #ddd';
+        cell6.style.padding = '8px';
+        row.appendChild(cell6);
+        
+        // Y补偿 (初始为0)
+        const cell7 = document.createElement('td');
+        cell7.textContent = '0.00';
+        cell7.style.border = '1px solid #ddd';
+        cell7.style.padding = '8px';
+        row.appendChild(cell7);
+        
+        // C值
+        const cell8 = document.createElement('td');
+        cell8.textContent = cValue.toFixed(2);
+        cell8.style.border = '1px solid #ddd';
+        cell8.style.padding = '8px';
+        row.appendChild(cell8);
+        
+        // C补偿 (初始为0)
+        const cell9 = document.createElement('td');
+        cell9.textContent = '0.00';
+        cell9.style.border = '1px solid #ddd';
+        cell9.style.padding = '8px';
+        row.appendChild(cell9);
+        
+        tableBody.appendChild(row);
+    });
+}
 
 // 更新补偿值的事件处理
 document.getElementById('update-compensation').addEventListener('click', function () {
@@ -1627,11 +1858,25 @@ document.getElementById('save_recipe_button').addEventListener('click', function
         return;
     }
 
-    // 检查图片是否已经生成
+    // 检查是否为手动规划配方（没有预览图片）
     const plotImg = document.getElementById('plot');
-    if (!plotImg || !plotImg.getAttribute('data-base64')) {
-        alertError('请先生成规划结果图片');
-        return;
+    const isManualPlanning = !plotImg || !plotImg.getAttribute('data-base64');
+    
+    if (isManualPlanning) {
+        // 手动规划配方：检查是否有数据清单数据
+        const table = document.querySelector('#data-list-content table');
+        const rows = table.getElementsByTagName('tr');
+        if (rows.length <= 1) { // 只有表头，没有数据
+            alertError('请先计算手动规划点位数据');
+            return;
+        }
+        // 手动规划配方可以继续保存，不需要预览图片
+    } else {
+        // 智能规划配方：检查图片是否已经生成
+        if (!plotImg || !plotImg.getAttribute('data-base64')) {
+            alertError('请先生成规划结果图片');
+            return;
+        }
     }
 
     // 先检查是否存在重名的配方文件
@@ -1708,7 +1953,59 @@ function saveRecipeData(recipeName, recipeId) {
         });
     }
 
-    // 获取其他表单数据
+    // 检查是否为手动规划配方（没有预览图片）
+    const plotImg = document.getElementById('plot');
+    const isManualPlanning = !plotImg || !plotImg.getAttribute('data-base64');
+    
+    if (isManualPlanning) {
+        // 手动规划配方：只保存基本数据和表格数据
+        const recipeData = {
+            recipeName: recipeName,
+            recipeId: recipeId,
+            tableData: tableData,
+            isManualPlanning: true, // 标记为手动规划配方
+            // 手动规划配方的其他必要信息
+            manualPlanningInfo: {
+                rowCount: document.getElementById('row_count')?.value || 0,
+                colCount: document.getElementById('col_count')?.value || 0,
+                referencePoints: window.referencePoints || {}
+            }
+        };
+        
+        // 发送请求到后端保存手动规划配方
+        fetch('/save_recipe', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(recipeData),
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.error || '保存配方失败');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('手动规划配方保存成功');
+            if (data.id_reassigned) {
+                document.getElementById('recipe_id').value = data.new_id;
+                alertSuccess(data.message);
+            } else {
+                alertSuccess('手动规划配方保存成功');
+            }
+        })
+        .catch(error => {
+            console.error('保存手动规划配方失败:', error.message);
+            alertError('保存手动规划配方失败: ' + error.message);
+        });
+        
+        return; // 提前返回，不执行智能规划配方的保存逻辑
+    }
+
+    // 智能规划配方：获取所有表单数据
     const frameLength = document.getElementById('frame_length')?.value || 0;
     const frameWidth = document.getElementById('frame_width')?.value || 0;
     const frameDepth = document.getElementById('frame_depth')?.value || 0;
@@ -1736,17 +2033,8 @@ function saveRecipeData(recipeName, recipeId) {
     const polygonArrangement = document.getElementById('polygon_arrangement')?.value || 'diagonal';  // 添加多边形排布方式参数
 
     // 获取预览结果图的Base64编码
-    const plotImg = document.getElementById('plot');
-    if (!plotImg) {
-        console.error('plot element not found when saving recipe');
-        return;
-    }
     const plotImageBase64 = plotImg.getAttribute('data-base64'); // 使用存储的 Base64 数据
-    if (!plotImageBase64) {
-        console.error('No base64 data found in plot element when saving recipe');
-        return;
-    }
-    console.log('Saving recipe with base64 data:', plotImageBase64.substring(0, 50) + '...');
+    console.log('Saving smart planning recipe with base64 data:', plotImageBase64.substring(0, 50) + '...');
 
     // 获取填充数量和单行/列数量
     const shapeCountValue = document.getElementById('shape-count-value')?.textContent || 0;
@@ -1786,7 +2074,8 @@ function saveRecipeData(recipeName, recipeId) {
         triangleType: document.getElementById('triangle_type')?.value || 'equilateral',
         triangleSideLength: document.getElementById('triangle_side_length')?.value || 0,
         triangleBaseLength: document.getElementById('triangle_base_length')?.value || 0,
-        triangleOrientation: document.getElementById('triangle_orientation')?.value || 'up'
+        triangleOrientation: document.getElementById('triangle_orientation')?.value || 'up',
+        isManualPlanning: false // 标记为智能规划配方
     };
 
     // 发送请求到后端保存配方
@@ -1869,7 +2158,28 @@ function loadRecipeList(keyword = '') {
 
                 const recipeNameSpan = document.createElement('span');
                 recipeNameSpan.className = 'recipe-name'; // 添加类名
-                recipeNameSpan.textContent = recipe.recipeName; // 设置配方名
+                
+                // 获取配方详细信息来判断类型
+                fetch('/get_recipe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ recipeName: recipe.recipeName }),
+                })
+                .then(response => response.json())
+                .then(recipeData => {
+                    // 检查是否为手动规划配方
+                    if (recipeData.isManualPlanning === true) {
+                        recipeNameSpan.textContent = `${recipe.recipeName}(手动规划)`;
+                    } else {
+                        recipeNameSpan.textContent = recipe.recipeName;
+                    }
+                })
+                .catch(error => {
+                    console.error('获取配方详细信息失败:', error);
+                    recipeNameSpan.textContent = recipe.recipeName; // 失败时显示原始名称
+                });
 
                 // 将勾选框和 <span> 添加到 <li> 中
                 if (checkbox) {
@@ -1992,10 +2302,38 @@ function previewRecipe(recipeName) {
     })
     .then(response => response.json())
     .then(data => {
-        // 更新预览标题，显示配方名称
+        // 检查是否为手动规划配方
+        const isManualPlanning = data.isManualPlanning === true;
+        
+        // 更新预览标题，显示配方名称和类型标识
         const previewTitle = document.querySelector('.recipe-preview h2');
         if (previewTitle) {
-            previewTitle.textContent = `配方预览 - ${recipeName}`;
+            if (isManualPlanning) {
+                previewTitle.textContent = `配方预览 - ${recipeName}(手动规划)`;
+            } else {
+                previewTitle.textContent = `配方预览 - ${recipeName}`;
+            }
+        }
+        
+        // 如果是手动规划配方，显示简化的预览信息
+        if (isManualPlanning) {
+            showManualPlanningPreview(data);
+            return;
+        }
+
+        // 智能规划配方：隐藏手动规划预览，显示智能规划预览
+        const manualPreviewElement = document.querySelector('.manual-planning-preview');
+        if (manualPreviewElement) {
+            manualPreviewElement.style.display = 'none';
+        }
+        
+        // 显示智能规划相关的元素
+        const previewContainer = document.querySelector('.recipe-preview .preview-container');
+        if (previewContainer) {
+            const smartPlanningElements = previewContainer.querySelectorAll('.input-container, .preview-image-container');
+            smartPlanningElements.forEach(element => {
+                element.style.display = 'block';
+            });
         }
 
         // 填充料框设置
@@ -2062,6 +2400,181 @@ function previewRecipe(recipeName) {
     .catch(error => console.error('加载配方失败:', error));
 }
 
+// 显示手动规划配方预览
+function showManualPlanningPreview(data) {
+    // 隐藏智能规划相关的预览元素
+    const previewContainer = document.querySelector('.recipe-preview .preview-container');
+    if (previewContainer) {
+        // 隐藏智能规划相关的元素
+        const smartPlanningElements = previewContainer.querySelectorAll('.input-container, .preview-image-container');
+        smartPlanningElements.forEach(element => {
+            element.style.display = 'none';
+        });
+        
+        // 检查是否已存在手动规划预览元素，如果不存在则创建
+        let manualPreviewElement = previewContainer.querySelector('.manual-planning-preview');
+        if (!manualPreviewElement) {
+            manualPreviewElement = document.createElement('div');
+            manualPreviewElement.className = 'manual-planning-preview';
+            previewContainer.appendChild(manualPreviewElement);
+        }
+        
+        // 更新手动规划预览内容
+        manualPreviewElement.innerHTML = `
+            <h3>手动规划配方信息</h3>
+            <div class="manual-planning-info">
+                <p><strong>配方名称:</strong> ${data.recipeName}</p>
+                <p><strong>配方编号:</strong> ${data.recipeId}</p>
+                <p><strong>点位总数:</strong> ${data.tableData ? data.tableData.length : 0}</p>
+                ${data.manualPlanningInfo ? `
+                    <p><strong>行数:</strong> ${data.manualPlanningInfo.rowCount}</p>
+                    <p><strong>列数:</strong> ${data.manualPlanningInfo.colCount}</p>
+                ` : ''}
+            </div>
+        `;
+        
+        // 显示手动规划预览
+        manualPreviewElement.style.display = 'block';
+    }
+}
+
+// 清除智能规划界面的所有参数和图片
+function clearSmartPlanningInterface() {
+    // 清除所有输入框的值
+    const inputFields = [
+        'frame_length', 'frame_width', 'frame_depth', 'shape_height', 'material_thickness',
+        'placement_layers', 'shape_type', 'shape_length', 'shape_width', 'drop_count',
+        'horizontal_spacing', 'vertical_spacing', 'horizontal_border_distance', 'vertical_border_distance',
+        'layout_type', 'place_type', 'remainder_turn', 'shape_count_value', 'shapes_per_row_or_col_value',
+        'circle_diameter', 'rectangle_length', 'rectangle_width', 'polygon_sides', 'polygon_side_length',
+        'polygon_arrangement', 'triangle_type', 'triangle_side_length', 'triangle_base_length', 'triangle_orientation'
+    ];
+    
+    inputFields.forEach(fieldId => {
+        const element = document.getElementById(fieldId);
+        if (element) {
+            if (element.type === 'select-one') {
+                element.selectedIndex = 0; // 重置为第一个选项
+            } else {
+                element.value = '';
+            }
+        }
+    });
+    
+    // 清除预览图片
+    const plotImg = document.getElementById('plot');
+    if (plotImg) {
+        plotImg.src = '';
+        plotImg.style.display = 'none';
+        plotImg.removeAttribute('data-base64');
+    }
+    
+    // 清除预览图片
+    const previewPlotImg = document.getElementById('preview-plot');
+    if (previewPlotImg) {
+        previewPlotImg.src = '';
+        previewPlotImg.style.display = 'none';
+        previewPlotImg.removeAttribute('data-base64');
+    }
+    
+    console.log('智能规划界面已清除');
+}
+
+// 重置配方预览状态
+function resetRecipePreview() {
+    const previewContainer = document.querySelector('.recipe-preview .preview-container');
+    if (previewContainer) {
+        // 隐藏手动规划预览
+        const manualPreviewElement = previewContainer.querySelector('.manual-planning-preview');
+        if (manualPreviewElement) {
+            manualPreviewElement.style.display = 'none';
+        }
+        
+        // 显示智能规划相关的元素
+        const smartPlanningElements = previewContainer.querySelectorAll('.input-container, .preview-image-container');
+        smartPlanningElements.forEach(element => {
+            element.style.display = 'block';
+        });
+    }
+}
+
+// 从配方数据填充数据清单表格
+function fillDataListTableFromRecipe(tableData) {
+    const tableBody = document.querySelector('#data-list-content table tbody');
+    tableBody.innerHTML = ''; // 清空现有数据
+    
+    if (tableData && Array.isArray(tableData)) {
+        tableData.forEach((rowData) => {
+            const row = document.createElement('tr');
+            
+            // 行号
+            const cell1 = document.createElement('td');
+            cell1.textContent = rowData.rowNumber || '';
+            cell1.style.border = '1px solid #ddd';
+            cell1.style.padding = '8px';
+            row.appendChild(cell1);
+            
+            // 列号
+            const cell2 = document.createElement('td');
+            cell2.textContent = rowData.colNumber || '';
+            cell2.style.border = '1px solid #ddd';
+            cell2.style.padding = '8px';
+            row.appendChild(cell2);
+            
+            // P_ID
+            const cell3 = document.createElement('td');
+            cell3.textContent = rowData.pId || '';
+            cell3.style.border = '1px solid #ddd';
+            cell3.style.padding = '8px';
+            row.appendChild(cell3);
+            
+            // X坐标
+            const cell4 = document.createElement('td');
+            cell4.textContent = (parseFloat(rowData.x) || 0).toFixed(2);
+            cell4.style.border = '1px solid #ddd';
+            cell4.style.padding = '8px';
+            row.appendChild(cell4);
+            
+            // X补偿
+            const cell5 = document.createElement('td');
+            cell5.textContent = (parseFloat(rowData.xCompensation) || 0).toFixed(2);
+            cell5.style.border = '1px solid #ddd';
+            cell5.style.padding = '8px';
+            row.appendChild(cell5);
+            
+            // Y坐标
+            const cell6 = document.createElement('td');
+            cell6.textContent = (parseFloat(rowData.y) || 0).toFixed(2);
+            cell6.style.border = '1px solid #ddd';
+            cell6.style.padding = '8px';
+            row.appendChild(cell6);
+            
+            // Y补偿
+            const cell7 = document.createElement('td');
+            cell7.textContent = (parseFloat(rowData.yCompensation) || 0).toFixed(2);
+            cell7.style.border = '1px solid #ddd';
+            cell7.style.padding = '8px';
+            row.appendChild(cell7);
+            
+            // C坐标
+            const cell8 = document.createElement('td');
+            cell8.textContent = (parseFloat(rowData.c) || 0).toFixed(2);
+            cell8.style.border = '1px solid #ddd';
+            cell8.style.padding = '8px';
+            row.appendChild(cell8);
+            
+            // C补偿
+            const cell9 = document.createElement('td');
+            cell9.textContent = (parseFloat(rowData.cCompensation) || 0).toFixed(2);
+            cell9.style.border = '1px solid #ddd';
+            cell9.style.padding = '8px';
+            row.appendChild(cell9);
+            
+            tableBody.appendChild(row);
+        });
+    }
+}
+
 // 删除配方
 async function deleteRecipe(recipeName) {
     const confirmDelete = await myConfirm(`确定要删除配方 "${recipeName}" 吗？`);
@@ -2096,7 +2609,43 @@ function loadRecipeToPlanning(recipeName) {
     })
     .then(response => response.json())
     .then(data => {
-        // 填充智能规划界面的参数
+        // 检查是否为手动规划配方
+        const isManualPlanning = data.isManualPlanning === true;
+        
+        if (isManualPlanning) {
+            // 清除智能规划界面的所有参数和图片，防止干扰
+            clearSmartPlanningInterface();
+            
+            // 设置全局状态标记，标识当前为手动规划配方
+            window.currentRecipeType = 'manual';
+            
+            // 手动规划配方：只填充数据清单表格
+            fillDataListTableFromRecipe(data.tableData);
+            
+            // 填充配方名和配方编号到数据清单的输入框中
+            document.getElementById('recipe_name').value = recipeName;
+            document.getElementById('recipe_id').value = data.recipeId;
+            
+            // 填充手动规划的行数和列数到输入框中，确保写入R寄存器时能正确获取
+            if (data.manualPlanningInfo) {
+                const rowCountInput = document.getElementById('row_count');
+                const colCountInput = document.getElementById('col_count');
+                if (rowCountInput && colCountInput) {
+                    rowCountInput.value = data.manualPlanningInfo.rowCount || '';
+                    colCountInput.value = data.manualPlanningInfo.colCount || '';
+                }
+            }
+            
+            // 显示数据清单页面
+            showSection('data-list-content');
+            setActiveButton('data-list-btn');
+            return;
+        }
+        
+        // 智能规划配方：设置全局状态标记
+        window.currentRecipeType = 'smart';
+        
+        // 智能规划配方：填充所有参数
         document.getElementById('frame_length').value = data.frameLength;
         document.getElementById('frame_width').value = data.frameWidth;
         document.getElementById('frame_depth').value = data.frameDepth;

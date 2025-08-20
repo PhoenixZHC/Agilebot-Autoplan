@@ -3,7 +3,7 @@
   "type": "generalService",
   "scriptLang": "python",
   "description": "智能摆盘规划系统",
-  "version": "V6.4_20250704",
+  "version": "V6.5_20250821",
   "entry": "app.py",
   "url": "/"
 }

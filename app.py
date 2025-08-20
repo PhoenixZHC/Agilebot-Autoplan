@@ -926,8 +926,9 @@ async def read_pr_register(request: Request):
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
 
-    pr_register_id = data.get('pr_register_id')
-    print(f"读取PR寄存器 {pr_register_id} 的C值")  # 打印调试信息
+    # 支持两种参数名：pr_register_id 和 pr_id
+    pr_register_id = data.get('pr_register_id') or data.get('pr_id')
+    print(f"读取PR寄存器 {pr_register_id} 的完整数据")  # 打印调试信息
 
     if pr_register_id is None:
         return JSONResponse({'error': '缺少PR寄存器ID'}, 400)
@@ -950,11 +951,15 @@ async def read_pr_register(request: Request):
             return JSONResponse({'error': '读取PR寄存器失败'}, 400)
 
         # 打印调试信息
+        print(f"PR寄存器 {pr_register_id} 的X值: {pose_register.poseRegisterData.cartData.position.x}")
+        print(f"PR寄存器 {pr_register_id} 的Y值: {pose_register.poseRegisterData.cartData.position.y}")
         print(f"PR寄存器 {pr_register_id} 的Z值: {pose_register.poseRegisterData.cartData.position.z}")
         print(f"PR寄存器 {pr_register_id} 的C值: {pose_register.poseRegisterData.cartData.position.c}")
 
-        # 返回Z和C的值
+        # 返回完整的X, Y, Z, C值
         return JSONResponse({
+            'x': pose_register.poseRegisterData.cartData.position.x,
+            'y': pose_register.poseRegisterData.cartData.position.y,
             'z': pose_register.poseRegisterData.cartData.position.z,
             'c': pose_register.poseRegisterData.cartData.position.c
         }, 200)
@@ -970,25 +975,54 @@ async def write_r_registers(request: Request):
     if data is None:
         return JSONResponse({'error': '无效的请求数据'}, 400)
 
-    # 获取前端传入的值
-    frame_length = data.get('frame_length')
-    frame_width = data.get('frame_width')
-    frame_depth = data.get('frame_depth')
-    shape_height = data.get('shape_height')
-    material_thickness = data.get('material_thickness')
-    placement_layers = data.get('placement_layers')
-    total_shapes = data.get('total_shapes')
-    tool_count = data.get('tool_count')
-    drop_Count = data.get('drop_Count')
-    numofsingle_row_columns = data.get('numofsingle_row_columns')
-    rows = data.get('rows')  # 获取行数
-    cols = data.get('cols')  # 获取列数
-
     # 检查机器人是否已连接
     if robot_arm is None:
         return JSONResponse({'error': '未连接机器人'}, 400)
 
+    # 获取配方类型
+    recipe_type = data.get('recipe_type', 'smart')  # 默认为智能规划
+
     try:
+        if recipe_type == 'manual':
+            # 手动规划配方：只写入三个基本参数
+            total_points = data.get('total_points')
+            row_count = data.get('row_count')
+            col_count = data.get('col_count')
+
+            if total_points is None or row_count is None or col_count is None:
+                return JSONResponse({'error': '手动规划配方缺少必要参数'}, 400)
+
+            # 写入R4寄存器（点位总数）
+            ret = robot_arm.register.write_R(4, int(total_points))
+            if ret != StatusCodeEnum.OK:
+                return JSONResponse({'error': '写入R4寄存器失败'}, 400)
+
+            # 写入R11寄存器（行数）
+            ret = robot_arm.register.write_R(11, int(row_count))
+            if ret != StatusCodeEnum.OK:
+                return JSONResponse({'error': '写入R11寄存器失败'}, 400)
+
+            # 写入R12寄存器（列数）
+            ret = robot_arm.register.write_R(12, int(col_count))
+            if ret != StatusCodeEnum.OK:
+                return JSONResponse({'error': '写入R12寄存器失败'}, 400)
+
+            return JSONResponse({'message': '手动规划R寄存器写入成功'}, 200)
+
+        else:
+            # 智能规划配方：写入所有参数
+            frame_length = data.get('frame_length')
+            frame_width = data.get('frame_width')
+            frame_depth = data.get('frame_depth')
+            shape_height = data.get('shape_height')
+            material_thickness = data.get('material_thickness')
+            placement_layers = data.get('placement_layers')
+            total_shapes = data.get('total_shapes')
+            tool_count = data.get('tool_count')
+            drop_Count = data.get('drop_Count')
+            numofsingle_row_or_col_value = data.get('numofsingle_row_or_col_value')
+            rows = data.get('rows')  # 获取行数
+            cols = data.get('cols')  # 获取列数
 
         # 写入R1寄存器（图形高度）- 使用新版本SDK的接口
         if robot_arm is None:
@@ -1058,7 +1092,7 @@ async def write_r_registers(request: Request):
          # 写入R10寄存器（单行列数量）
         if robot_arm is None:
             return JSONResponse({'error': '机器人连接已断开'}, 400)
-        ret = robot_arm.register.write_R(10, int(numofsingle_row_columns))
+        ret = robot_arm.register.write_R(10, int(numofsingle_row_or_col_value))
         if ret != StatusCodeEnum.OK:
             return JSONResponse({'error': '写入R10寄存器失败'}, 400)
 
@@ -1076,7 +1110,7 @@ async def write_r_registers(request: Request):
         if ret != StatusCodeEnum.OK:
             return JSONResponse({'error': '写入R12寄存器失败'}, 400)
 
-        return JSONResponse({'message': 'R寄存器写入成功'}, 200)
+        return JSONResponse({'message': '智能规划R寄存器写入成功'}, 200)
 
     except Exception as e:
         return JSONResponse({'error': str(e)}, 400)
@@ -1369,53 +1403,69 @@ async def save_recipe(request: Request):
             print('Warning: No image data found in recipe')
             # 这里不返回错误，因为图片数据是可选的
 
-        # 获取工件类型对应的几何参数
-        circle_diameter = data.get('circleDiameter') if shape_type == 'circle' else None
-        rectangle_length = data.get('rectangleLength') if shape_type == 'rectangle' else None
-        rectangle_width = data.get('rectangleWidth') if shape_type == 'rectangle' else None
-        polygon_sides = data.get('polygonSides') if shape_type == 'polygon' else None
-        polygon_side_length = data.get('polygonSideLength') if shape_type == 'polygon' else None
-        polygon_arrangement = data.get('polygonArrangement') if shape_type == 'polygon' else 'diagonal'  # 添加多边形排布方式参数
-        triangle_type = data.get('triangleType') if shape_type == 'triangle' else None
-        triangle_side_length = data.get('triangleSideLength') if shape_type == 'triangle' else None
-        triangle_base_length = data.get('triangleBaseLength') if shape_type == 'triangle' else None
-        triangle_orientation = data.get('triangleOrientation') if shape_type == 'triangle' else None
+        # 检查是否为手动规划配方
+        is_manual_planning = data.get('isManualPlanning', False)
+        
+        if is_manual_planning:
+            # 手动规划配方：只保存基本数据和表格数据
+            manual_planning_info = data.get('manualPlanningInfo', {})
+            
+            recipe_data = {
+                'recipeId': recipe_id,  # 保存配方编号
+                'tableData': table_data,
+                'isManualPlanning': True,  # 标记为手动规划配方
+                'manualPlanningInfo': manual_planning_info
+            }
+        else:
+            # 智能规划配方：获取所有参数
+            # 获取工件类型对应的几何参数
+            circle_diameter = data.get('circleDiameter') if shape_type == 'circle' else None
+            rectangle_length = data.get('rectangleLength') if shape_type == 'rectangle' else None
+            rectangle_width = data.get('rectangleWidth') if shape_type == 'rectangle' else None
+            polygon_sides = data.get('polygonSides') if shape_type == 'polygon' else None
+            polygon_side_length = data.get('polygonSideLength') if shape_type == 'polygon' else None
+            polygon_arrangement = data.get('polygonArrangement') if shape_type == 'polygon' else 'diagonal'  # 添加多边形排布方式参数
+            triangle_type = data.get('triangleType') if shape_type == 'triangle' else None
+            triangle_side_length = data.get('triangleSideLength') if shape_type == 'triangle' else None
+            triangle_base_length = data.get('triangleBaseLength') if shape_type == 'triangle' else None
+            triangle_orientation = data.get('triangleOrientation') if shape_type == 'triangle' else None
 
-        # 将数据保存到一个 JSON 文件中（不再保存recipeName字段，因为文件名就是配方名）
-        recipe_data = {
-            'recipeId': recipe_id,  # 保存配方编号
-            'tableData': table_data,
-            'frameLength': frame_length,
-            'frameWidth': frame_width,
-            'frameDepth': frame_depth,
-            'shapeHeight': shape_height,
-            'materialThickness': material_thickness,
-            'placementLayers': placement_layers,
-            'shapeType': shape_type,
-            'shapeLength': shape_length,
-            'shapeWidth': shape_width,
-            'dropCount': dropCount,
-            'horizontalSpacing': horizontal_spacing,
-            'verticalSpacing': vertical_spacing,
-            'horizontalBorderDistance': horizontal_border_distance,
-            'verticalBorderDistance': vertical_border_distance,
-            'layoutType': layout_type,
-            'placeType': place_type,
-            'remainderTurn': remainder_turn,
-            'plotImageBase64': plot_image_base64,  # 保存Base64编码的图片数据
-            'shapeCountValue': shape_count_value,
-            'shapesPerRowOrColValue': shapes_per_row_or_col_value,
-            'circleDiameter': circle_diameter,
-            'rectangleLength': rectangle_length,
-            'rectangleWidth': rectangle_width,
-            'polygonSides': polygon_sides,
-            'polygonSideLength': polygon_side_length,
-            'polygonArrangement': polygon_arrangement,  # 添加多边形排布方式参数
-            'triangleType': triangle_type,
-            'triangleSideLength': triangle_side_length,
-            'triangleBaseLength': triangle_base_length,
-            'triangleOrientation': triangle_orientation
-        }
+            # 将数据保存到一个 JSON 文件中（不再保存recipeName字段，因为文件名就是配方名）
+            recipe_data = {
+                'recipeId': recipe_id,  # 保存配方编号
+                'tableData': table_data,
+                'frameLength': frame_length,
+                'frameWidth': frame_width,
+                'frameDepth': frame_depth,
+                'shapeHeight': shape_height,
+                'materialThickness': material_thickness,
+                'placementLayers': placement_layers,
+                'shapeType': shape_type,
+                'shapeLength': shape_length,
+                'shapeWidth': shape_width,
+                'dropCount': dropCount,
+                'horizontalSpacing': horizontal_spacing,
+                'verticalSpacing': vertical_spacing,
+                'horizontalBorderDistance': horizontal_border_distance,
+                'verticalBorderDistance': vertical_border_distance,
+                'layoutType': layout_type,
+                'placeType': place_type,
+                'remainderTurn': remainder_turn,
+                'plotImageBase64': plot_image_base64,  # 保存Base64编码的图片数据
+                'shapeCountValue': shape_count_value,
+                'shapesPerRowOrColValue': shapes_per_row_or_col_value,
+                'circleDiameter': circle_diameter,
+                'rectangleLength': rectangle_length,
+                'rectangleWidth': rectangle_width,
+                'polygonSides': polygon_sides,
+                'polygonSideLength': polygon_side_length,
+                'polygonArrangement': polygon_arrangement,  # 添加多边形排布方式参数
+                'triangleType': triangle_type,
+                'triangleSideLength': triangle_side_length,
+                'triangleBaseLength': triangle_base_length,
+                'triangleOrientation': triangle_orientation,
+                'isManualPlanning': False  # 标记为智能规划配方
+            }
 
         # 保存到文件
         recipe_file_path = f'data/{recipe_name}.json'

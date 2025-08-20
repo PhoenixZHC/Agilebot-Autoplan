@@ -941,6 +941,65 @@ input[type="number"] {
     display: inline-block; /* 确保 span 元素在同一行显示 */
 }
 
+/* 手动规划配方预览样式 */
+.manual-planning-preview {
+    width: 100%;
+    padding: 15px;
+}
+
+.manual-planning-preview h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 16px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+}
+
+.manual-planning-info {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #007bff;
+}
+
+.manual-planning-info p {
+    margin: 8px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.manual-planning-info strong {
+    color: #333;
+    font-weight: 600;
+}
+
+.manual-planning-table {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.manual-planning-table h4 {
+    margin: 0;
+    padding: 15px;
+    background-color: #007bff;
+    color: white;
+    font-size: 14px;
+}
+
+.manual-planning-table table {
+    margin: 0;
+    border: none;
+}
+
+.manual-planning-table th {
+    background-color: #f8f9fa !important;
+    font-weight: 600;
+    color: #333;
+}
+
 /* 查找功能样式 */
 .search-section {
     margin-bottom: 10px;
@@ -1021,7 +1080,20 @@ input[type="number"] {
     max-width: 400px;
 }
 
-/* 间隔计算器样式 */
+/* 手动规划样式 */
+/* 参考图片容器样式 */
+.reference-image-container {
+    margin: 10px 0;
+}
+
+.reference-image {
+    max-width: 35%;
+    height: auto;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
 #interval-calculator-content .input-section div {
     display: flex;
     align-items: center;
@@ -1047,7 +1119,7 @@ input[type="number"] {
 }
 
 #interval-calculator-content input[type="number"] {
-    width: 45px;
+    width: 55px;
 }
 
 #interval-calculator-content select {
@@ -1747,4 +1819,176 @@ input[type="number"] {
 
 .export-date {
     color: #28a745;
+}
+
+/* 手动规划新界面样式 */
+.interval-calculator-content .input-container {
+    padding: 20px;
+    max-width: 600px;
+}
+
+/* 网格输入框在同一行显示 */
+.interval-calculator-content .grid-inputs {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+    margin-bottom: 15px;
+}
+
+.interval-calculator-content .grid-inputs .input-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.interval-calculator-content h3 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+
+.interval-calculator-content h4 {
+    color: #555;
+    margin-bottom: 15px;
+    font-size: 14px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 5px;
+}
+
+.interval-calculator-content .input-section {
+    margin-bottom: 25px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.interval-calculator-content .input-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    gap: 15px;
+}
+
+.interval-calculator-content .input-group:last-child {
+    margin-bottom: 0;
+}
+
+.interval-calculator-content label {
+    font-weight: bold;
+    color: #555;
+    font-size: 12px;
+    min-width: 80px;
+    flex-shrink: 0;
+}
+
+.interval-calculator-content input {
+    width: 120px;
+    height: 30px;
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+.interval-calculator-content input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+.primary-button {
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    height: 32px;
+    min-width: 100px;
+}
+
+.primary-button:hover {
+    background-color: #0056b3;
+}
+
+.primary-button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+}
+
+.primary-button:disabled:hover {
+    background-color: #6c757d;
+}
+
+.reference-points-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 12px;
+}
+
+.data-table th,
+.data-table td {
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    text-align: center;
+}
+
+.data-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    color: #333;
+}
+
+.data-table td {
+    background-color: #fff;
+    color: #555;
+}
+
+.data-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.calculation-status {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #e3f2fd;
+    border: 1px solid #2196f3;
+    border-radius: 8px;
+}
+
+.status-message {
+    text-align: center;
+    color: #1976d2;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* 响应式设计 */
+@media (max-width: 600px) {
+    .interval-calculator-content .input-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .interval-calculator-content input {
+        width: 100%;
+    }
+    
+    .primary-button {
+        width: 100%;
+    }
 }
