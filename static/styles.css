@@ -1098,7 +1098,6 @@ input[type="number"] {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 5px;
 }
 
 #interval-calculator-content label {
@@ -1924,8 +1923,7 @@ input[type="number"] {
 }
 
 .reference-points-section {
-    margin-top: 20px;
-    padding: 15px;
+    padding: 5px;
     background-color: #fff;
     border-radius: 8px;
     border: 1px solid #e9ecef;
@@ -1933,9 +1931,8 @@ input[type="number"] {
 }
 
 .data-table {
-    width: 100%;
+    width: 70%;
     border-collapse: collapse;
-    margin-bottom: 20px;
     font-size: 12px;
 }
 
