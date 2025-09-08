@@ -1596,8 +1596,11 @@ document.getElementById('calculate_points').addEventListener('click', function (
   document.getElementById('calculation-status').style.display = 'block';
   document.getElementById('status-text').textContent = '正在计算所有点位...';
 
+  // 获取计算方式选择
+  var calculationMethod = document.getElementById('calculation_method').value;
+
   // 计算所有点的坐标（使用当前输入框中的最新值）
-  var allPoints = calculateAllPoints(pr1, pr2, pr3, currentRowCount, currentColCount);
+  var allPoints = calculateAllPoints(pr1, pr2, pr3, currentRowCount, currentColCount, calculationMethod);
 
   // 读取Z&C参考寄存器对应的PR寄存器的C值
   var prRegisterId = parseInt(document.getElementById('pr_register_id').value, 10);
@@ -1650,26 +1653,47 @@ function readPRRegister(prId) {
 
 // 计算所有点位的函数
 function calculateAllPoints(pr1, pr2, pr3, rowCount, colCount) {
+  var calculationMethod = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 'row_priority';
   var points = [];
 
   // 计算行间距和列间距
   var rowSpacing = (pr2.y - pr1.y) / (rowCount - 1);
   var colSpacing = (pr3.x - pr1.x) / (colCount - 1);
 
-  // 生成所有点的坐标
-  for (var row = 1; row <= rowCount; row++) {
-    for (var col = 1; col <= colCount; col++) {
-      var x = pr1.x + (col - 1) * colSpacing;
-      var y = pr1.y + (row - 1) * rowSpacing;
-      var z = pr1.z; // Z值保持与PR1相同
+  // 根据计算方式生成不同顺序的点位
+  if (calculationMethod === 'row_priority') {
+    // 行优先：先按行遍历，再按列遍历
+    for (var row = 1; row <= rowCount; row++) {
+      for (var col = 1; col <= colCount; col++) {
+        var x = pr1.x + (col - 1) * colSpacing;
+        var y = pr1.y + (row - 1) * rowSpacing;
+        var z = pr1.z; // Z值保持与PR1相同
 
-      points.push({
-        row: row,
-        col: col,
-        x: x,
-        y: y,
-        z: z
-      });
+        points.push({
+          row: row,
+          col: col,
+          x: x,
+          y: y,
+          z: z
+        });
+      }
+    }
+  } else if (calculationMethod === 'col_priority') {
+    // 列优先：先按列遍历，再按行遍历
+    for (var _col = 1; _col <= colCount; _col++) {
+      for (var _row = 1; _row <= rowCount; _row++) {
+        var _x = pr1.x + (_col - 1) * colSpacing;
+        var _y = pr1.y + (_row - 1) * rowSpacing;
+        var _z = pr1.z; // Z值保持与PR1相同
+
+        points.push({
+          row: _row,
+          col: _col,
+          x: _x,
+          y: _y,
+          z: _z
+        });
+      }
     }
   }
   return points;
@@ -1875,7 +1899,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
         }
       }, _callee);
     }));
-    return function (_x) {
+    return function (_x2) {
       return _ref3.apply(this, arguments);
     };
   }()).catch(function (error) {
@@ -1884,7 +1908,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
   });
 });
 function saveRecipeData(recipeName, recipeId) {
-  var _document$getElementB3, _document$getElementB4, _document$getElementB5, _document$getElementB6, _document$getElementB7, _document$getElementB8, _document$getElementB9, _document$getElementB10, _document$getElementB11, _document$getElementB12, _document$getElementB13, _document$getElementB14, _document$getElementB15, _document$getElementB16, _document$getElementB17, _document$getElementB18, _document$getElementB19, _document$getElementB20, _document$getElementB21, _document$getElementB22, _document$getElementB23, _document$getElementB24, _document$getElementB25, _document$getElementB26, _document$getElementB27, _document$getElementB28, _document$getElementB29, _document$getElementB30, _document$getElementB31, _document$getElementB32, _document$getElementB33, _document$getElementB34, _document$getElementB35;
+  var _document$getElementB4, _document$getElementB5, _document$getElementB6, _document$getElementB7, _document$getElementB8, _document$getElementB9, _document$getElementB10, _document$getElementB11, _document$getElementB12, _document$getElementB13, _document$getElementB14, _document$getElementB15, _document$getElementB16, _document$getElementB17, _document$getElementB18, _document$getElementB19, _document$getElementB20, _document$getElementB21, _document$getElementB22, _document$getElementB23, _document$getElementB24, _document$getElementB25, _document$getElementB26, _document$getElementB27, _document$getElementB28, _document$getElementB29, _document$getElementB30, _document$getElementB31, _document$getElementB32, _document$getElementB33, _document$getElementB34, _document$getElementB35, _document$getElementB36;
   // 获取数据清单表格中的数据
   var tableData = [];
   var table = document.querySelector('#data-list-content table');
@@ -1908,7 +1932,7 @@ function saveRecipeData(recipeName, recipeId) {
   var plotImg = document.getElementById('plot');
   var isManualPlanning = !plotImg || !plotImg.getAttribute('data-base64');
   if (isManualPlanning) {
-    var _document$getElementB, _document$getElementB2;
+    var _document$getElementB, _document$getElementB2, _document$getElementB3;
     // 手动规划配方：只保存基本数据和表格数据
     var _recipeData = {
       recipeName: recipeName,
@@ -1920,6 +1944,7 @@ function saveRecipeData(recipeName, recipeId) {
       manualPlanningInfo: {
         rowCount: ((_document$getElementB = document.getElementById('row_count')) === null || _document$getElementB === void 0 ? void 0 : _document$getElementB.value) || 0,
         colCount: ((_document$getElementB2 = document.getElementById('col_count')) === null || _document$getElementB2 === void 0 ? void 0 : _document$getElementB2.value) || 0,
+        calculationMethod: ((_document$getElementB3 = document.getElementById('calculation_method')) === null || _document$getElementB3 === void 0 ? void 0 : _document$getElementB3.value) || 'row_priority',
         referencePoints: window.referencePoints || {}
       }
     };
@@ -1954,39 +1979,39 @@ function saveRecipeData(recipeName, recipeId) {
   }
 
   // 智能规划配方：获取所有表单数据
-  var frameLength = ((_document$getElementB3 = document.getElementById('frame_length')) === null || _document$getElementB3 === void 0 ? void 0 : _document$getElementB3.value) || 0;
-  var frameWidth = ((_document$getElementB4 = document.getElementById('frame_width')) === null || _document$getElementB4 === void 0 ? void 0 : _document$getElementB4.value) || 0;
-  var frameDepth = ((_document$getElementB5 = document.getElementById('frame_depth')) === null || _document$getElementB5 === void 0 ? void 0 : _document$getElementB5.value) || 0;
-  var shapeHeight = ((_document$getElementB6 = document.getElementById('shape_height')) === null || _document$getElementB6 === void 0 ? void 0 : _document$getElementB6.value) || 0;
-  var materialThickness = ((_document$getElementB7 = document.getElementById('material_thickness')) === null || _document$getElementB7 === void 0 ? void 0 : _document$getElementB7.value) || 0;
-  var placementLayers = ((_document$getElementB8 = document.getElementById('placement_layers')) === null || _document$getElementB8 === void 0 ? void 0 : _document$getElementB8.value) || 1;
-  var toolCount = ((_document$getElementB9 = document.getElementById('tool_count')) === null || _document$getElementB9 === void 0 ? void 0 : _document$getElementB9.value) || 1;
-  var toolSpacing = ((_document$getElementB10 = document.getElementById('tool_spacing')) === null || _document$getElementB10 === void 0 ? void 0 : _document$getElementB10.value) || 0;
-  var toolLayout = ((_document$getElementB11 = document.getElementById('tool_layout')) === null || _document$getElementB11 === void 0 ? void 0 : _document$getElementB11.value) || 'single';
-  var autoTF = ((_document$getElementB12 = document.getElementById('auto_tf')) === null || _document$getElementB12 === void 0 ? void 0 : _document$getElementB12.value) || 1;
-  var leftRight = ((_document$getElementB13 = document.getElementById('left_right')) === null || _document$getElementB13 === void 0 ? void 0 : _document$getElementB13.value) || 1;
+  var frameLength = ((_document$getElementB4 = document.getElementById('frame_length')) === null || _document$getElementB4 === void 0 ? void 0 : _document$getElementB4.value) || 0;
+  var frameWidth = ((_document$getElementB5 = document.getElementById('frame_width')) === null || _document$getElementB5 === void 0 ? void 0 : _document$getElementB5.value) || 0;
+  var frameDepth = ((_document$getElementB6 = document.getElementById('frame_depth')) === null || _document$getElementB6 === void 0 ? void 0 : _document$getElementB6.value) || 0;
+  var shapeHeight = ((_document$getElementB7 = document.getElementById('shape_height')) === null || _document$getElementB7 === void 0 ? void 0 : _document$getElementB7.value) || 0;
+  var materialThickness = ((_document$getElementB8 = document.getElementById('material_thickness')) === null || _document$getElementB8 === void 0 ? void 0 : _document$getElementB8.value) || 0;
+  var placementLayers = ((_document$getElementB9 = document.getElementById('placement_layers')) === null || _document$getElementB9 === void 0 ? void 0 : _document$getElementB9.value) || 1;
+  var toolCount = ((_document$getElementB10 = document.getElementById('tool_count')) === null || _document$getElementB10 === void 0 ? void 0 : _document$getElementB10.value) || 1;
+  var toolSpacing = ((_document$getElementB11 = document.getElementById('tool_spacing')) === null || _document$getElementB11 === void 0 ? void 0 : _document$getElementB11.value) || 0;
+  var toolLayout = ((_document$getElementB12 = document.getElementById('tool_layout')) === null || _document$getElementB12 === void 0 ? void 0 : _document$getElementB12.value) || 'single';
+  var autoTF = ((_document$getElementB13 = document.getElementById('auto_tf')) === null || _document$getElementB13 === void 0 ? void 0 : _document$getElementB13.value) || 1;
+  var leftRight = ((_document$getElementB14 = document.getElementById('left_right')) === null || _document$getElementB14 === void 0 ? void 0 : _document$getElementB14.value) || 1;
 
   // 获取智能规划界面的所有参数
-  var shapeType = ((_document$getElementB14 = document.getElementById('shape_type')) === null || _document$getElementB14 === void 0 ? void 0 : _document$getElementB14.value) || 'circle';
-  var shapeLength = ((_document$getElementB15 = document.getElementById('shape_length')) === null || _document$getElementB15 === void 0 ? void 0 : _document$getElementB15.value) || 0;
-  var shapeWidth = ((_document$getElementB16 = document.getElementById('shape_width')) === null || _document$getElementB16 === void 0 ? void 0 : _document$getElementB16.value) || 0;
+  var shapeType = ((_document$getElementB15 = document.getElementById('shape_type')) === null || _document$getElementB15 === void 0 ? void 0 : _document$getElementB15.value) || 'circle';
+  var shapeLength = ((_document$getElementB16 = document.getElementById('shape_length')) === null || _document$getElementB16 === void 0 ? void 0 : _document$getElementB16.value) || 0;
+  var shapeWidth = ((_document$getElementB17 = document.getElementById('shape_width')) === null || _document$getElementB17 === void 0 ? void 0 : _document$getElementB17.value) || 0;
   var dropCount = document.getElementById('drop_Count').value || 0;
-  var horizontalSpacing = ((_document$getElementB17 = document.getElementById('horizontal_spacing')) === null || _document$getElementB17 === void 0 ? void 0 : _document$getElementB17.value) || 0;
-  var verticalSpacing = ((_document$getElementB18 = document.getElementById('vertical_spacing')) === null || _document$getElementB18 === void 0 ? void 0 : _document$getElementB18.value) || 0;
-  var horizontalBorderDistance = ((_document$getElementB19 = document.getElementById('horizontal_border_distance')) === null || _document$getElementB19 === void 0 ? void 0 : _document$getElementB19.value) || 0;
-  var verticalBorderDistance = ((_document$getElementB20 = document.getElementById('vertical_border_distance')) === null || _document$getElementB20 === void 0 ? void 0 : _document$getElementB20.value) || 0;
-  var layoutType = ((_document$getElementB21 = document.getElementById('layout_type')) === null || _document$getElementB21 === void 0 ? void 0 : _document$getElementB21.value) || 'array';
-  var placeType = ((_document$getElementB22 = document.getElementById('place_type')) === null || _document$getElementB22 === void 0 ? void 0 : _document$getElementB22.value) || 'row';
-  var remainderTurn = ((_document$getElementB23 = document.getElementById('remainder_turn')) === null || _document$getElementB23 === void 0 ? void 0 : _document$getElementB23.value) || 'off';
-  var polygonArrangement = ((_document$getElementB24 = document.getElementById('polygon_arrangement')) === null || _document$getElementB24 === void 0 ? void 0 : _document$getElementB24.value) || 'diagonal'; // 添加多边形排布方式参数
+  var horizontalSpacing = ((_document$getElementB18 = document.getElementById('horizontal_spacing')) === null || _document$getElementB18 === void 0 ? void 0 : _document$getElementB18.value) || 0;
+  var verticalSpacing = ((_document$getElementB19 = document.getElementById('vertical_spacing')) === null || _document$getElementB19 === void 0 ? void 0 : _document$getElementB19.value) || 0;
+  var horizontalBorderDistance = ((_document$getElementB20 = document.getElementById('horizontal_border_distance')) === null || _document$getElementB20 === void 0 ? void 0 : _document$getElementB20.value) || 0;
+  var verticalBorderDistance = ((_document$getElementB21 = document.getElementById('vertical_border_distance')) === null || _document$getElementB21 === void 0 ? void 0 : _document$getElementB21.value) || 0;
+  var layoutType = ((_document$getElementB22 = document.getElementById('layout_type')) === null || _document$getElementB22 === void 0 ? void 0 : _document$getElementB22.value) || 'array';
+  var placeType = ((_document$getElementB23 = document.getElementById('place_type')) === null || _document$getElementB23 === void 0 ? void 0 : _document$getElementB23.value) || 'row';
+  var remainderTurn = ((_document$getElementB24 = document.getElementById('remainder_turn')) === null || _document$getElementB24 === void 0 ? void 0 : _document$getElementB24.value) || 'off';
+  var polygonArrangement = ((_document$getElementB25 = document.getElementById('polygon_arrangement')) === null || _document$getElementB25 === void 0 ? void 0 : _document$getElementB25.value) || 'diagonal'; // 添加多边形排布方式参数
 
   // 获取预览结果图的Base64编码
   var plotImageBase64 = plotImg.getAttribute('data-base64'); // 使用存储的 Base64 数据
   console.log('Saving smart planning recipe with base64 data:', plotImageBase64.substring(0, 50) + '...');
 
   // 获取填充数量和单行/列数量
-  var shapeCountValue = ((_document$getElementB25 = document.getElementById('shape-count-value')) === null || _document$getElementB25 === void 0 ? void 0 : _document$getElementB25.textContent) || 0;
-  var shapesPerRowOrColValue = ((_document$getElementB26 = document.getElementById('shapes-per-row-or-col-value')) === null || _document$getElementB26 === void 0 ? void 0 : _document$getElementB26.textContent) || 0;
+  var shapeCountValue = ((_document$getElementB26 = document.getElementById('shape-count-value')) === null || _document$getElementB26 === void 0 ? void 0 : _document$getElementB26.textContent) || 0;
+  var shapesPerRowOrColValue = ((_document$getElementB27 = document.getElementById('shapes-per-row-or-col-value')) === null || _document$getElementB27 === void 0 ? void 0 : _document$getElementB27.textContent) || 0;
 
   // 将所有数据打包成一个对象
   var recipeData = {
@@ -2015,17 +2040,17 @@ function saveRecipeData(recipeName, recipeId) {
     // 使用Base64编码的图片数据
     shapeCountValue: shapeCountValue,
     shapesPerRowOrColValue: shapesPerRowOrColValue,
-    circleDiameter: ((_document$getElementB27 = document.getElementById('circle_diameter')) === null || _document$getElementB27 === void 0 ? void 0 : _document$getElementB27.value) || 0,
-    rectangleLength: ((_document$getElementB28 = document.getElementById('rectangle_length')) === null || _document$getElementB28 === void 0 ? void 0 : _document$getElementB28.value) || 0,
-    rectangleWidth: ((_document$getElementB29 = document.getElementById('rectangle_width')) === null || _document$getElementB29 === void 0 ? void 0 : _document$getElementB29.value) || 0,
-    polygonSides: ((_document$getElementB30 = document.getElementById('polygon_sides')) === null || _document$getElementB30 === void 0 ? void 0 : _document$getElementB30.value) || 0,
-    polygonSideLength: ((_document$getElementB31 = document.getElementById('polygon_side_length')) === null || _document$getElementB31 === void 0 ? void 0 : _document$getElementB31.value) || 0,
+    circleDiameter: ((_document$getElementB28 = document.getElementById('circle_diameter')) === null || _document$getElementB28 === void 0 ? void 0 : _document$getElementB28.value) || 0,
+    rectangleLength: ((_document$getElementB29 = document.getElementById('rectangle_length')) === null || _document$getElementB29 === void 0 ? void 0 : _document$getElementB29.value) || 0,
+    rectangleWidth: ((_document$getElementB30 = document.getElementById('rectangle_width')) === null || _document$getElementB30 === void 0 ? void 0 : _document$getElementB30.value) || 0,
+    polygonSides: ((_document$getElementB31 = document.getElementById('polygon_sides')) === null || _document$getElementB31 === void 0 ? void 0 : _document$getElementB31.value) || 0,
+    polygonSideLength: ((_document$getElementB32 = document.getElementById('polygon_side_length')) === null || _document$getElementB32 === void 0 ? void 0 : _document$getElementB32.value) || 0,
     polygonArrangement: polygonArrangement,
     // 添加多边形排布方式参数
-    triangleType: ((_document$getElementB32 = document.getElementById('triangle_type')) === null || _document$getElementB32 === void 0 ? void 0 : _document$getElementB32.value) || 'equilateral',
-    triangleSideLength: ((_document$getElementB33 = document.getElementById('triangle_side_length')) === null || _document$getElementB33 === void 0 ? void 0 : _document$getElementB33.value) || 0,
-    triangleBaseLength: ((_document$getElementB34 = document.getElementById('triangle_base_length')) === null || _document$getElementB34 === void 0 ? void 0 : _document$getElementB34.value) || 0,
-    triangleOrientation: ((_document$getElementB35 = document.getElementById('triangle_orientation')) === null || _document$getElementB35 === void 0 ? void 0 : _document$getElementB35.value) || 'up',
+    triangleType: ((_document$getElementB33 = document.getElementById('triangle_type')) === null || _document$getElementB33 === void 0 ? void 0 : _document$getElementB33.value) || 'equilateral',
+    triangleSideLength: ((_document$getElementB34 = document.getElementById('triangle_side_length')) === null || _document$getElementB34 === void 0 ? void 0 : _document$getElementB34.value) || 0,
+    triangleBaseLength: ((_document$getElementB35 = document.getElementById('triangle_base_length')) === null || _document$getElementB35 === void 0 ? void 0 : _document$getElementB35.value) || 0,
+    triangleOrientation: ((_document$getElementB36 = document.getElementById('triangle_orientation')) === null || _document$getElementB36 === void 0 ? void 0 : _document$getElementB36.value) || 'up',
     isManualPlanning: false // 标记为智能规划配方
   };
 
@@ -2372,7 +2397,7 @@ function showManualPlanningPreview(data) {
     }
 
     // 更新手动规划预览内容
-    manualPreviewElement.innerHTML = "\n            <h3>\u624B\u52A8\u89C4\u5212\u914D\u65B9\u4FE1\u606F</h3>\n            <div class=\"manual-planning-info\">\n                <p><strong>\u914D\u65B9\u540D\u79F0:</strong> ".concat(data.recipeName, "</p>\n                <p><strong>\u914D\u65B9\u7F16\u53F7:</strong> ").concat(data.recipeId, "</p>\n                <p><strong>\u70B9\u4F4D\u603B\u6570:</strong> ").concat(data.tableData ? data.tableData.length : 0, "</p>\n                ").concat(data.manualPlanningInfo ? "\n                    <p><strong>\u884C\u6570:</strong> ".concat(data.manualPlanningInfo.rowCount, "</p>\n                    <p><strong>\u5217\u6570:</strong> ").concat(data.manualPlanningInfo.colCount, "</p>\n                ") : '', "\n            </div>\n        ");
+    manualPreviewElement.innerHTML = "\n            <h3>\u624B\u52A8\u89C4\u5212\u914D\u65B9\u4FE1\u606F</h3>\n            <div class=\"manual-planning-info\">\n                <p><strong>\u914D\u65B9\u540D\u79F0:</strong> ".concat(data.recipeName, "</p>\n                <p><strong>\u914D\u65B9\u7F16\u53F7:</strong> ").concat(data.recipeId, "</p>\n                <p><strong>\u70B9\u4F4D\u603B\u6570:</strong> ").concat(data.tableData ? data.tableData.length : 0, "</p>\n                ").concat(data.manualPlanningInfo ? "\n                    <p><strong>\u884C\u6570:</strong> ".concat(data.manualPlanningInfo.rowCount, "</p>\n                    <p><strong>\u5217\u6570:</strong> ").concat(data.manualPlanningInfo.colCount, "</p>\n                    <p><strong>\u8BA1\u7B97\u65B9\u5F0F:</strong> ").concat(data.manualPlanningInfo.calculationMethod === 'row_priority' ? '行优先' : '列优先', "</p>\n                ") : '', "\n            </div>\n        ");
 
     // 显示手动规划预览
     manualPreviewElement.style.display = 'block';
@@ -2507,7 +2532,7 @@ function fillDataListTableFromRecipe(tableData) {
 }
 
 // 删除配方
-function deleteRecipe(_x2) {
+function deleteRecipe(_x3) {
   return _deleteRecipe.apply(this, arguments);
 } // 读取配方到智能规划页面
 function _deleteRecipe() {
@@ -2577,13 +2602,17 @@ function loadRecipeToPlanning(recipeName) {
       document.getElementById('recipe_name').value = recipeName;
       document.getElementById('recipe_id').value = data.recipeId;
 
-      // 填充手动规划的行数和列数到输入框中，确保写入R寄存器时能正确获取
+      // 填充手动规划的行数、列数和计算方式到输入框中，确保写入R寄存器时能正确获取
       if (data.manualPlanningInfo) {
         var rowCountInput = document.getElementById('row_count');
         var colCountInput = document.getElementById('col_count');
+        var calculationMethodInput = document.getElementById('calculation_method');
         if (rowCountInput && colCountInput) {
           rowCountInput.value = data.manualPlanningInfo.rowCount || '';
           colCountInput.value = data.manualPlanningInfo.colCount || '';
+        }
+        if (calculationMethodInput) {
+          calculationMethodInput.value = data.manualPlanningInfo.calculationMethod || 'row_priority';
         }
       }
 
@@ -3062,7 +3091,7 @@ function updateImportSelectAllState() {
 }
 
 // 确认导入配方
-function confirmImportRecipes(_x3) {
+function confirmImportRecipes(_x4) {
   return _confirmImportRecipes.apply(this, arguments);
 } // 执行导入操作
 function _confirmImportRecipes() {
@@ -3097,7 +3126,7 @@ function _confirmImportRecipes() {
   }));
   return _confirmImportRecipes.apply(this, arguments);
 }
-function executeImport(_x4, _x5) {
+function executeImport(_x5, _x6) {
   return _executeImport.apply(this, arguments);
 } // 检查导入冲突
 function _executeImport() {
@@ -3229,7 +3258,7 @@ function _executeImport() {
   }));
   return _executeImport.apply(this, arguments);
 }
-function checkImportConflicts(_x6, _x7) {
+function checkImportConflicts(_x7, _x8) {
   return _checkImportConflicts.apply(this, arguments);
 } // 显示配方号重新分配确认对话框
 function _checkImportConflicts() {
@@ -3286,7 +3315,7 @@ function _checkImportConflicts() {
   }));
   return _checkImportConflicts.apply(this, arguments);
 }
-function showIdReassignmentDialog(_x8) {
+function showIdReassignmentDialog(_x9) {
   return _showIdReassignmentDialog.apply(this, arguments);
 } // 逐个解决重名冲突
 function _showIdReassignmentDialog() {
@@ -3316,7 +3345,7 @@ function _showIdReassignmentDialog() {
   }));
   return _showIdReassignmentDialog.apply(this, arguments);
 }
-function resolveNameConflictsOneByOne(_x9) {
+function resolveNameConflictsOneByOne(_x10) {
   return _resolveNameConflictsOneByOne.apply(this, arguments);
 } // 显示单个重名冲突确认对话框
 function _resolveNameConflictsOneByOne() {
@@ -3393,7 +3422,7 @@ function _resolveNameConflictsOneByOne() {
   }));
   return _resolveNameConflictsOneByOne.apply(this, arguments);
 }
-function showSingleNameConflictDialog(_x10, _x11, _x12) {
+function showSingleNameConflictDialog(_x11, _x12, _x13) {
   return _showSingleNameConflictDialog.apply(this, arguments);
 } // 生成单个重名冲突信息HTML
 function _showSingleNameConflictDialog() {
@@ -3437,7 +3466,7 @@ function generateIdReassignmentList(idReassignments) {
 }
 
 // 显示配方名冲突对话框（用于保存配方时）
-function showNameConflictDialog(_x13) {
+function showNameConflictDialog(_x14) {
   return _showNameConflictDialog.apply(this, arguments);
 } // 显示ID冲突对话框（用于保存配方时）
 function _showNameConflictDialog() {
@@ -3492,7 +3521,7 @@ function _showNameConflictDialog() {
   }));
   return _showNameConflictDialog.apply(this, arguments);
 }
-function showIdConflictDialog(_x14) {
+function showIdConflictDialog(_x15) {
   return _showIdConflictDialog.apply(this, arguments);
 } // 关闭导入对话框
 function _showIdConflictDialog() {

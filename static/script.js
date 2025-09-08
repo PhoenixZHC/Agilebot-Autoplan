@@ -1652,8 +1652,11 @@ document.getElementById('calculate_points').addEventListener('click', function (
     document.getElementById('calculation-status').style.display = 'block';
     document.getElementById('status-text').textContent = '正在计算所有点位...';
 
+    // 获取计算方式选择
+    const calculationMethod = document.getElementById('calculation_method').value;
+    
     // 计算所有点的坐标（使用当前输入框中的最新值）
-    const allPoints = calculateAllPoints(pr1, pr2, pr3, currentRowCount, currentColCount);
+    const allPoints = calculateAllPoints(pr1, pr2, pr3, currentRowCount, currentColCount, calculationMethod);
     
     // 读取Z&C参考寄存器对应的PR寄存器的C值
     const prRegisterId = parseInt(document.getElementById('pr_register_id').value, 10);
@@ -1711,27 +1714,50 @@ function readPRRegister(prId) {
 }
 
 // 计算所有点位的函数
-function calculateAllPoints(pr1, pr2, pr3, rowCount, colCount) {
+// 注意：rowCount实际代表列数（X方向），colCount实际代表行数（Y方向）
+function calculateAllPoints(pr1, pr2, pr3, rowCount, colCount, calculationMethod = 'row_priority') {
     const points = [];
     
     // 计算行间距和列间距
-    const rowSpacing = (pr2.y - pr1.y) / (rowCount - 1);
-    const colSpacing = (pr3.x - pr1.x) / (colCount - 1);
+    // rowCount是列数，所以用colSpacing计算X方向间距
+    // colCount是行数，所以用rowSpacing计算Y方向间距
+    const rowSpacing = (pr2.y - pr1.y) / (colCount - 1);  // Y方向间距，使用行数
+    const colSpacing = (pr3.x - pr1.x) / (rowCount - 1);  // X方向间距，使用列数
     
-    // 生成所有点的坐标
-    for (let row = 1; row <= rowCount; row++) {
-        for (let col = 1; col <= colCount; col++) {
-            const x = pr1.x + (col - 1) * colSpacing;
-            const y = pr1.y + (row - 1) * rowSpacing;
-            const z = pr1.z; // Z值保持与PR1相同
-            
-            points.push({
-                row: row,
-                col: col,
-                x: x,
-                y: y,
-                z: z
-            });
+    // 根据计算方式生成不同顺序的点位
+    if (calculationMethod === 'row_priority') {
+        // 行优先：先按行遍历，再按列遍历
+        for (let row = 1; row <= colCount; row++) {  // 行数使用colCount
+            for (let col = 1; col <= rowCount; col++) {  // 列数使用rowCount
+                const x = pr1.x + (col - 1) * colSpacing;
+                const y = pr1.y + (row - 1) * rowSpacing;
+                const z = pr1.z; // Z值保持与PR1相同
+                
+                points.push({
+                    row: row,
+                    col: col,
+                    x: x,
+                    y: y,
+                    z: z
+                });
+            }
+        }
+    } else if (calculationMethod === 'col_priority') {
+        // 列优先：先按列遍历，再按行遍历
+        for (let col = 1; col <= rowCount; col++) {  // 列数使用rowCount
+            for (let row = 1; row <= colCount; row++) {  // 行数使用colCount
+                const x = pr1.x + (col - 1) * colSpacing;
+                const y = pr1.y + (row - 1) * rowSpacing;
+                const z = pr1.z; // Z值保持与PR1相同
+                
+                points.push({
+                    row: row,
+                    col: col,
+                    x: x,
+                    y: y,
+                    z: z
+                });
+            }
         }
     }
     
@@ -1968,6 +1994,7 @@ function saveRecipeData(recipeName, recipeId) {
             manualPlanningInfo: {
                 rowCount: document.getElementById('row_count')?.value || 0,
                 colCount: document.getElementById('col_count')?.value || 0,
+                calculationMethod: document.getElementById('calculation_method')?.value || 'row_priority',
                 referencePoints: window.referencePoints || {}
             }
         };
@@ -2429,6 +2456,7 @@ function showManualPlanningPreview(data) {
                 ${data.manualPlanningInfo ? `
                     <p><strong>行数:</strong> ${data.manualPlanningInfo.rowCount}</p>
                     <p><strong>列数:</strong> ${data.manualPlanningInfo.colCount}</p>
+                    <p><strong>计算方式:</strong> ${data.manualPlanningInfo.calculationMethod === 'row_priority' ? '行优先' : '列优先'}</p>
                 ` : ''}
             </div>
         `;
@@ -2626,13 +2654,17 @@ function loadRecipeToPlanning(recipeName) {
             document.getElementById('recipe_name').value = recipeName;
             document.getElementById('recipe_id').value = data.recipeId;
             
-            // 填充手动规划的行数和列数到输入框中，确保写入R寄存器时能正确获取
+            // 填充手动规划的行数、列数和计算方式到输入框中，确保写入R寄存器时能正确获取
             if (data.manualPlanningInfo) {
                 const rowCountInput = document.getElementById('row_count');
                 const colCountInput = document.getElementById('col_count');
+                const calculationMethodInput = document.getElementById('calculation_method');
                 if (rowCountInput && colCountInput) {
                     rowCountInput.value = data.manualPlanningInfo.rowCount || '';
                     colCountInput.value = data.manualPlanningInfo.colCount || '';
+                }
+                if (calculationMethodInput) {
+                    calculationMethodInput.value = data.manualPlanningInfo.calculationMethod || 'row_priority';
                 }
             }
             
