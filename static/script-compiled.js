@@ -1232,8 +1232,8 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     var rowCountInput = document.getElementById('row_count');
     var colCountInput = document.getElementById('col_count');
     if (rowCountInput && colCountInput) {
-      rowCount = parseInt(rowCountInput.value) || 0;
-      colCount = parseInt(colCountInput.value) || 0;
+      rowCount = parseInt(rowCountInput.value) || 0; // 行数
+      colCount = parseInt(colCountInput.value) || 0; // 列数
     }
 
     // 发送请求到后端写入R寄存器（手动规划模式）
@@ -1652,19 +1652,24 @@ function readPRRegister(prId) {
 }
 
 // 计算所有点位的函数
+// rowCount代表行数（Y方向），colCount代表列数（X方向）
 function calculateAllPoints(pr1, pr2, pr3, rowCount, colCount) {
   var calculationMethod = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : 'row_priority';
   var points = [];
 
   // 计算行间距和列间距
-  var rowSpacing = (pr2.y - pr1.y) / (rowCount - 1);
-  var colSpacing = (pr3.x - pr1.x) / (colCount - 1);
+  // rowCount是行数，所以用rowSpacing计算Y方向间距
+  // colCount是列数，所以用colSpacing计算X方向间距
+  var rowSpacing = (pr2.y - pr1.y) / (rowCount - 1); // Y方向间距，使用行数
+  var colSpacing = (pr3.x - pr1.x) / (colCount - 1); // X方向间距，使用列数
 
   // 根据计算方式生成不同顺序的点位
   if (calculationMethod === 'row_priority') {
     // 行优先：先按行遍历，再按列遍历
     for (var row = 1; row <= rowCount; row++) {
+      // 行数使用rowCount
       for (var col = 1; col <= colCount; col++) {
+        // 列数使用colCount
         var x = pr1.x + (col - 1) * colSpacing;
         var y = pr1.y + (row - 1) * rowSpacing;
         var z = pr1.z; // Z值保持与PR1相同
@@ -1681,7 +1686,9 @@ function calculateAllPoints(pr1, pr2, pr3, rowCount, colCount) {
   } else if (calculationMethod === 'col_priority') {
     // 列优先：先按列遍历，再按行遍历
     for (var _col = 1; _col <= colCount; _col++) {
+      // 列数使用colCount
       for (var _row = 1; _row <= rowCount; _row++) {
+        // 行数使用rowCount
         var _x = pr1.x + (_col - 1) * colSpacing;
         var _y = pr1.y + (_row - 1) * rowSpacing;
         var _z = pr1.z; // Z值保持与PR1相同

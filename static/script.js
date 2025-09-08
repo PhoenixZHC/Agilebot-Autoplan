@@ -1287,8 +1287,8 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         const rowCountInput = document.getElementById('row_count');
         const colCountInput = document.getElementById('col_count');
         if (rowCountInput && colCountInput) {
-            rowCount = parseInt(rowCountInput.value) || 0;
-            colCount = parseInt(colCountInput.value) || 0;
+            rowCount = parseInt(rowCountInput.value) || 0;  // 行数
+            colCount = parseInt(colCountInput.value) || 0;  // 列数
         }
         
         // 发送请求到后端写入R寄存器（手动规划模式）
@@ -1714,21 +1714,21 @@ function readPRRegister(prId) {
 }
 
 // 计算所有点位的函数
-// 注意：rowCount实际代表列数（X方向），colCount实际代表行数（Y方向）
+// rowCount代表行数（Y方向），colCount代表列数（X方向）
 function calculateAllPoints(pr1, pr2, pr3, rowCount, colCount, calculationMethod = 'row_priority') {
     const points = [];
     
     // 计算行间距和列间距
-    // rowCount是列数，所以用colSpacing计算X方向间距
-    // colCount是行数，所以用rowSpacing计算Y方向间距
-    const rowSpacing = (pr2.y - pr1.y) / (colCount - 1);  // Y方向间距，使用行数
-    const colSpacing = (pr3.x - pr1.x) / (rowCount - 1);  // X方向间距，使用列数
+    // rowCount是行数，所以用rowSpacing计算Y方向间距
+    // colCount是列数，所以用colSpacing计算X方向间距
+    const rowSpacing = (pr2.y - pr1.y) / (rowCount - 1);  // Y方向间距，使用行数
+    const colSpacing = (pr3.x - pr1.x) / (colCount - 1);  // X方向间距，使用列数
     
     // 根据计算方式生成不同顺序的点位
     if (calculationMethod === 'row_priority') {
         // 行优先：先按行遍历，再按列遍历
-        for (let row = 1; row <= colCount; row++) {  // 行数使用colCount
-            for (let col = 1; col <= rowCount; col++) {  // 列数使用rowCount
+        for (let row = 1; row <= rowCount; row++) {  // 行数使用rowCount
+            for (let col = 1; col <= colCount; col++) {  // 列数使用colCount
                 const x = pr1.x + (col - 1) * colSpacing;
                 const y = pr1.y + (row - 1) * rowSpacing;
                 const z = pr1.z; // Z值保持与PR1相同
@@ -1744,8 +1744,8 @@ function calculateAllPoints(pr1, pr2, pr3, rowCount, colCount, calculationMethod
         }
     } else if (calculationMethod === 'col_priority') {
         // 列优先：先按列遍历，再按行遍历
-        for (let col = 1; col <= rowCount; col++) {  // 列数使用rowCount
-            for (let row = 1; row <= colCount; row++) {  // 行数使用colCount
+        for (let col = 1; col <= colCount; col++) {  // 列数使用colCount
+            for (let row = 1; row <= rowCount; row++) {  // 行数使用rowCount
                 const x = pr1.x + (col - 1) * colSpacing;
                 const y = pr1.y + (row - 1) * rowSpacing;
                 const z = pr1.z; // Z值保持与PR1相同
