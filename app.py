@@ -984,18 +984,30 @@ async def write_r_registers(request: Request):
 
     try:
         if recipe_type == 'manual':
-            # 手动规划配方：只写入三个基本参数
+            # 手动规划配方：写入基本参数
             total_points = data.get('total_points')
             row_count = data.get('row_count')
             col_count = data.get('col_count')
+            tool_count = data.get('tool_count')
+            single_row_or_col_count = data.get('single_row_or_col_count')
 
-            if total_points is None or row_count is None or col_count is None:
+            if total_points is None or row_count is None or col_count is None or tool_count is None or single_row_or_col_count is None:
                 return JSONResponse({'error': '手动规划配方缺少必要参数'}, 400)
 
             # 写入R4寄存器（点位总数）
             ret = robot_arm.register.write_R(4, int(total_points))
             if ret != StatusCodeEnum.OK:
                 return JSONResponse({'error': '写入R4寄存器失败'}, 400)
+
+            # 写入R5寄存器（工具数量）
+            ret = robot_arm.register.write_R(5, int(tool_count))
+            if ret != StatusCodeEnum.OK:
+                return JSONResponse({'error': '写入R5寄存器失败'}, 400)
+
+            # 写入R10寄存器（单行列数量）
+            ret = robot_arm.register.write_R(10, int(single_row_or_col_count))
+            if ret != StatusCodeEnum.OK:
+                return JSONResponse({'error': '写入R10寄存器失败'}, 400)
 
             # 写入R11寄存器（行数）
             ret = robot_arm.register.write_R(11, int(row_count))

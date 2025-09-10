@@ -835,6 +835,10 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
       row.appendChild(cell9);
       tableBody.appendChild(row);
     });
+
+    // 跳转到数据清单页面
+    showSection('data-list-content');
+    setActiveButton('data-list-btn');
   }).catch(function (error) {
     alertError(error.message);
   });
@@ -1227,14 +1231,27 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     // 从手动规划信息中获取行数和列数
     var rowCount = 0;
     var colCount = 0;
+    var calculationMethod = 'row_priority';
 
     // 尝试从手动规划输入框获取行数和列数
     var rowCountInput = document.getElementById('row_count');
     var colCountInput = document.getElementById('col_count');
+    var calculationMethodInput = document.getElementById('calculation_method');
     if (rowCountInput && colCountInput) {
       rowCount = parseInt(rowCountInput.value) || 0; // 行数
       colCount = parseInt(colCountInput.value) || 0; // 列数
     }
+    if (calculationMethodInput) {
+      calculationMethod = calculationMethodInput.value || 'row_priority';
+    }
+
+    // 获取工具数量（从机器人设置页面）
+    var _toolCount = document.getElementById('tool_count').value || 1;
+
+    // 计算单行列数量
+    // 行优先：单行列数量 = 列数
+    // 列优先：单行列数量 = 行数
+    var singleRowOrColCount = calculationMethod === 'row_priority' ? colCount : rowCount;
 
     // 发送请求到后端写入R寄存器（手动规划模式）
     fetch('/write_r_registers', {
@@ -1248,7 +1265,11 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         // R4寄存器：点位总数
         row_count: rowCount,
         // R11寄存器：行数
-        col_count: colCount // R12寄存器：列数
+        col_count: colCount,
+        // R12寄存器：列数
+        tool_count: _toolCount,
+        // R5寄存器：工具数量
+        single_row_or_col_count: singleRowOrColCount // R10寄存器：单行列数量
       })
     }).then(function (response) {
       if (!response.ok) {

@@ -483,6 +483,8 @@ input[type="number"] {
     border: 1px solid #ddd;
     border-radius: 5px;
     overflow: hidden;
+    justify-content: center;
+    align-items: flex-start;
 }
 
 .planning-content .preview-image-container img {
