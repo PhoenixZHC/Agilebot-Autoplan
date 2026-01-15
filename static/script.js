@@ -211,13 +211,13 @@ function startExternalCallMonitor() {
     const finishSignal = document.getElementById('finish-signal').value;
 
     if (!recipeNumber || !callSignal || !finishSignal) {
-        alertError('请先输入配方号MH、调用信号DI和完成信号DO');
+        alertError(t('error_input_required'));
         return;
     }
 
     isMonitoring = true;
     console.log('开始外部调用监控...');
-    updateStatusDisplay(`监控状态: 正在监控 DI${callSignal} 信号，等待触发...`, 'monitoring');
+    updateStatusDisplay(t('monitoring_status_monitoring', { signal: callSignal }), 'monitoring');
 
     // 每0.3秒检查一次DI信号
     externalCallInterval = setInterval(() => {
@@ -234,7 +234,7 @@ function stopExternalCallMonitor() {
     isMonitoring = false;
     isAutoWriting = false; // 重置写入状态
     console.log('停止外部调用监控');
-    updateStatusDisplay('监控状态: 已停止');
+    updateStatusDisplay(t('monitoring_status_stopped_text'));
 }
 
 // 检查外部调用
@@ -246,7 +246,7 @@ function checkExternalCall() {
     // 如果正在自动写入，则跳过此次检查
     if (isAutoWriting) {
         console.log('正在自动写入中，跳过此次配方调用检查');
-        updateStatusDisplay('正在自动写入中，暂停接收新的配方调用...', 'processing');
+        updateStatusDisplay(t('monitoring_status_processing'), 'processing');
         return;
     }
 
@@ -265,7 +265,7 @@ function checkExternalCall() {
     .then(data => {
         if (data.error) {
             console.error('外部调用监控错误:', data.error);
-            updateStatusDisplay(`监控错误: ${data.error}`, 'error');
+            updateStatusDisplay(t('error_monitoring_failed', { error: data.error }), 'error');
             stopExternalCallMonitor();
             return;
         }
@@ -292,7 +292,7 @@ function checkExternalCall() {
 
             // DI信号为1，读取到MH值，加载对应配方
             console.log(`检测到触发信号，MH${recipeNumber} 寄存器值: ${data.mh_value}`);
-            updateStatusDisplay(`检测到触发信号，MH值: ${data.mh_value}，正在加载配方...`, 'triggered');
+            updateStatusDisplay(t('monitoring_status_triggered', { mh: data.mh_value }), 'triggered');
 
             // 加载配方但不停止监控
             loadRecipeByMHValue(data.mh_value);
@@ -300,14 +300,14 @@ function checkExternalCall() {
             // 延迟一下再继续监控，避免重复触发
             setTimeout(() => {
                 if (isMonitoring) {
-                    updateStatusDisplay(`监控状态: 正在监控 DI${callSignal} 信号，等待下一次触发...`, 'monitoring');
+                    updateStatusDisplay(t('monitoring_status_monitoring', { signal: callSignal }), 'monitoring');
                 }
             }, 2000); // 2秒后恢复监控状态显示
         }
     })
     .catch(error => {
         console.error('外部调用监控请求失败:', error);
-        updateStatusDisplay(`监控请求失败: ${error.message}`, 'error');
+        updateStatusDisplay(t('error_monitoring_failed', { error: error.message }), 'error');
         stopExternalCallMonitor();
     });
 }
@@ -359,19 +359,19 @@ function loadRecipeByMHValue(mhValue) {
                 console.log('执行手动模式，加载配方到数据清单页面');
                 window.isFromExternalCall = true; // 设置标志位
                 loadRecipeToPlanning(targetRecipe.recipeName);
-                updateStatusDisplay(`配方加载成功: ${targetRecipe.recipeName}`, 'success');
-                alertSuccess(`检测到配方调用，配方: ${targetRecipe.recipeName}`);
+                updateStatusDisplay(t('success_recipe_loaded') + targetRecipe.recipeName, 'success');
+                alertSuccess(t('success_recipe_loaded') + targetRecipe.recipeName);
             }
         } else {
             console.log('未找到配方编号为', mhValue, '的配方');
             console.log('可用的配方编号:', data.recipes.map(r => r.recipeId));
-            updateStatusDisplay(`未找到配方编号为 ${mhValue} 的配方`, 'error');
-            alertError(`未找到配方编号为 ${mhValue} 的配方`);
+            updateStatusDisplay(t('error_load_recipe_failed', { error: mhValue }), 'error');
+            alertError(t('error_load_recipe_failed', { error: mhValue }));
         }
     })
     .catch(error => {
         console.error('根据MH值加载配方失败:', error);
-        updateStatusDisplay(`加载配方失败: ${error.message}`, 'error');
+        updateStatusDisplay(t('error_load_recipe_failed', { error: error.message }), 'error');
     });
 }
 
@@ -415,8 +415,8 @@ function performAutoWrite(recipeName) {
         .then(data => {
             if (data.error) {
                 console.error('检查机器人状态失败:', data.error);
-                updateStatusDisplay(`机器人状态检查失败: ${data.error}`, 'error');
-                alertError(`机器人状态检查失败: ${data.error}`);
+                updateStatusDisplay(t('error_robot_status_check_failed') + data.error, 'error');
+                alertError(t('error_robot_status_check_failed') + data.error);
                 isAutoWriting = false; // 重置写入状态
                 throw new Error(data.error);
             }
@@ -444,8 +444,8 @@ function performAutoWrite(recipeName) {
         .then(data => {
             if (data.error) {
                 console.error('检查运行程序失败:', data.error);
-                updateStatusDisplay(`检查运行程序失败: ${data.error}`, 'error');
-                alertError(`检查运行程序失败: ${data.error}`);
+                updateStatusDisplay(t('error_check_running_program_failed') + data.error, 'error');
+                alertError(t('error_check_running_program_failed') + data.error);
                 isAutoWriting = false; // 重置写入状态
                 throw new Error(data.error);
             }
@@ -511,8 +511,8 @@ function performAutoWrite(recipeName) {
         })
         .then((message) => {
             console.log('自动写入完成:', message);
-            updateStatusDisplay(`配方 ${recipeName} 自动写入完成`, 'success');
-            alertSuccess(`配方 ${recipeName} 自动写入成功！`);
+            updateStatusDisplay(t('monitoring_status_auto_write_complete'), 'success');
+            alertSuccess(t('success_recipe_auto_write', { name: recipeName }));
             isAutoWriting = false; // 重置写入状态
 
             // 自动写入完成后，触发DO信号
@@ -520,8 +520,8 @@ function performAutoWrite(recipeName) {
         })
         .catch(error => {
             console.error('自动写入过程出错:', error);
-            updateStatusDisplay(`自动写入失败: ${error.message}`, 'error');
-            alertError(`自动写入失败: ${error.message}`);
+            updateStatusDisplay(t('monitoring_status_auto_write_failed') + error.message, 'error');
+            alertError(t('error_auto_write_failed') + error.message);
             isAutoWriting = false; // 重置写入状态
         });
     }, 1000); // 等待1秒，确保页面加载完成
@@ -557,6 +557,12 @@ function showSection(sectionId) {
 
     // 显示选中的内容区域
     document.getElementById(sectionId).style.display = 'block';
+    
+    // 重新应用当前语言,确保新显示的内容区域中的元素文字正确
+    if (typeof getCurrentLanguage === 'function' && typeof applyLanguage === 'function') {
+        const currentLang = getCurrentLanguage();
+        applyLanguage(currentLang);
+    }
     
     // 如果切换到配方库，重置预览状态
     if (sectionId === 'recipe-library-content') {
@@ -946,7 +952,7 @@ function fetchWithTimeout(url, options, timeout = 5000) {
 document.getElementById('robot_connect_button').addEventListener('click', function () {
     const robotIp = document.getElementById('robot_ip').value;
     const connectButton = document.getElementById('robot_connect_button');
-    const isConnected = connectButton.textContent === '断开连接';
+    const isConnected = connectButton.textContent === t('disconnect') || connectButton.textContent === '断开连接';
 
     if (isConnected) {
         // 如果当前是"断开连接"状态，则发送断开连接请求
@@ -966,15 +972,23 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
         })
         .then(data => {
             // 更新按钮状态和显示
-            connectButton.textContent = '连接';
+            connectButton.setAttribute('data-i18n', 'connect');
+            connectButton.textContent = t('connect');
             document.getElementById('robot_status').style.display = 'none';
             document.getElementById('program_input').style.display = 'none'; // 隐藏程序输入框
             document.getElementById('p_data_table_container').style.display = 'none'; // 隐藏P点数据表格
             console.log('机器人已断开连接');
+            
+            // 确保按钮文本正确显示
+            if (window.applyLanguage && window.getCurrentLanguage) {
+                setTimeout(() => {
+                    window.applyLanguage(window.getCurrentLanguage());
+                }, 10);
+            }
         })
         .catch(error => {
             console.error('断开连接失败:', error.message);
-            alertError('断开连接失败: ' + error.message);
+            alertError(t('error_disconnect_failed') + error.message);
         });
     } else {
         // 如果当前是"连接"状态，则发送连接请求
@@ -994,8 +1008,8 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
         }, 5000) // 设置超时时间为 5 秒
         .then(response => {
             if (!response.ok) {
-                // 连接失败时，重置按钮状态
-                connectButton.textContent = '连接';
+            // 连接失败时，重置按钮状态
+            connectButton.textContent = t('connect');
                 return response.json().then(err => {
                     throw new Error(err.error || '连接失败');
                 });
@@ -1004,7 +1018,8 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
         })
         .then(data => {
             // 更新按钮状态和显示
-            connectButton.textContent = '断开连接';
+            connectButton.setAttribute('data-i18n', 'disconnect');
+            connectButton.textContent = t('disconnect');
             const robotStatus = document.getElementById('robot_status');
             const robotIpDisplay = document.getElementById('robot_ip_display');
             const robotModel = document.getElementById('robot_model');
@@ -1017,17 +1032,33 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
             document.getElementById('program_input').style.display = 'block'; // 显示程序输入框
 
             console.log('机器人连接成功');
+            
+            // 确保按钮文本正确显示
+            if (window.applyLanguage && window.getCurrentLanguage) {
+                setTimeout(() => {
+                    window.applyLanguage(window.getCurrentLanguage());
+                }, 10);
+            }
         })
         .catch(error => {
             console.error('连接失败:', error.message);
-            // 根据错误类型显示不同的提示
-            if (error.message === '请求超时') {
-                alertError('请求超时: 请检查网络连接或稍后重试');
-            } else {
-                alertError('连接失败: ' + error.message);
+            // 连接失败时，先重置按钮状态
+            connectButton.setAttribute('data-i18n', 'connect');
+            connectButton.textContent = t('connect');
+            
+            // 确保按钮文本正确显示
+            if (window.applyLanguage && window.getCurrentLanguage) {
+                setTimeout(() => {
+                    window.applyLanguage(window.getCurrentLanguage());
+                }, 10);
             }
-            // 连接失败时，重置按钮状态
-            connectButton.textContent = '连接';
+            
+            // 然后根据错误类型显示不同的提示
+            if (error.message === '请求超时' || error.message.includes('timeout')) {
+                alertError(t('error_timeout'));
+            } else {
+                alertError(t('error_connect_failed') + error.message);
+            }
         });
     }
 });
@@ -1066,6 +1097,9 @@ document.getElementById('read_p_data_button').addEventListener('click', function
         const tableBody = document.querySelector('#p_data_table tbody');
         tableBody.innerHTML = ''; // 清空之前的表格数据
 
+        // 存储原始数据以便语言切换时使用
+        tableBody._pDataTableData = data.poses;
+        
         // 填充表格数据
         data.poses.forEach((pose, index) => {
             const row = document.createElement('tr');
@@ -1122,7 +1156,38 @@ document.getElementById('read_p_data_button').addEventListener('click', function
             // 坐标系方向值
             const cell8 = document.createElement('td');
             const leftRightValue = pose.poseData.cartData.baseCart.posture.arm_left_right;
-            cell8.textContent = leftRightValue === 1 ? '右手' : '左手';  // 将1和-1转换为文本描述
+            // 存储原始值到data属性，方便语言切换时更新
+            cell8.setAttribute('data-left-right-value', leftRightValue);
+            
+            // 获取当前语言并使用对应的翻译
+            // 注意：arm_left_right 的值为 1 表示右手坐标系，0 或其他值表示左手坐标系
+            const currentLang = getCurrentLanguage();
+            let leftRightText;
+            if (leftRightValue === 1) {
+                // 右手坐标系
+                if (currentLang === 'zh') {
+                    leftRightText = '右手坐标系';
+                } else if (currentLang === 'en') {
+                    leftRightText = 'Right-Handed';
+                } else if (currentLang === 'vi') {
+                    leftRightText = 'Hệ Tọa Độ Tay Phải';
+                } else {
+                    leftRightText = '右手坐标系'; // 默认中文
+                }
+            } else {
+                // 左手坐标系
+                if (currentLang === 'zh') {
+                    leftRightText = '左手坐标系';
+                } else if (currentLang === 'en') {
+                    leftRightText = 'Left-Handed';
+                } else if (currentLang === 'vi') {
+                    leftRightText = 'Hệ Tọa Độ Tay Trái';
+                } else {
+                    leftRightText = '左手坐标系'; // 默认中文
+                }
+            }
+            
+            cell8.textContent = leftRightText;
             cell8.style.border = '1px solid #ddd';
             cell8.style.padding = '8px';
             row.appendChild(cell8);
@@ -2219,7 +2284,14 @@ function loadRecipeList(keyword = '') {
                 .then(recipeData => {
                     // 检查是否为手动规划配方
                     if (recipeData.isManualPlanning === true) {
-                        recipeNameSpan.textContent = `${recipe.recipeName}(手动规划)`;
+                        const manualPlanningText = t('menu_manual_planning');
+                        // 确保翻译文本不是 undefined
+                        if (manualPlanningText && manualPlanningText !== 'menu_manual_planning' && manualPlanningText !== 'undefined') {
+                            recipeNameSpan.textContent = `${recipe.recipeName}(${manualPlanningText})`;
+                        } else {
+                            // 如果翻译失败，使用中文作为后备
+                            recipeNameSpan.textContent = `${recipe.recipeName}(手动规划)`;
+                        }
                     } else {
                         recipeNameSpan.textContent = recipe.recipeName;
                     }
@@ -2238,7 +2310,11 @@ function loadRecipeList(keyword = '') {
 
                 // 添加读取按钮
                 const readButton = document.createElement('button');
-                readButton.textContent = '读取';
+                readButton.className = 'recipe-read-btn';
+                // 使用data-i18n属性确保语言切换时能正确更新
+                readButton.setAttribute('data-i18n', 'read_recipe');
+                // 直接使用t()函数获取翻译，如果翻译不存在则使用key作为默认值
+                readButton.textContent = t('read_recipe');
                 readButton.addEventListener('click', (e) => {
                     e.stopPropagation(); // 阻止事件冒泡
                     loadRecipeToPlanning(recipe.recipeName);
@@ -2246,7 +2322,11 @@ function loadRecipeList(keyword = '') {
 
                 // 添加删除按钮
                 const deleteButton = document.createElement('button');
-                deleteButton.textContent = '删除';
+                deleteButton.className = 'recipe-delete-btn';
+                // 使用data-i18n属性确保语言切换时能正确更新
+                deleteButton.setAttribute('data-i18n', 'delete_recipe');
+                // 直接使用t()函数获取翻译，如果翻译不存在则使用key作为默认值
+                deleteButton.textContent = t('delete_recipe');
                 deleteButton.addEventListener('click', (e) => {
                     e.stopPropagation(); // 阻止事件冒泡
                     deleteRecipe(recipe.recipeName);
@@ -2265,53 +2345,65 @@ function loadRecipeList(keyword = '') {
                     if (isTP && e.target.type === 'checkbox') {
                         return;
                     }
-                    previewRecipe(recipe.recipeName);
+                    // 获取干净的配方名称（移除可能存在的括号内容）
+                    const recipeNameSpan = li.querySelector('.recipe-name');
+                    const fullText = recipeNameSpan ? recipeNameSpan.textContent : recipe.recipeName;
+                    const cleanRecipeName = fullText.split('(')[0].trim();
+                    previewRecipe(cleanRecipeName);
                 });
             });
+            
+            // 确保按钮文本正确显示
+            if (window.applyLanguage && window.getCurrentLanguage) {
+                setTimeout(() => {
+                    window.applyLanguage(window.getCurrentLanguage());
+                }, 10);
+            }
         })
         .catch(error => console.error('加载配方列表失败:', error));
 }
 
-// 将图形类型的英文转换为中文
-function getShapeTypeChinese(shapeType) {
+// 将图形类型的英文转换为当前语言
+function getShapeTypeText(shapeType) {
     switch (shapeType) {
         case 'circle':
-            return '圆形';
+            return t('workpiece_type_circle');
         case 'rectangle':
-            return '矩形';
+            return t('workpiece_type_rectangle');
         case 'polygon':
-            return '多边形';
+            return t('workpiece_type_polygon');
         case 'triangle':
-            return '三角形';
+            return t('workpiece_type_triangle');
         default:
-            return '未知图形';
+            return shapeType;
     }
 }
 
-// 将三角形类型和朝向的英文转换为中文
-function getTriangleTypeChinese(triangleType) {
+// 将三角形类型转换为当前语言
+function getTriangleTypeText(triangleType) {
     switch (triangleType) {
         case 'equilateral':
-            return '等边三角形';
+            return t('triangle_type_equilateral');
         case 'isosceles':
-            return '等腰三角形';
+            return t('triangle_type_isosceles');
         default:
-            return '未知类型';
+            return triangleType;
     }
 }
 
-function getTriangleOrientationChinese(orientation) {
+// 将三角形朝向转换为当前语言
+function getTriangleOrientationText(orientation) {
     switch (orientation) {
         case 'up':
-            return '向上';
+            return t('triangle_orientation_up');
         case 'down':
-            return '向下';
+            return t('triangle_orientation_down');
         case 'left':
-            return '向左';
+            return t('triangle_orientation_left');
         case 'right':
-            return '向右';
+            return t('triangle_orientation_right');
         default:
-            return '未知朝向';
+            return orientation;
     }
 }
 
@@ -2341,12 +2433,15 @@ function updatePreviewInputFields(shapeType) {
 
 // 预览配方
 function previewRecipe(recipeName) {
+    // 清理配方名称，移除可能存在的括号内容（如 "shou24(undefined)" -> "shou24"）
+    const cleanRecipeName = recipeName.split('(')[0].trim();
+    
     fetch('/get_recipe', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ recipeName }),
+        body: JSON.stringify({ recipeName: cleanRecipeName }),
     })
     .then(response => response.json())
     .then(data => {
@@ -2356,10 +2451,19 @@ function previewRecipe(recipeName) {
         // 更新预览标题，显示配方名称和类型标识
         const previewTitle = document.querySelector('.recipe-preview h2');
         if (previewTitle) {
+            const recipePreviewText = t('recipe_preview');
+            const manualPlanningText = t('menu_manual_planning');
+            // 确保翻译文本不是 undefined 或 key 本身
+            const safeRecipePreviewText = (recipePreviewText && recipePreviewText !== 'recipe_preview' && recipePreviewText !== 'undefined') 
+                ? recipePreviewText 
+                : '配方预览';
+            const safeManualPlanningText = (manualPlanningText && manualPlanningText !== 'menu_manual_planning' && manualPlanningText !== 'undefined') 
+                ? manualPlanningText 
+                : '手动规划';
             if (isManualPlanning) {
-                previewTitle.textContent = `配方预览 - ${recipeName}(手动规划)`;
+                previewTitle.textContent = `${safeRecipePreviewText} - ${cleanRecipeName}(${safeManualPlanningText})`;
             } else {
-                previewTitle.textContent = `配方预览 - ${recipeName}`;
+                previewTitle.textContent = `${safeRecipePreviewText} - ${cleanRecipeName}`;
             }
         }
         
@@ -2390,8 +2494,8 @@ function previewRecipe(recipeName) {
         document.getElementById('preview-frame-depth').textContent = data.frameDepth;
 
         // 填充工件设置
-        const shapeTypeChinese = getShapeTypeChinese(data.shapeType); // 将图形类型转换为中文
-        document.getElementById('preview-shape-type').textContent = shapeTypeChinese;
+        const shapeTypeText = getShapeTypeText(data.shapeType); // 将图形类型转换为当前语言
+        document.getElementById('preview-shape-type').textContent = shapeTypeText;
 
         // 根据工件类型显示对应的输入框
         updatePreviewInputFields(data.shapeType);
@@ -2406,11 +2510,11 @@ function previewRecipe(recipeName) {
             document.getElementById('preview-polygon-sides').textContent = data.polygonSides || 'N/A';
             document.getElementById('preview-polygon-side-length').textContent = data.polygonSideLength || 'N/A';
         } else if (data.shapeType === 'triangle') {
-            const triangleTypeChinese = getTriangleTypeChinese(data.triangleType); // 转换为中文
-            const triangleOrientationChinese = getTriangleOrientationChinese(data.triangleOrientation); // 转换为中文
-            document.getElementById('preview-triangle-type').textContent = triangleTypeChinese || 'N/A';
+            const triangleTypeText = getTriangleTypeText(data.triangleType); // 转换为当前语言
+            const triangleOrientationText = getTriangleOrientationText(data.triangleOrientation); // 转换为当前语言
+            document.getElementById('preview-triangle-type').textContent = triangleTypeText || 'N/A';
             document.getElementById('preview-triangle-side-length').textContent = data.triangleSideLength || 'N/A';
-            document.getElementById('preview-triangle-orientation').textContent = triangleOrientationChinese || 'N/A';
+            document.getElementById('preview-triangle-orientation').textContent = triangleOrientationText || 'N/A';
             // 如果是等腰三角形，显示底边长
             if (data.triangleType === 'isosceles') {
                 document.getElementById('preview-triangle-base-length').textContent = data.triangleBaseLength || 'N/A';
@@ -2432,12 +2536,12 @@ function previewRecipe(recipeName) {
         document.getElementById('preview-material-thickness').textContent = data.materialThickness;
         document.getElementById('preview-placement-layers').textContent = data.placementLayers;
 
-        const layoutTypeChinese = data.layoutType === 'array' ? '阵列式' : '蜂窝式';
-        const placeTypeChinese = data.placeType === 'row' ? '行优先' : '列优先';
-        const remainderTurnChinese = data.remainderTurn === 'off' ? '关闭' : (data.remainderTurn === 'left' ? '左转90度' : '右转90度');
-        document.getElementById('preview-layout-type').textContent = layoutTypeChinese;
-        document.getElementById('preview-place-type').textContent = placeTypeChinese;
-        document.getElementById('preview-remainder-turn').textContent = remainderTurnChinese;
+        const layoutTypeText = data.layoutType === 'array' ? t('layout_type_array') : t('layout_type_honeycomb');
+        const placeTypeText = data.placeType === 'row' ? t('place_type_row') : t('place_type_col');
+        const remainderTurnText = data.remainderTurn === 'off' ? t('remainder_turn_off') : (data.remainderTurn === 'left' ? t('remainder_turn_left') : t('remainder_turn_right'));
+        document.getElementById('preview-layout-type').textContent = layoutTypeText;
+        document.getElementById('preview-place-type').textContent = placeTypeText;
+        document.getElementById('preview-remainder-turn').textContent = remainderTurnText;
 
         // 显示预览图片
         const plotImg = document.getElementById('preview-plot');
@@ -2448,8 +2552,8 @@ function previewRecipe(recipeName) {
     .catch(error => console.error('加载配方失败:', error));
 }
 
-// 显示手动规划配方预览
-function showManualPlanningPreview(data) {
+// 显示手动规划配方预览（全局函数，供语言切换时调用）
+window.showManualPlanningPreview = function(data) {
     // 隐藏智能规划相关的预览元素
     const previewContainer = document.querySelector('.recipe-preview .preview-container');
     if (previewContainer) {
@@ -2467,17 +2571,82 @@ function showManualPlanningPreview(data) {
             previewContainer.appendChild(manualPreviewElement);
         }
         
-        // 更新手动规划预览内容
+        // 存储数据以便语言切换时使用
+        manualPreviewElement._recipeData = data;
+        
+        // 更新手动规划预览内容（使用翻译函数）
+        // 获取所有翻译文本，确保不是undefined
+        const manualPlanningRecipeInfoText = t('manual_planning_recipe_info');
+        const recipeNameText = t('recipe_name');
+        const recipeIdText = t('recipe_id');
+        const pointTotalCountText = t('point_total_count');
+        const rowCountText = t('row_count');
+        const colCountText = t('col_count');
+        const calculationMethodText = t('calculation_method');
+        const calculationMethodRowText = t('calculation_method_row');
+        const calculationMethodColText = t('calculation_method_col');
+        
+        // 确保所有翻译文本都不是undefined，如果是则使用中文作为后备
+        // 检查翻译是否成功（不是key本身，不是undefined，不是null）
+        // 如果翻译返回的是key本身，说明翻译不存在，使用后备文本
+        const isTranslationValid = (text, key) => {
+            return text && 
+                   text !== key && 
+                   text !== 'undefined' &&
+                   text !== 'null' &&
+                   typeof text === 'string' &&
+                   text.length > 0;
+        };
+        
+        const currentLang = getCurrentLanguage();
+        const getFallbackText = (key, zhText, enText, viText) => {
+            if (currentLang === 'vi') return viText;
+            if (currentLang === 'en') return enText;
+            return zhText;
+        };
+        
+        const safeManualPlanningRecipeInfo = isTranslationValid(manualPlanningRecipeInfoText, 'manual_planning_recipe_info')
+            ? manualPlanningRecipeInfoText 
+            : getFallbackText('manual_planning_recipe_info', '手动规划配方信息', 'Manual Planning Recipe Info', 'Thông Tin Công Thức Lập Kế Hoạch Thủ Công');
+        const safeRecipeName = isTranslationValid(recipeNameText, 'recipe_name')
+            ? recipeNameText 
+            : getFallbackText('recipe_name', '配方名:', 'Recipe Name:', 'Tên Công Thức:');
+        const safeRecipeId = isTranslationValid(recipeIdText, 'recipe_id')
+            ? recipeIdText 
+            : getFallbackText('recipe_id', '配方编号:', 'Recipe ID:', 'ID Công Thức:');
+        const safePointTotalCount = isTranslationValid(pointTotalCountText, 'point_total_count')
+            ? pointTotalCountText 
+            : getFallbackText('point_total_count', '点位总数:', 'Total Points:', 'Tổng Số Điểm:');
+        const safeRowCount = isTranslationValid(rowCountText, 'row_count')
+            ? rowCountText 
+            : getFallbackText('row_count', '行数:', 'Row Count:', 'Số Hàng:');
+        const safeColCount = isTranslationValid(colCountText, 'col_count')
+            ? colCountText 
+            : getFallbackText('col_count', '列数:', 'Column Count:', 'Số Cột:');
+        const safeCalculationMethod = isTranslationValid(calculationMethodText, 'calculation_method')
+            ? calculationMethodText 
+            : getFallbackText('calculation_method', '计算方式:', 'Calculation Method:', 'Phương Pháp Tính Toán:');
+        const safeCalculationMethodRow = isTranslationValid(calculationMethodRowText, 'calculation_method_row')
+            ? calculationMethodRowText 
+            : getFallbackText('calculation_method_row', '行优先', 'Row Priority', 'Ưu Tiên Hàng');
+        const safeCalculationMethodCol = isTranslationValid(calculationMethodColText, 'calculation_method_col')
+            ? calculationMethodColText 
+            : getFallbackText('calculation_method_col', '列优先', 'Column Priority', 'Ưu Tiên Cột');
+        
+        const finalCalculationMethodText = data.manualPlanningInfo && data.manualPlanningInfo.calculationMethod === 'row_priority' 
+            ? safeCalculationMethodRow 
+            : safeCalculationMethodCol;
+        
         manualPreviewElement.innerHTML = `
-            <h3>手动规划配方信息</h3>
+            <h3>${safeManualPlanningRecipeInfo}</h3>
             <div class="manual-planning-info">
-                <p><strong>配方名称:</strong> ${data.recipeName}</p>
-                <p><strong>配方编号:</strong> ${data.recipeId}</p>
-                <p><strong>点位总数:</strong> ${data.tableData ? data.tableData.length : 0}</p>
+                <p><strong>${safeRecipeName}</strong> ${data.recipeName || ''}</p>
+                <p><strong>${safeRecipeId}</strong> ${data.recipeId || ''}</p>
+                <p><strong>${safePointTotalCount}</strong> ${data.tableData ? data.tableData.length : 0}</p>
                 ${data.manualPlanningInfo ? `
-                    <p><strong>行数:</strong> ${data.manualPlanningInfo.rowCount}</p>
-                    <p><strong>列数:</strong> ${data.manualPlanningInfo.colCount}</p>
-                    <p><strong>计算方式:</strong> ${data.manualPlanningInfo.calculationMethod === 'row_priority' ? '行优先' : '列优先'}</p>
+                    <p><strong>${safeRowCount}</strong> ${data.manualPlanningInfo.rowCount || ''}</p>
+                    <p><strong>${safeColCount}</strong> ${data.manualPlanningInfo.colCount || ''}</p>
+                    <p><strong>${safeCalculationMethod}</strong> ${finalCalculationMethodText}</p>
                 ` : ''}
             </div>
         `;
@@ -2485,7 +2654,7 @@ function showManualPlanningPreview(data) {
         // 显示手动规划预览
         manualPreviewElement.style.display = 'block';
     }
-}
+};
 
 // 清除智能规划界面的所有参数和图片
 function clearSmartPlanningInterface() {
