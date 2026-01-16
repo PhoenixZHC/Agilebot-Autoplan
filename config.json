@@ -1,9 +1,13 @@
 {
   "name": "AUTOPLAN",
+  "author": "Phoenix",
   "type": "generalService",
   "scriptLang": "python",
   "description": "智能摆盘规划系统",
   "version": "v7.4.0",
   "entry": "app.py",
-  "url": "/"
+  "url": "/",
+  "contact": "zhanghaoce@agilebot.com.cn",
+  "copyright": "Copyright © 2026 Agilebot Robotics Co., Ltd.",
+  "license": "MIT"
 }
