@@ -874,9 +874,15 @@ async def write_p_data(request: Request):
         if ret != StatusCodeEnum.OK:
             return JSONResponse({'error': '获取机器人状态失败'}, 400)
 
+        # 添加调试信息：打印实际状态值
+        print(f"写入P点前检查 - 机器人运行状态：{state.msg}")
+        print(f"状态类型：{type(state.msg)}, 状态值（repr）：{repr(state.msg)}")
+        print(f"状态值长度：{len(state.msg) if state.msg else 0}")
+        print(f"是否等于'机器人空闲'：{state.msg == '机器人空闲'}")
+
         # 检查机器人是否处于空闲状态
         if state.msg != "机器人空闲":
-            return JSONResponse({'error': '机器人当前不处于空闲状态，无法写入P点'}, 400)
+            return JSONResponse({'error': f'机器人当前不处于空闲状态（实际状态：{state.msg}），无法写入P点'}, 400)
 
         # 批量写入P点数据
         for p in p_data:
