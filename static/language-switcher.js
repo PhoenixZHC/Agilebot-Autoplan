@@ -170,8 +170,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // 如果无法从状态判断，再检查按钮文本
             if (!isActuallyConnected) {
                 const currentText = connectButton.textContent.trim();
-                const isDisconnected = currentText === t('connect') || currentText === '连接' || currentText === 'Connect' || currentText === 'Kết Nối';
-                const isConnected = currentText === t('disconnect') || currentText === '断开连接' || currentText === 'Disconnect' || currentText === 'Ngắt Kết Nối';
+                const isDisconnected = currentText === t('connect') || currentText === '连接' || currentText === 'Connect' || currentText === 'Kết Nối' || currentText === '接続';
+                const isConnected = currentText === t('disconnect') || currentText === '断开连接' || currentText === 'Disconnect' || currentText === 'Ngắt Kết Nối' || currentText === '切断';
                 
                 if (isConnected) {
                     connectButton.textContent = t('disconnect');
