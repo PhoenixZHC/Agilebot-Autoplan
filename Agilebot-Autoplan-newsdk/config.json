@@ -1,0 +1,13 @@
+{
+  "name": "AUTOPLANnew",
+  "author": "Phoenix",
+  "type": "generalService",
+  "scriptLang": "python",
+  "description": "智能摆盘规划系统新SDK",
+  "version": "7.5.0",
+  "entry": "app.py",
+  "url": "/",
+  "contact": "zhanghaoce@agilebot.com.cn",
+  "copyright": "Copyright © 2026 Agilebot Robotics Co., Ltd.",
+  "license": "MIT"
+}

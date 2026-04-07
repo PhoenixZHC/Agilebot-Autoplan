@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能摆盘规划系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css')  }}">
+</head>
+<body data-is-tp="{{ 'true' if is_tp else 'false' }}">
+    <!-- 标题栏 -->
+    <div class="header">
+        <div class="logo">
+            <img src="{{ url_for('static', path='logo.png')  }}" alt="Logo">
+        </div>
+        <div class="title" data-i18n="title">捷勃特智能摆盘规划系统</div>
+        <div class="header-right">
+            <!-- 语言切换按钮 -->
+            <div class="language-switcher">
+                <button class="language-btn" id="language-btn" title="Language">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                    </svg>
+                </button>
+                <div class="language-dropdown" id="language-dropdown">
+                    <button class="language-option" data-lang="zh">
+                        <span>中文</span>
+                    </button>
+                    <button class="language-option" data-lang="en">
+                        <span>English</span>
+                    </button>
+                    <button class="language-option" data-lang="vi">
+                        <span>Tiếng Việt</span>
+                    </button>
+                    <button class="language-option" data-lang="ja">
+                        <span>日本語</span>
+                    </button>
+                    <button class="language-option" data-lang="ko">
+                        <span>한국어</span>
+                    </button>
+                </div>
+            </div>
+            <div class="version">{{ version }}</div>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="main-container">
+        <!-- 左侧菜单栏 -->
+        <div class="sidebar">
+            <button id="robot-settings-btn" class="active">
+                <img src="{{ url_for('static', path='icons/robot.svg')  }}" alt="机器人设置" class="icon">
+                <span data-i18n="menu_robot_settings">机器人设置</span>
+            </button>
+            <button id="smart-planning-btn">
+                <img src="{{ url_for('static', path='icons/planning.svg')  }}" alt="智能规划" class="icon">
+                <span data-i18n="menu_smart_planning">智能规划</span>
+            </button>
+            <button id="interval-calculator-btn">
+                <img src="{{ url_for('static', path='icons/calculator.svg') }}" alt="手动规划" class="icon">
+                <span data-i18n="menu_manual_planning">手动规划</span>
+            </button>
+            <button id="data-list-btn">
+                <img src="{{ url_for('static', path='icons/list.svg')  }}" alt="数据清单" class="icon">
+                <span data-i18n="menu_data_list">数据清单</span>
+            </button>
+            <button id="recipe-library-btn">
+                <img src="{{ url_for('static', path='icons/library.svg') }}" alt="配方库" class="icon">
+                <span data-i18n="menu_recipe_library">配方库</span>
+            </button>
+        </div>
+
+        <!-- 右侧内容区域 -->
+        <div class="content">
+            <!-- 机器人设置 -->
+            <div id="robot-settings-content" class="content-section active">
+                <div class="robot-settings">
+                    <!-- IP地址输入和连接按钮 -->
+                    <div class="robot-connection">
+                        <div class="input-group">
+                            <label for="robot_ip" data-i18n="robot_ip_label">机器人IP地址:</label>
+                            <input type="text" id="robot_ip" name="robot_ip" data-i18n="robot_ip_placeholder" placeholder="输入机器人IP地址">
+                            <button id="robot_connect_button" data-i18n="connect">连接</button>
+                            <!-- 将状态信息移到连接按钮后面 -->
+                            <div id="robot_status" style="display: none;">
+                                <span><span data-i18n="connection_status">连接状态:</span> <span id="robot_ip_display"></span></span>
+                                <span><span data-i18n="robot_model">型号:</span> <span id="robot_model"></span></span>
+                                <span><span data-i18n="controller_version">控制柜版本:</span> <span id="controller_version"></span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 程序设置部分 -->
+                    <div id="program_input" style="display: none;">
+                        <!-- 程序名称 -->
+                        <div class="program-name-section">
+                            <label for="program_name" data-i18n="program_name">程序名称:</label>
+                            <input type="text" id="program_name" name="program_name" data-i18n="program_name_placeholder" placeholder="输入程序名称" value="PUT">
+                            <button id="read_p_data_button" data-i18n="read_p_data">读取P点</button>
+                        </div>
+
+                        <!-- 工具设置 -->
+                        <div class="tool-settings">
+                            <div class="input-group">
+                                <label for="pr_register_id" data-i18n="pr_register_id">Z&C参考寄存器:</label>
+                                <input type="number" id="pr_register_id" name="pr_register_id" min="1" max="99999" value="1" oninput="if(this.value.length > 5) this.value=this.value.slice(0,5)">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="uf_value" data-i18n="uf_value">UF值:</label>
+                                <select id="uf_value" name="uf_value">
+                                    <option value="0">0</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                    <option value="12">12</option>
+                                    <option value="13">13</option>
+                                    <option value="14">14</option>
+                                    <option value="15">15</option>
+                                    <option value="16">16</option>
+                                    <option value="17">17</option>
+                                    <option value="18">18</option>
+                                    <option value="19">19</option>
+                                    <option value="20">20</option>
+                                    <option value="21">21</option>
+                                    <option value="22">22</option>
+                                    <option value="23">23</option>
+                                    <option value="24">24</option>
+                                    <option value="25">25</option>
+                                    <option value="26">26</option>
+                                    <option value="27">27</option>
+                                    <option value="28">28</option>
+                                    <option value="29">29</option>
+                                    <option value="30">30</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="tool_count" data-i18n="tool_count">工具数量:</label>
+                                <select id="tool_count" name="tool_count">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="tool_spacing" data-i18n="tool_spacing">工具间距:</label>
+                                <input type="number" id="tool_spacing" name="tool_spacing" step="0.1" min="0" max="99999" value="0" oninput="if(this.value.length > 5) this.value=this.value.slice(0,5)">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="tool_direction" data-i18n="tool_direction">工具方向:</label>
+                                <select id="tool_direction" name="tool_direction" data-i18n-options="tool_direction_y,tool_direction_x">
+                                    <option value="y" data-i18n="tool_direction_y">Y方向</option>
+                                    <option value="x" data-i18n="tool_direction_x">X方向</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="tool_layout" data-i18n="tool_layout">工具布局:</label>
+                                <select id="tool_layout" name="tool_layout" data-i18n-options="tool_layout_single,tool_layout_double">
+                                    <option value="single" data-i18n="tool_layout_single">单侧</option>
+                                    <option value="double" data-i18n="tool_layout_double">双向</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="auto_tf" data-i18n="auto_tf">自动TF计算:</label>
+                                <select id="auto_tf" name="auto_tf" data-i18n-options="auto_tf_off,auto_tf_on">
+                                    <option value="0" selected data-i18n="auto_tf_off">关闭</option>
+                                    <option value="1" data-i18n="auto_tf_on">开启</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="left_right" data-i18n="left_right">坐标系方向:</label>
+                                <select id="left_right" name="left_right" data-i18n-options="left_right_right,left_right_left">
+                                    <option value="1" selected data-i18n="left_right_right">右手坐标系</option>
+                                    <option value="-1" data-i18n="left_right_left">左手坐标系</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- P点数据表格 -->
+                    <div id="p_data_table_container" style="display: none;">
+                        <h3 data-i18n="p_data_table_title">P点数据</h3>
+                        <table id="p_data_table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="p_data_table_no">序号</th>
+                                    <th data-i18n="p_data_table_x">X</th>
+                                    <th data-i18n="p_data_table_y">Y</th>
+                                    <th data-i18n="p_data_table_z">Z</th>
+                                    <th data-i18n="p_data_table_c">C</th>
+                                    <th data-i18n="p_data_table_uf">UF</th>
+                                    <th data-i18n="p_data_table_tf">TF</th>
+                                    <th data-i18n="p_data_table_coord">坐标系方向</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- P点数据将动态填充到这里 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 智能规划 -->
+            <div id="smart-planning-content" class="content-section">
+                <div class="planning-content">
+                    <!-- 参数设置 -->
+                    <form id="inputForm">
+                        <div class="settings-container">
+                            <!-- 料框设置板块 -->
+                            <div class="input-section">
+                                <h3 data-i18n="frame_settings">料框设置</h3>
+                                <div>
+                                    <label for="frame_length" data-i18n="frame_length">料框长度:</label>
+                                    <input type="number" id="frame_length" name="frame_length" step="0.1" required>
+                                </div>
+                                <div>
+                                    <label for="frame_width" data-i18n="frame_width">料框宽度:</label>
+                                    <input type="number" id="frame_width" name="frame_width" step="0.1" required>
+                                </div>
+                                <div>
+                                    <label for="frame_depth" data-i18n="frame_depth">料框深度:</label>
+                                    <input type="number" id="frame_depth" name="frame_depth" step="0.1">
+                                </div>
+                            </div>
+
+                            <!-- 工件设置板块 -->
+                            <div class="input-section">
+                                <h3 data-i18n="workpiece_settings">工件设置</h3>
+                                <div>
+                                    <label for="shape_type" data-i18n="workpiece_type">工件类型:</label>
+                                    <select id="shape_type" name="shape_type" data-i18n-options="workpiece_type_circle,workpiece_type_rectangle,workpiece_type_polygon,workpiece_type_triangle">
+                                        <option value="circle" selected data-i18n="workpiece_type_circle">圆形</option>
+                                        <option value="rectangle" data-i18n="workpiece_type_rectangle">长方形</option>
+                                        <option value="polygon" data-i18n="workpiece_type_polygon">多边形</option>
+                                        <option value="triangle" data-i18n="workpiece_type_triangle">三角形</option>
+                                    </select>
+                                </div>
+                                <!-- 圆形输入 -->
+                                <div id="circle_input" class="shape-input">
+                                    <div>
+                                        <label for="circle_diameter" data-i18n="circle_diameter">圆形直径:</label>
+                                        <input type="number" id="circle_diameter" name="circle_diameter" step="0.1">
+                                    </div>
+                                </div>
+                                <!-- 长方形输入 -->
+                                <div id="rectangle_input" class="shape-input">
+                                    <div>
+                                        <label for="rectangle_length" data-i18n="rectangle_length">长方形长度:</label>
+                                        <input type="number" id="rectangle_length" name="rectangle_length" step="0.1">
+                                    </div>
+                                    <div>
+                                        <label for="rectangle_width" data-i18n="rectangle_width">长方形宽度:</label>
+                                        <input type="number" id="rectangle_width" name="rectangle_width" step="0.1">
+                                    </div>
+                                </div>
+                                <!-- 多边形输入 -->
+                                <div id="polygon_input" class="shape-input">
+                                    <div>
+                                        <label for="polygon_sides" data-i18n="polygon_sides">多边形边数 (5-8):</label>
+                                        <input type="number" id="polygon_sides" name="polygon_sides" min="5" max="8" step="1">
+                                    </div>
+                                    <div>
+                                        <label for="polygon_side_length" data-i18n="polygon_side_length">多边形边长:</label>
+                                        <input type="number" id="polygon_side_length" name="polygon_side_length" step="0.1">
+                                    </div>
+                                    <div id="polygon_arrangement_input" style="display: none;">
+                                        <label for="polygon_arrangement" data-i18n="polygon_arrangement">排布方式:</label>
+                                        <select id="polygon_arrangement" name="polygon_arrangement" data-i18n-options="polygon_arrangement_diagonal,polygon_arrangement_edge">
+                                            <option value="diagonal" data-i18n="polygon_arrangement_diagonal">对角排布</option>
+                                            <option value="edge" data-i18n="polygon_arrangement_edge">对边排布</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <!-- 三角形输入 -->
+                                <div id="triangle_input" class="shape-input">
+                                    <div>
+                                        <label for="triangle_type" data-i18n="triangle_type">三角形类型:</label>
+                                        <select id="triangle_type" name="triangle_type" data-i18n-options="triangle_type_equilateral,triangle_type_isosceles">
+                                            <option value="equilateral" data-i18n="triangle_type_equilateral">等边三角形</option>
+                                            <option value="isosceles" data-i18n="triangle_type_isosceles">等腰三角形</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="triangle_side_length" data-i18n="triangle_side_length">三角形边长:</label>
+                                        <input type="number" id="triangle_side_length" name="triangle_side_length" step="0.1">
+                                    </div>
+                                    <div id="triangle_base_length_input" style="display: none;">
+                                        <label for="triangle_base_length" data-i18n="triangle_base_length">三角形底边长:</label>
+                                        <input type="number" id="triangle_base_length" name="triangle_base_length" step="0.1">
+                                    </div>
+                                    <div>
+                                        <label for="triangle_orientation" data-i18n="triangle_orientation">三角形朝向:</label>
+                                        <select id="triangle_orientation" name="triangle_orientation" data-i18n-options="triangle_orientation_up,triangle_orientation_down,triangle_orientation_left,triangle_orientation_right">
+                                            <option value="up" data-i18n="triangle_orientation_up">朝上</option>
+                                            <option value="down" data-i18n="triangle_orientation_down">朝下</option>
+                                            <option value="left" data-i18n="triangle_orientation_left">朝左</option>
+                                            <option value="right" data-i18n="triangle_orientation_right">朝右</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <!-- 工件高度 -->
+                                <div>
+                                    <label for="shape_height" data-i18n="workpiece_height">工件高度:</label>
+                                    <input type="number" id="shape_height" name="shape_height" step="0.1">
+                                </div>
+                                <!-- 工件高度 -->
+                                <div>
+                                    <label for="drop_Count" data-i18n="drop_count">前端单次下料数量:</label>
+                                    <input type="number" id="drop_Count" name="shape_height" step="0.1">
+                                </div>
+                            </div>
+
+                            <!-- 摆放设置板块 -->
+                            <div class="input-section">
+                                <h3 data-i18n="placement_settings">摆放设置</h3>
+                                <div>
+                                    <label for="horizontal_spacing" data-i18n="horizontal_spacing">横向间距:</label>
+                                    <input type="number" id="horizontal_spacing" name="horizontal_spacing" step="0.1" required>
+                                </div>
+                                <div>
+                                    <label for="vertical_spacing" data-i18n="vertical_spacing">纵向间距:</label>
+                                    <input type="number" id="vertical_spacing" name="vertical_spacing" step="0.1" required>
+                                </div>
+                                <div>
+                                    <label for="horizontal_border_distance" data-i18n="horizontal_border_distance">横向边框距离:</label>
+                                    <input type="number" id="horizontal_border_distance" name="horizontal_border_distance" step="0.1" required>
+                                </div>
+                                <div>
+                                    <label for="vertical_border_distance" data-i18n="vertical_border_distance">纵向边框距离:</label>
+                                    <input type="number" id="vertical_border_distance" name="vertical_border_distance" step="0.1" required>
+                                </div>
+                                <div>
+                                    <label for="material_thickness" data-i18n="material_thickness">包材厚度:</label>
+                                    <input type="number" id="material_thickness" name="material_thickness" step="0.1">
+                                </div>
+                                <div>
+                                    <label for="placement_layers" data-i18n="placement_layers">摆放层数:</label>
+                                    <input type="number" id="placement_layers" name="placement_layers" step="1">
+                                </div>
+                                <div>
+                                    <label for="layout_type" data-i18n="layout_type">排布方式:</label>
+                                    <select id="layout_type" name="layout_type" data-i18n-options="layout_type_array,layout_type_honeycomb">
+                                        <option value="array" data-i18n="layout_type_array">阵列式</option>
+                                        <option value="honeycomb" data-i18n="layout_type_honeycomb">蜂窝式</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="place_type" data-i18n="place_type">摆盘方式:</label>
+                                    <select id="place_type" name="place_type" data-i18n-options="place_type_row,place_type_col">
+                                        <option value="row" data-i18n="place_type_row">行优先</option>
+                                        <option value="col" data-i18n="place_type_col">列优先</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="remainder_turn" data-i18n="remainder_turn">余行列转向:</label>
+                                    <select id="remainder_turn" name="remainder_turn" data-i18n-options="remainder_turn_off,remainder_turn_left,remainder_turn_right">
+                                        <option value="off" data-i18n="remainder_turn_off">关闭</option>
+                                        <option value="left" data-i18n="remainder_turn_left">左转90度</option>
+                                        <option value="right" data-i18n="remainder_turn_right">右转90度</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 提交按钮容器 -->
+                        <div class="submit-button-container">
+                            <button type="submit" data-i18n="calculate">计算</button>
+                        </div>
+                    </form>
+
+                    <!-- 规划结果预览 -->
+                    <div class="preview-container">
+                        <h2 data-i18n="planning_result_preview">规划结果预览</h2>
+                        <div class="preview-image-container">
+                            <img id="plot" src="" alt="图形填充结果" style="display: none;">
+                        </div>
+                        <div id="shape-count" style="display: none; font-size: 15px; color: #333;">
+                            <span data-i18n="shape_count">可填充的图形数量：</span><span id="shape-count-value">0</span>
+                        </div>
+                        <div id="shapes-per-row-or-col" style="display: none; font-size: 15px; color: #333;">
+                            <span data-i18n="shapes_per_row_or_col">单行/列填充数量：</span><span id="shapes-per-row-or-col-value">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据清单表格 -->
+            <div id="data-list-content" class="content-section">
+                <div class="data-list-container">
+                    <h2 data-i18n="compensation_instructions">补偿使用说明</h2>
+                        <!-- 添加说明文字 -->
+                        <p>
+                            <span data-i18n="compensation_instruction_1">1、规划页面重新计算则清除所有的补偿值，重新生成数据表单。</span><br>
+                            <span data-i18n="compensation_instruction_2">2、可选单行/列以及编号，输入补偿值和角度补偿，点击更新按钮，补偿值显示在数据清单中。</span><br>
+                            <span data-i18n="compensation_instruction_3">3、如需修改多行，则多次输入补偿更新即可。</span><br>
+                            <span data-i18n="compensation_instruction_4">4、数据修改完成后，输入程序名，点击写入P点。</span><br>
+                            <span data-i18n="compensation_instruction_5">5、行补偿Y值，列补偿X值。</span>
+                        </p>
+                     <!-- 补偿设置区域 -->
+                    <div class="compensation-section">
+                        <label for="compensation-type" data-i18n="compensation_type">补偿行/列:</label>
+                        <select id="compensation-type" data-i18n-options="compensation_type_row,compensation_type_col">
+                            <option value="row" data-i18n="compensation_type_row">行</option>
+                            <option value="col" data-i18n="compensation_type_col">列</option>
+                        </select>
+
+                        <label for="row-col-number" data-i18n="row_col_number">行号/列号:</label>
+                        <input type="number" id="row-col-number" min="1">
+
+                        <label for="compensation-value" data-i18n="compensation_value">补偿值:</label>
+                        <input type="number" id="compensation-value" step="0.1">
+
+                        <label for="angle-compensation" data-i18n="angle_compensation">角度补偿:</label>
+                        <input type="number" id="angle-compensation" step="0.1">
+
+                        <button id="update-compensation" data-i18n="update_compensation">更新补偿</button>
+                    </div>
+
+                    <!-- 程序名称输入框和写入P点按钮 -->
+                    <div class="program-input-section">
+                        <label for="write_program_name" data-i18n="write_program_name">程序名称:</label>
+                        <input type="text" id="write_program_name" name="write_program_name" data-i18n="program_name_placeholder" placeholder="输入程序名称" value="PUT">
+                        <label for="start_p_point" data-i18n="start_p_point">起始P点:</label>
+                        <input type="number" id="start_p_point" name="start_p_point" min="1" step="1" value="1">
+                        <button id="write_p_data_button" data-i18n="write_p_data">写入P点</button>
+                        <label for="recipe_name" data-i18n="recipe_name">配方名:</label>
+                        <input type="text" id="recipe_name" name="recipe_name">
+                        <label for="recipe_id" data-i18n="recipe_id">配方编号:</label>
+                        <input type="text" id="recipe_id" name="recipe_id">
+                        <button id="save_recipe_button" data-i18n="save_recipe">保存配方</button>
+                    </div>
+
+                    <!-- 数据清单表格 -->
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;" data-i18n="data_list_row">行号</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;" data-i18n="data_list_col">列号</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;" data-i18n="data_list_p_id">P_ID</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;" data-i18n="data_list_x">X</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;" data-i18n="data_list_x_comp">X补偿</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;" data-i18n="data_list_y">Y</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;" data-i18n="data_list_y_comp">Y补偿</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;" data-i18n="data_list_c">C</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;" data-i18n="data_list_c_comp">C补偿</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 数据将动态填充到这里 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 手动规划 -->
+            <div id="interval-calculator-content" class="content-section">
+                <div class="input-container">
+                    <img src="{{ url_for('static', path='cankao.png') }}" alt="参考图片" style="width: 45%; height: auto;">
+                    
+                    <!-- 基本参数输入 -->
+                    <div class="input-section">
+                        <h4 data-i18n="grid_parameters">网格参数</h4>
+                        <div class="grid-inputs">
+                            <div class="input-group">
+                                <label for="manual_pr1_id" data-i18n="manual_pr1_id">参考点1PR ID:</label>
+                                <input type="number" id="manual_pr1_id" name="manual_pr1_id" min="1" step="1" value="1">
+                            </div>
+                            <div class="input-group">
+                                <label for="manual_pr2_id" data-i18n="manual_pr2_id">参考点2PR ID:</label>
+                                <input type="number" id="manual_pr2_id" name="manual_pr2_id" min="1" step="1" value="2">
+                            </div>
+                            <div class="input-group">
+                                <label for="manual_pr3_id" data-i18n="manual_pr3_id">参考点3PR ID:</label>
+                                <input type="number" id="manual_pr3_id" name="manual_pr3_id" min="1" step="1" value="3">
+                            </div>
+                            <div class="input-group">
+                                <label for="row_count" data-i18n="row_count">行数:</label>
+                                <input type="number" id="row_count" name="row_count" min="1" step="1" data-i18n="row_count_placeholder" placeholder="输入行数">
+                            </div>
+                            <div class="input-group">
+                                <label for="col_count" data-i18n="col_count">列数:</label>
+                                <input type="number" id="col_count" name="col_count" min="1" step="1" data-i18n="col_count_placeholder" placeholder="输入列数">
+                            </div>
+                            <div class="input-group">
+                                <label for="calculation_method" data-i18n="calculation_method">计算方式:</label>
+                                <select id="calculation_method" name="calculation_method" data-i18n-options="calculation_method_row,calculation_method_col">
+                                    <option value="row_priority" data-i18n="calculation_method_row">行优先</option>
+                                    <option value="col_priority" data-i18n="calculation_method_col">列优先</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button id="read_reference_points" class="primary-button" data-i18n="read_reference_points">读取参考点</button>
+                    </div>
+
+                    <!-- 参考点显示表格 -->
+                    <div class="reference-points-section" style="display: none;">
+                        <h4 data-i18n="reference_points_title">参考点坐标</h4>
+                        <table id="reference-points-table" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="reference_point">参考点</th>
+                                    <th data-i18n="data_list_x">X</th>
+                                    <th data-i18n="data_list_y">Y</th>
+                                    <th data-i18n="p_data_table_z">Z</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td data-i18n="reference_point_pr1">PR1 (第一行第一列)</td>
+                                    <td id="pr1-x">-</td>
+                                    <td id="pr1-y">-</td>
+                                    <td id="pr1-z">-</td>
+                                </tr>
+                                <tr>
+                                    <td data-i18n="reference_point_pr2">PR2 (最后一行第一列)</td>
+                                    <td id="pr2-x">-</td>
+                                    <td id="pr2-y">-</td>
+                                    <td id="pr2-z">-</td>
+                                </tr>
+                                <tr>
+                                    <td data-i18n="reference_point_pr3">PR3 (第一行最后一列)</td>
+                                    <td id="pr3-x">-</td>
+                                    <td id="pr3-y">-</td>
+                                    <td id="pr3-z">-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button id="calculate_points" class="primary-button" disabled data-i18n="calculate_points">计算所有点位</button>
+                    </div>
+
+                    <!-- 计算状态提示 -->
+                    <div id="calculation-status" style="display: none; margin-top: 20px;">
+                        <div class="status-message">
+                            <span id="status-text" data-i18n="calculating">正在计算...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 配方库内容 -->
+            <div id="recipe-library-content" class="content-section">
+                <div class="recipe-library-container">
+                    <div class="search-section">
+                        <label for="recipe-search" data-i18n="search_recipe">查找配方:</label>
+                        <input type="text" id="recipe-search" data-i18n="search_recipe_placeholder" placeholder="输入配方名">
+
+                        <label for="recipe-number" data-i18n="recipe_number_mh">配方号MH:</label>
+                        <input type="number" id="recipe-number" min="1" data-i18n="recipe_number_mh_placeholder" placeholder="输入配方号MH">
+
+                        <label for="call-signal" data-i18n="call_signal_di">调用信号DI:</label>
+                        <input type="number" id="call-signal" min="1" data-i18n="call_signal_di_placeholder" placeholder="输入调用信号DI">
+
+                        <label for="finish-signal" data-i18n="finish_signal_do">完成信号DO:</label>
+                        <input type="number" id="finish-signal" min="1" data-i18n="finish_signal_do_placeholder" placeholder="输入完成信号DO">
+                    </div>
+                    <!-- 允许外部调用和自动写入选项 - 单独一行 -->
+                    <div class="search-section-options">
+                        <!-- 允许外部调用选择框 - 默认隐藏 -->
+                        <div id="external-call-container" style="display: none;">
+                            <label for="external-call" data-i18n="external_call">允许外部调用:</label>
+                            <select id="external-call" data-i18n-options="external_call_off,external_call_on">
+                                <option value="0" data-i18n="external_call_off">关闭</option>
+                                <option value="1" data-i18n="external_call_on">开启</option>
+                            </select>
+                        </div><!-- 自动写入选择框 - 默认隐藏 -->
+                        <div id="auto-write-container" style="display: none;">
+                            <label for="auto-write" data-i18n="auto_write">自动写入:</label>
+                            <select id="auto-write" data-i18n-options="auto_write_off,auto_write_on">
+                                <option value="0" selected data-i18n="auto_write_off">关闭</option>
+                                <option value="1" data-i18n="auto_write_on">开启</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- 监控状态单独一行 -->
+                    <div style="width:auto; display:inline-block;">
+                        <div id="external-call-status" style="display: none; margin-top: 10px; padding: 5px; background-color: #f0f0f0; border-radius: 3px;">
+                            <span id="status-text"><span data-i18n="monitoring_status">监控状态:</span> <span data-i18n="monitoring_status_stopped">未启动</span></span>
+                        </div>
+                    </div>
+                    <div class="recipe-library">
+                        <!-- 左侧配方列表 -->
+                        <div class="recipe-list-container">
+                            <h3 data-i18n="recipe_list">配方列表</h3>
+                            <!-- 配方操作按钮区域 -->
+                            {% if is_tp %}
+                                <div class="recipe-operations">
+                                    <div class="recipe-select-row">
+                                        <input type="checkbox" id="select-all-recipes" class="select-all-checkbox">
+                                        <label for="select-all-recipes" data-i18n="select_all">全选</label>
+                                    </div>
+                                    <div class="recipe-button-row">
+                                        <button id="export-selected-recipes" data-i18n="export_selected">导出选中配方</button>
+                                        <button id="import-recipes" data-i18n="import_recipes">导入配方</button>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            <!-- 配方列表显示区域 -->
+                            <ul id="recipe-list" class="recipe-list">
+                                <!-- 配方列表将动态填充到这里 -->
+                            </ul>
+                        </div>
+                        <!-- 配方预览区域 -->
+                        <div class="recipe-preview">
+                            <div id="recipe-preview-content">
+                                <h2 data-i18n="recipe_preview">配方预览</h2>
+                                <div class="preview-container">
+                                    <div class="input-container">
+                                        <form>
+                                            <div class="input-section">
+                                                <h3 data-i18n="frame_settings">料框设置</h3>
+                                                <div>
+                                                    <label data-i18n="frame_length">料框长度:</label>
+                                                    <span id="preview-frame-length"></span>
+                                                </div>
+                                                <div>
+                                                    <label data-i18n="frame_width">料框宽度:</label>
+                                                    <span id="preview-frame-width"></span>
+                                                </div>
+                                                <div>
+                                                    <label data-i18n="frame_depth">料框深度:</label>
+                                                    <span id="preview-frame-depth"></span>
+                                                </div>
+                                            </div>
+                                            <!-- 工件设置板块 -->
+                                            <div class="input-section">
+                                                <h3 data-i18n="workpiece_settings">工件设置</h3>
+                                                <div>
+                                                    <label data-i18n="workpiece_type">工件类型:</label>
+                                                    <span id="preview-shape-type"></span>
+                                                </div>
+                                                <!-- 圆形输入 -->
+                                                <div id="preview-circle-input" class="shape-input-preview" style="display: none;">
+                                                    <div>
+                                                        <label data-i18n="circle_diameter">圆形直径:</label>
+                                                        <span id="preview-circle-diameter"></span>
+                                                    </div>
+                                                </div>
+                                                <!-- 长方形输入 -->
+                                                <div id="preview-rectangle-input" class="shape-input-preview" style="display: none;">
+                                                    <div>
+                                                        <label data-i18n="rectangle_length">长方形长度:</label>
+                                                        <span id="preview-rectangle-length"></span>
+                                                    </div>
+                                                    <div>
+                                                        <label data-i18n="rectangle_width">长方形宽度:</label>
+                                                        <span id="preview-rectangle-width"></span>
+                                                    </div>
+                                                </div>
+                                                <!-- 多边形输入 -->
+                                                <div id="preview-polygon-input" class="shape-input-preview" style="display: none;">
+                                                    <div>
+                                                        <label data-i18n="polygon_sides">多边形边数:</label>
+                                                        <span id="preview-polygon-sides"></span>
+                                                    </div>
+                                                    <div>
+                                                        <label data-i18n="polygon_side_length">多边形边长:</label>
+                                                        <span id="preview-polygon-side-length"></span>
+                                                    </div>
+                                                </div>
+                                                <!-- 三角形输入 -->
+                                                <div id="preview-triangle-input" class="shape-input-preview" style="display: none;">
+                                                    <div>
+                                                        <label data-i18n="triangle_type">三角形类型:</label>
+                                                        <span id="preview-triangle-type"></span>
+                                                    </div>
+                                                    <div>
+                                                        <label data-i18n="triangle_side_length">三角形边长:</label>
+                                                        <span id="preview-triangle-side-length"></span>
+                                                    </div>
+                                                    <div id="preview-triangle-base-length-input" style="display: none;">
+                                                        <label data-i18n="triangle_base_length">三角形底边长:</label>
+                                                        <span id="preview-triangle-base-length"></span>
+                                                    </div>
+                                                    <div>
+                                                        <label data-i18n="triangle_orientation">三角形朝向:</label>
+                                                        <span id="preview-triangle-orientation"></span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label data-i18n="workpiece_height">工件高度:</label>
+                                                    <span id="preview-shape-height"></span>
+                                                </div>
+                                                <div>
+                                                    <label data-i18n="drop_count">前端单次下料数量:</label>
+                                                    <span id="preview-drop-count"></span>
+                                                </div>
+                                            </div>
+                                            <div class="input-section">
+                                                <h3 data-i18n="placement_settings">摆放设置</h3>
+                                                <div>
+                                                    <label data-i18n="horizontal_spacing">横向间距:</label>
+                                                    <span id="preview-horizontal-spacing"></span>
+                                                </div>
+                                                <div>
+                                                    <label data-i18n="vertical_spacing">纵向间距:</label>
+                                                    <span id="preview-vertical-spacing"></span>
+                                                </div>
+                                                <div>
+                                                    <label data-i18n="horizontal_border_distance">横向边框距离:</label>
+                                                    <span id="preview-horizontal-border-distance"></span>
+                                                </div>
+                                                <div>
+                                                    <label data-i18n="vertical_border_distance">纵向边框距离:</label>
+                                                    <span id="preview-vertical-border-distance"></span>
+                                                </div>
+                                                <div>
+                                                    <label data-i18n="material_thickness">包材厚度:</label>
+                                                    <span id="preview-material-thickness"></span>
+                                                </div>
+                                                <div>
+                                                    <label data-i18n="placement_layers">摆放层数:</label>
+                                                    <span id="preview-placement-layers"></span>
+                                                </div>
+                                                <div>
+                                                    <label data-i18n="layout_type">排布方式:</label>
+                                                    <span id="preview-layout-type"></span>
+                                                </div>
+                                                <div>
+                                                    <label data-i18n="place_type">摆盘方式:</label>
+                                                    <span id="preview-place-type"></span>
+                                                </div>
+                                                <div>
+                                                    <label data-i18n="remainder_turn">余行列转向:</label>
+                                                    <span id="preview-remainder-turn"></span>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="preview-image-container">
+                                        <img id="preview-plot" src="" alt="规划结果预览" style="max-width: 100%;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 从HTML data属性获取TP状态
+        window.isTP = document.body.dataset.isTp === 'true';
+    </script>
+    <script src="{{ url_for('static', path='i18n.js')  }}"></script>
+    <script src="{{ url_for('static', path='language-switcher.js')  }}"></script>
+    <script src="{{ url_for('static', path='extension-runtime.js')  }}"></script>
+    <script src="{{ url_for('static', path='script-compiled.js')  }}"></script>
+</body>
+</html>
