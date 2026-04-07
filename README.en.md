@@ -1,6 +1,6 @@
 # Agilebot Intelligent Palletizing Planning System
 
-**Version v7.4.0 | Updated: January 16, 2026**
+**Version v7.5 | Updated: April 7, 2026**
 
 ---
 
@@ -58,7 +58,7 @@ The system provides the following 5 main feature modules:
 
 ### 3. Manual Planning
 - **Grid Parameter Settings**: Set row count, column count, calculation method (row priority/column priority)
-- **Reference Point Reading**: Read three reference points (PR1, PR2, PR3) from robot
+- **Reference Point Reading**: Support custom PR IDs for 3 reference points (default 1/2/3), then read from robot
 - **Point Calculation**: Automatically calculate all grid point coordinates based on reference points
 - **Data Generation**: Generate complete point data table
 
@@ -73,6 +73,7 @@ The system provides the following 5 main feature modules:
   - Support angle compensation
   - Real-time compensation value update
 - **Data Writing**: Write planning data to robot P-point program
+  - Support configurable "Start P Point" (default 1) for continuous writing
 - **Recipe Saving**: Save current planning parameters as recipe
 
 ### 5. Recipe Library
@@ -114,6 +115,7 @@ The system provides the following 5 main feature modules:
 - English
 - Tiếng Việt (Vietnamese)
 - 日本語 (Japanese)
+- 한국어 (Korean)
 
 ---
 
@@ -147,6 +149,7 @@ The system provides the following 5 main feature modules:
 
 5. **Write to Robot**
    - Enter program name
+   - (Optional) Set start P point (default 1)
    - Click "Write P-points" to write data to robot
    - (Optional) Save as recipe for future use
 
@@ -161,7 +164,8 @@ The system provides the following 5 main feature modules:
 
 3. **Read Reference Points**
    - Click "Read Reference Points" button
-   - System automatically reads PR1, PR2, PR3 three reference points from robot
+   - Set PR IDs for reference point 1/2/3 (default 1/2/3)
+   - System reads three reference points based on the configured PR IDs
 
 4. **Calculate Points**
    - Confirm reference point data is correct
@@ -196,19 +200,26 @@ The system provides the following 5 main feature modules:
    - Confirm no longer needed before deleting recipe
 
 5. **Coordinate System Settings**:
-   - UF value range: 1-10
+   - UF value range: 0-30
    - Tool coordinate system ID range: 1-30
    - Coordinate system direction: Right-hand/Left-hand coordinate system
 
 6. **Manual Planning**:
-   - Reference points (PR1, PR2, PR3) must be preset in robot
-   - PR1: First row, first column
-   - PR2: Last row, first column
-   - PR3: First row, last column
+   - Reference point 1/2/3 support custom PR IDs (default 1/2/3)
+   - Recommended mapping:
+   - Reference point 1: First row, first column
+   - Reference point 2: Last row, first column
+   - Reference point 3: First row, last column
 
 ---
 
 ## Version History
+
+### v7.5 (April 7, 2026)
+- Added Korean UI support
+- Manual planning now supports custom reference PR IDs (default 1/2/3)
+- Added configurable "Start P Point" in Data List write flow
+- UF range updated to 0-30
 
 ### v7.4.0 (January 16, 2026)
 - Current stable version
@@ -219,4 +230,4 @@ The system provides the following 5 main feature modules:
 
 ---
 
-**Agilebot Intelligent Palletizing Planning System | Version v7.4.0 | Updated: January 16, 2026 | © 2026**
+**Agilebot Intelligent Palletizing Planning System | Version v7.5 | Updated: April 7, 2026 | © 2026**

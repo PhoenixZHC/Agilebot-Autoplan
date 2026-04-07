@@ -36,6 +36,9 @@
                     <button class="language-option" data-lang="ja">
                         <span>日本語</span>
                     </button>
+                    <button class="language-option" data-lang="ko">
+                        <span>한국어</span>
+                    </button>
                 </div>
             </div>
             <div class="version">{{ version }}</div>
@@ -107,6 +110,7 @@
                             <div class="input-group">
                                 <label for="uf_value" data-i18n="uf_value">UF值:</label>
                                 <select id="uf_value" name="uf_value">
+                                    <option value="0">0</option>
                                     <option value="1">1</option>
                                     <option value="2">2</option>
                                     <option value="3">3</option>
@@ -117,6 +121,26 @@
                                     <option value="8">8</option>
                                     <option value="9">9</option>
                                     <option value="10">10</option>
+                                    <option value="11">11</option>
+                                    <option value="12">12</option>
+                                    <option value="13">13</option>
+                                    <option value="14">14</option>
+                                    <option value="15">15</option>
+                                    <option value="16">16</option>
+                                    <option value="17">17</option>
+                                    <option value="18">18</option>
+                                    <option value="19">19</option>
+                                    <option value="20">20</option>
+                                    <option value="21">21</option>
+                                    <option value="22">22</option>
+                                    <option value="23">23</option>
+                                    <option value="24">24</option>
+                                    <option value="25">25</option>
+                                    <option value="26">26</option>
+                                    <option value="27">27</option>
+                                    <option value="28">28</option>
+                                    <option value="29">29</option>
+                                    <option value="30">30</option>
                                 </select>
                             </div>
 
@@ -419,6 +443,8 @@
                     <div class="program-input-section">
                         <label for="write_program_name" data-i18n="write_program_name">程序名称:</label>
                         <input type="text" id="write_program_name" name="write_program_name" data-i18n="program_name_placeholder" placeholder="输入程序名称" value="PUT">
+                        <label for="start_p_point" data-i18n="start_p_point">起始P点:</label>
+                        <input type="number" id="start_p_point" name="start_p_point" min="1" step="1" value="1">
                         <button id="write_p_data_button" data-i18n="write_p_data">写入P点</button>
                         <label for="recipe_name" data-i18n="recipe_name">配方名:</label>
                         <input type="text" id="recipe_name" name="recipe_name">
@@ -458,6 +484,18 @@
                     <div class="input-section">
                         <h4 data-i18n="grid_parameters">网格参数</h4>
                         <div class="grid-inputs">
+                            <div class="input-group">
+                                <label for="manual_pr1_id" data-i18n="manual_pr1_id">参考点1PR ID:</label>
+                                <input type="number" id="manual_pr1_id" name="manual_pr1_id" min="1" step="1" value="1">
+                            </div>
+                            <div class="input-group">
+                                <label for="manual_pr2_id" data-i18n="manual_pr2_id">参考点2PR ID:</label>
+                                <input type="number" id="manual_pr2_id" name="manual_pr2_id" min="1" step="1" value="2">
+                            </div>
+                            <div class="input-group">
+                                <label for="manual_pr3_id" data-i18n="manual_pr3_id">参考点3PR ID:</label>
+                                <input type="number" id="manual_pr3_id" name="manual_pr3_id" min="1" step="1" value="3">
+                            </div>
                             <div class="input-group">
                                 <label for="row_count" data-i18n="row_count">行数:</label>
                                 <input type="number" id="row_count" name="row_count" min="1" step="1" data-i18n="row_count_placeholder" placeholder="输入行数">

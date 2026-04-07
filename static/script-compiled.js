@@ -1141,6 +1141,8 @@ document.getElementById('read_p_data_button').addEventListener('click', function
           leftRightText = 'Right-Handed';
         } else if (currentLang === 'vi') {
           leftRightText = 'Hệ Tọa Độ Tay Phải';
+        } else if (currentLang === 'ko') {
+          leftRightText = '오른손 좌표계';
         } else {
           leftRightText = '右手坐标系'; // 默认中文
         }
@@ -1152,6 +1154,8 @@ document.getElementById('read_p_data_button').addEventListener('click', function
           leftRightText = 'Left-Handed';
         } else if (currentLang === 'vi') {
           leftRightText = 'Hệ Tọa Độ Tay Trái';
+        } else if (currentLang === 'ko') {
+          leftRightText = '왼손 좌표계';
         } else {
           leftRightText = '左手坐标系'; // 默认中文
         }
@@ -1174,6 +1178,7 @@ document.getElementById('read_p_data_button').addEventListener('click', function
 // 处理写入P点数据的按钮点击事件
 document.getElementById('write_p_data_button').addEventListener('click', function () {
   var programName = document.getElementById('write_program_name').value || 'PUT'; // 如果用户没有输入，则使用默认值 'PUT'
+  var startPPoint = parseInt(document.getElementById('start_p_point').value, 10);
   var prRegisterId = parseInt(document.getElementById('pr_register_id').value, 10); // 将PR寄存器ID转换为整数
   var ufValue = parseInt(document.getElementById('uf_value').value, 10); // 将UF值转换为整数
   var toolCount = parseInt(document.getElementById('tool_count').value, 10); // 获取工具数量
@@ -1186,6 +1191,10 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
   if (isNaN(prRegisterId)) {
     // 检查PR寄存器ID是否为有效数字
     alertError('请输入有效的PR寄存器ID');
+    return;
+  }
+  if (isNaN(startPPoint) || startPPoint < 1) {
+    alertError(t('error_invalid_start_p_point'));
     return;
   }
 
@@ -1205,8 +1214,8 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
 
   // 准备要写入的P点数据
   var pData = [];
-  rows.forEach(function (row) {
-    var pId = parseInt(row.cells[2].textContent, 10); // P_ID
+  rows.forEach(function (row, index) {
+    var pId = startPPoint + index; // 以起始P点为基准连续写入
     var x = parseFloat(row.cells[3].textContent); // X坐标
     var xCompensation = parseFloat(row.cells[4].textContent); // X补偿
     var y = parseFloat(row.cells[5].textContent); // Y坐标
@@ -1226,7 +1235,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
       // 暂时设置为0，稍后从PR寄存器中读取Z值并更新
       c: finalC,
       uf: ufValue,
-      tf: (pId - 1) % toolCount + 1,
+      tf: index % toolCount + 1,
       // 根据工具数量循环设置TF值
       left_right: left_right
     });
@@ -1615,8 +1624,17 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
 document.getElementById('read_reference_points').addEventListener('click', function () {
   var rowCount = parseInt(document.getElementById('row_count').value, 10);
   var colCount = parseInt(document.getElementById('col_count').value, 10);
+  var pr1Id = parseInt(document.getElementById('manual_pr1_id').value, 10);
+  var pr2Id = parseInt(document.getElementById('manual_pr2_id').value, 10);
+  var pr3Id = parseInt(document.getElementById('manual_pr3_id').value, 10);
   if (isNaN(rowCount) || isNaN(colCount) || rowCount < 1 || colCount < 1) {
     alertError('请输入有效的行数和列数（必须大于0）');
+    return;
+  }
+  if ([pr1Id, pr2Id, pr3Id].some(function (id) {
+    return isNaN(id) || id < 1;
+  })) {
+    alertError(t('error_invalid_manual_pr_id'));
     return;
   }
 
@@ -1624,13 +1642,8 @@ document.getElementById('read_reference_points').addEventListener('click', funct
   document.getElementById('calculation-status').style.display = 'block';
   document.getElementById('status-text').textContent = '正在读取参考点...';
 
-  // 读取PR1、PR2、PR3的值
-  Promise.all([readPRRegister(1),
-  // PR1
-  readPRRegister(2),
-  // PR2
-  readPRRegister(3) // PR3
-  ]).then(function (_ref) {
+  // 根据输入的PR ID读取参考点
+  Promise.all([readPRRegister(pr1Id), readPRRegister(pr2Id), readPRRegister(pr3Id)]).then(function (_ref) {
     var _ref2 = _slicedToArray(_ref, 3),
       pr1 = _ref2[0],
       pr2 = _ref2[1],
@@ -1653,11 +1666,14 @@ document.getElementById('read_reference_points').addEventListener('click', funct
     // 隐藏计算状态
     document.getElementById('calculation-status').style.display = 'none';
 
-    // 存储参考点数据供后续计算使用（不包含行数和列数，这些值会在计算时实时读取）
+    // 存储参考点数据和PR ID供后续计算使用（行列数在计算时实时读取）
     window.referencePoints = {
       pr1: pr1,
       pr2: pr2,
-      pr3: pr3
+      pr3: pr3,
+      pr1Id: pr1Id,
+      pr2Id: pr2Id,
+      pr3Id: pr3Id
     };
 
     // alertSuccess('参考点读取成功！'); // 已禁用成功提示弹窗
@@ -2564,19 +2580,21 @@ window.showManualPlanningPreview = function (data) {
     };
     var currentLang = getCurrentLanguage();
     var getFallbackText = function getFallbackText(key, zhText, enText, viText) {
+      var koText = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : enText;
+      if (currentLang === 'ko') return koText;
       if (currentLang === 'vi') return viText;
       if (currentLang === 'en') return enText;
       return zhText;
     };
-    var safeManualPlanningRecipeInfo = isTranslationValid(manualPlanningRecipeInfoText, 'manual_planning_recipe_info') ? manualPlanningRecipeInfoText : getFallbackText('manual_planning_recipe_info', '手动规划配方信息', 'Manual Planning Recipe Info', 'Thông Tin Công Thức Lập Kế Hoạch Thủ Công');
-    var safeRecipeName = isTranslationValid(recipeNameText, 'recipe_name') ? recipeNameText : getFallbackText('recipe_name', '配方名:', 'Recipe Name:', 'Tên Công Thức:');
-    var safeRecipeId = isTranslationValid(recipeIdText, 'recipe_id') ? recipeIdText : getFallbackText('recipe_id', '配方编号:', 'Recipe ID:', 'ID Công Thức:');
-    var safePointTotalCount = isTranslationValid(pointTotalCountText, 'point_total_count') ? pointTotalCountText : getFallbackText('point_total_count', '点位总数:', 'Total Points:', 'Tổng Số Điểm:');
-    var safeRowCount = isTranslationValid(rowCountText, 'row_count') ? rowCountText : getFallbackText('row_count', '行数:', 'Row Count:', 'Số Hàng:');
-    var safeColCount = isTranslationValid(colCountText, 'col_count') ? colCountText : getFallbackText('col_count', '列数:', 'Column Count:', 'Số Cột:');
-    var safeCalculationMethod = isTranslationValid(calculationMethodText, 'calculation_method') ? calculationMethodText : getFallbackText('calculation_method', '计算方式:', 'Calculation Method:', 'Phương Pháp Tính Toán:');
-    var safeCalculationMethodRow = isTranslationValid(calculationMethodRowText, 'calculation_method_row') ? calculationMethodRowText : getFallbackText('calculation_method_row', '行优先', 'Row Priority', 'Ưu Tiên Hàng');
-    var safeCalculationMethodCol = isTranslationValid(calculationMethodColText, 'calculation_method_col') ? calculationMethodColText : getFallbackText('calculation_method_col', '列优先', 'Column Priority', 'Ưu Tiên Cột');
+    var safeManualPlanningRecipeInfo = isTranslationValid(manualPlanningRecipeInfoText, 'manual_planning_recipe_info') ? manualPlanningRecipeInfoText : getFallbackText('manual_planning_recipe_info', '手动规划配方信息', 'Manual Planning Recipe Info', 'Thông Tin Công Thức Lập Kế Hoạch Thủ Công', '수동 계획 레시피 정보');
+    var safeRecipeName = isTranslationValid(recipeNameText, 'recipe_name') ? recipeNameText : getFallbackText('recipe_name', '配方名:', 'Recipe Name:', 'Tên Công Thức:', '레시피 이름:');
+    var safeRecipeId = isTranslationValid(recipeIdText, 'recipe_id') ? recipeIdText : getFallbackText('recipe_id', '配方编号:', 'Recipe ID:', 'ID Công Thức:', '레시피 ID:');
+    var safePointTotalCount = isTranslationValid(pointTotalCountText, 'point_total_count') ? pointTotalCountText : getFallbackText('point_total_count', '点位总数:', 'Total Points:', 'Tổng Số Điểm:', '총 점 개수:');
+    var safeRowCount = isTranslationValid(rowCountText, 'row_count') ? rowCountText : getFallbackText('row_count', '行数:', 'Row Count:', 'Số Hàng:', '행 수:');
+    var safeColCount = isTranslationValid(colCountText, 'col_count') ? colCountText : getFallbackText('col_count', '列数:', 'Column Count:', 'Số Cột:', '열 수:');
+    var safeCalculationMethod = isTranslationValid(calculationMethodText, 'calculation_method') ? calculationMethodText : getFallbackText('calculation_method', '计算方式:', 'Calculation Method:', 'Phương Pháp Tính Toán:', '계산 방식:');
+    var safeCalculationMethodRow = isTranslationValid(calculationMethodRowText, 'calculation_method_row') ? calculationMethodRowText : getFallbackText('calculation_method_row', '行优先', 'Row Priority', 'Ưu Tiên Hàng', '행 우선');
+    var safeCalculationMethodCol = isTranslationValid(calculationMethodColText, 'calculation_method_col') ? calculationMethodColText : getFallbackText('calculation_method_col', '列优先', 'Column Priority', 'Ưu Tiên Cột', '열 우선');
     var finalCalculationMethodText = data.manualPlanningInfo && data.manualPlanningInfo.calculationMethod === 'row_priority' ? safeCalculationMethodRow : safeCalculationMethodCol;
     manualPreviewElement.innerHTML = "\n            <h3>".concat(safeManualPlanningRecipeInfo, "</h3>\n            <div class=\"manual-planning-info\">\n                <p><strong>").concat(safeRecipeName, "</strong> ").concat(data.recipeName || '', "</p>\n                <p><strong>").concat(safeRecipeId, "</strong> ").concat(data.recipeId || '', "</p>\n                <p><strong>").concat(safePointTotalCount, "</strong> ").concat(data.tableData ? data.tableData.length : 0, "</p>\n                ").concat(data.manualPlanningInfo ? "\n                    <p><strong>".concat(safeRowCount, "</strong> ").concat(data.manualPlanningInfo.rowCount || '', "</p>\n                    <p><strong>").concat(safeColCount, "</strong> ").concat(data.manualPlanningInfo.colCount || '', "</p>\n                    <p><strong>").concat(safeCalculationMethod, "</strong> ").concat(finalCalculationMethodText, "</p>\n                ") : '', "\n            </div>\n        ");
 

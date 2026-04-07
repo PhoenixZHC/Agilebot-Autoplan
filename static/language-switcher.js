@@ -121,10 +121,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         // 检查当前文本是右手还是左手（支持多种语言）
                         const isRightHanded = currentText === '右手' || currentText === '右手坐标系' || 
                                              currentText === 'Right-Handed' || 
-                                             currentText === 'Hệ Tọa Độ Tay Phải';
+                                             currentText === 'Hệ Tọa Độ Tay Phải' ||
+                                             currentText === '오른손 좌표계';
                         const isLeftHanded = currentText === '左手' || currentText === '左手坐标系' || 
                                             currentText === 'Left-Handed' || 
-                                            currentText === 'Hệ Tọa Độ Tay Trái';
+                                            currentText === 'Hệ Tọa Độ Tay Trái' ||
+                                            currentText === '왼손 좌표계';
                         
                         if (isRightHanded) {
                             const rightText = t('left_right_right');
@@ -170,8 +172,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // 如果无法从状态判断，再检查按钮文本
             if (!isActuallyConnected) {
                 const currentText = connectButton.textContent.trim();
-                const isDisconnected = currentText === t('connect') || currentText === '连接' || currentText === 'Connect' || currentText === 'Kết Nối' || currentText === '接続';
-                const isConnected = currentText === t('disconnect') || currentText === '断开连接' || currentText === 'Disconnect' || currentText === 'Ngắt Kết Nối' || currentText === '切断';
+                const isDisconnected = currentText === t('connect') || currentText === '连接' || currentText === 'Connect' || currentText === 'Kết Nối' || currentText === '接続' || currentText === '연결';
+                const isConnected = currentText === t('disconnect') || currentText === '断开连接' || currentText === 'Disconnect' || currentText === 'Ngắt Kết Nối' || currentText === '切断' || currentText === '연결 해제';
                 
                 if (isConnected) {
                     connectButton.textContent = t('disconnect');

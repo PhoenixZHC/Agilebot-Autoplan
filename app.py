@@ -891,7 +891,7 @@ async def write_p_data(request: Request):
             y = float(p['y'])  # 确保Y是浮点数
             z = float(p['z'])  # 确保Z是浮点数
             c = float(p['c'])  # 确保C是浮点数
-            uf = int(p.get('uf', 1))  # 确保UF是整数
+            uf = int(p.get('uf', 0))  # 确保UF是整数，默认从0开始
             tf = int(p.get('tf', 1))  # 确保TF是整数
             left_right = int(p.get('left_right', 1))  # 确保坐标系方向是整数
 
@@ -2640,7 +2640,7 @@ async def auto_write_recipe(request: Request):
             y = float(p['y'])
             z = float(p.get('z', 0))  # 添加默认值，因为配方数据中可能没有z字段
             c = float(p['c'])
-            uf = int(p.get('uf', 1))  # 使用默认值1
+            uf = int(p.get('uf', 0))  # 使用默认值0
             tf = int(p.get('tf', 1))  # 使用默认值1
             left_right = int(p.get('left_right', 1))  # 使用默认值1
 
