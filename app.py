@@ -3,7 +3,7 @@
 #然后再pnpm build
 #插件包版本如果更新需要pnpm copy
 #打包命令
-#pyinstaller --onefile --add-data "templates;templates" --add-data "static;static" -i C:\Users\Phoenix\Documents\AUTOPLAN\AUTOPLAN_V3.3\static\favicon.ico --name 启动系统 app.py
+#pyinstaller --noconfirm --clean --onefile --name AutoPlan_V7.5 -i "D:/Agilebot-Autoplan/static/favicon.ico" --add-data "templates;templates" --add-data "static;static" --add-data "config.json;." --collect-all numpy --collect-all matplotlib --hidden-import numpy._core._exceptions app.py
 #安装依赖
 #pip install fastapi[standard]
 
