@@ -25,9 +25,9 @@ if defined PORT_PID (
 
 :after_kill_port
 
-set "EXE_PATH=.\dist\AutoPlan_V7.5.exe"
+set "EXE_PATH=.\dist\AutoPlan_V7.5.1.exe"
 if not exist "%EXE_PATH%" (
-    set "EXE_PATH=.\AutoPlan_V7.5.exe"
+    set "EXE_PATH=.\AutoPlan_V7.5.1.exe"
 )
 
 REM Check executable
