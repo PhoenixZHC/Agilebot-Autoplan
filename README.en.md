@@ -1,6 +1,6 @@
 # Agilebot Intelligent Palletizing Planning System
 
-**Version v7.5 | Updated: April 7, 2026**
+**Version v7.5.1 | Updated: April 8, 2026**
 
 ---
 
@@ -17,11 +17,7 @@
 ---
 ## Version Information
 
-This extension has been upgraded to SDK version `PYTHON_v2.0.1.0`.
-
-Compatibility requirements:
-- SDK `v2.0.1.x` targets robot software `Copper v7.7.x.x / Bronze v7.7.x.x`
-- Please ensure the controller software version meets the requirement before deployment
+This extension is developed using SDK version PYTHON_v1.7.1.3. Please ensure your robot system environment is compatible with this version.
 
 ---
 
@@ -219,6 +215,11 @@ The system provides the following 5 main feature modules:
 
 ## Version History
 
+### v7.5.1 (April 8, 2026)
+- Added C column display in manual planning reference points table
+- Unified reference point labels to "Reference Point 1/2/3"
+- Fixed manual planning error caused by unintended fallback read of default PR1 during calculation
+
 ### v7.5 (April 7, 2026)
 - Added Korean UI support
 - Manual planning now supports custom reference PR IDs (default 1/2/3)
@@ -234,4 +235,4 @@ The system provides the following 5 main feature modules:
 
 ---
 
-**Agilebot Intelligent Palletizing Planning System | Version v7.5 | Updated: April 7, 2026 | © 2026**
+**Agilebot Intelligent Palletizing Planning System | Version v7.5.1 | Updated: April 8, 2026 | © 2026**

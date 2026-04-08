@@ -1652,12 +1652,15 @@ document.getElementById('read_reference_points').addEventListener('click', funct
     document.getElementById('pr1-x').textContent = pr1.x.toFixed(2);
     document.getElementById('pr1-y').textContent = pr1.y.toFixed(2);
     document.getElementById('pr1-z').textContent = pr1.z.toFixed(2);
+    document.getElementById('pr1-c').textContent = pr1.c.toFixed(2);
     document.getElementById('pr2-x').textContent = pr2.x.toFixed(2);
     document.getElementById('pr2-y').textContent = pr2.y.toFixed(2);
     document.getElementById('pr2-z').textContent = pr2.z.toFixed(2);
+    document.getElementById('pr2-c').textContent = pr2.c.toFixed(2);
     document.getElementById('pr3-x').textContent = pr3.x.toFixed(2);
     document.getElementById('pr3-y').textContent = pr3.y.toFixed(2);
     document.getElementById('pr3-z').textContent = pr3.z.toFixed(2);
+    document.getElementById('pr3-c').textContent = pr3.c.toFixed(2);
 
     // 显示参考点表格和计算按钮
     document.querySelector('.reference-points-section').style.display = 'block';
@@ -1721,26 +1724,19 @@ document.getElementById('calculate_points').addEventListener('click', function (
   // 计算所有点的坐标（使用当前输入框中的最新值）
   var allPoints = calculateAllPoints(pr1, pr2, pr3, currentRowCount, currentColCount, calculationMethod);
 
-  // 读取Z&C参考寄存器对应的PR寄存器的C值
-  var prRegisterId = parseInt(document.getElementById('pr_register_id').value, 10);
-  readPRRegister(prRegisterId).then(function (prData) {
-    var cValue = prData.c;
+  // 手动规划优先使用参考点1的C值，避免误读默认PR1导致报错
+  var cValue = Number.isFinite(pr1.c) ? pr1.c : 0;
 
-    // 将计算结果填入数据清单表格
-    fillDataListTable(allPoints, cValue);
+  // 将计算结果填入数据清单表格
+  fillDataListTable(allPoints, cValue);
 
-    // 隐藏计算状态
-    document.getElementById('calculation-status').style.display = 'none';
+  // 隐藏计算状态
+  document.getElementById('calculation-status').style.display = 'none';
 
-    // 切换到数据清单页面
-    showSection('data-list-content');
-    setActiveButton('data-list-btn');
-    alertSuccess("\u8BA1\u7B97\u5B8C\u6210\uFF01\u5171\u751F\u6210 ".concat(allPoints.length, " \u4E2A\u70B9\u4F4D"));
-  }).catch(function (error) {
-    console.error('读取C值失败:', error);
-    alertError('读取C值失败: ' + error.message);
-    document.getElementById('calculation-status').style.display = 'none';
-  });
+  // 切换到数据清单页面
+  showSection('data-list-content');
+  setActiveButton('data-list-btn');
+  alertSuccess("\u8BA1\u7B97\u5B8C\u6210\uFF01\u5171\u751F\u6210 ".concat(allPoints.length, " \u4E2A\u70B9\u4F4D"));
 });
 
 // 读取PR寄存器的函数
