@@ -1,6 +1,6 @@
 # Agilebot Intelligent Palletizing Planning System
 
-**Version v7.5.1 | Updated: April 8, 2026**
+**Version v7.5.2 | Updated: April 9, 2026**
 
 ---
 
@@ -215,24 +215,30 @@ The system provides the following 5 main feature modules:
 
 ## Version History
 
+### v7.5.2 (April 9, 2026)
+- Added desktop edition
+- Tool count range adjusted to 0-10
+- When tool count is 0, writing P-points uses TF0
+- Skip automatic TF updates when tool count is 0/1 to avoid invalid error prompts
+
 ### v7.5.1 (April 8, 2026)
-- Added C column display in manual planning reference points table
-- Unified reference point labels to "Reference Point 1/2/3"
-- Fixed manual planning error caused by unintended fallback read of default PR1 during calculation
+- Added a C column to the manual planning reference-point coordinate table
+- Unified reference-point labels to "Reference Point 1/2/3"
+- Fixed an error where manual planning calculation incorrectly read default PR1
 
 ### v7.5 (April 7, 2026)
 - Added Korean UI support
-- Manual planning now supports custom reference PR IDs (default 1/2/3)
-- Added configurable "Start P Point" in Data List write flow
-- UF range updated to 0-30
+- Manual planning supports custom reference-point PR IDs (default 1/2/3)
+- Added "Start P Point" write-start configuration in Data List
+- UF range adjusted to 0-30
 
 ### v7.4.0 (January 16, 2026)
 - Current stable version
-- Support intelligent planning and manual planning
-- Complete recipe management system
+- Supports intelligent planning and manual planning
+- Complete recipe management module
 - Multi-language support
-- External call monitoring function
+- External call monitoring
 
 ---
 
-**Agilebot Intelligent Palletizing Planning System | Version v7.5.1 | Updated: April 8, 2026 | © 2026**
+**Agilebot Intelligent Palletizing Planning System | Version v7.5.2 | Updated: April 9, 2026 | © 2026**

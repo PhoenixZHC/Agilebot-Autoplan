@@ -1269,7 +1269,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
             z: 0, // 暂时设置为0，稍后从PR寄存器中读取Z值并更新
             c: finalC,
             uf: ufValue,
-            tf: (index % toolCount) + 1, // 根据工具数量循环设置TF值
+            tf: toolCount === 0 ? 0 : (index % toolCount) + 1, // 工具数量为0时写入TF0，否则按数量循环TF1..N
             left_right: left_right
         });
     });
@@ -1516,8 +1516,10 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         return;
     }
 
-    // 如果工具数量为 1，直接返回，不需要修改 TF
-    if (toolCount === 1) {
+    // 工具数量为0或1时，不需要执行自动TF更新
+    // - 0: 点位写入时已按逻辑写入TF0
+    // - 1: 仅使用TF1，无需额外复制/更新TF
+    if (toolCount <= 1) {
         return;
     }
 
