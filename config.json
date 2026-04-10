@@ -4,7 +4,7 @@
   "type": "generalService",
   "scriptLang": "python",
   "description": "智能摆盘规划系统",
-  "version": "7.5.2",
+  "version": "7.5.3",
   "entry": "app.py",
   "url": "/",
   "contact": "zhanghaoce@agilebot.com.cn",

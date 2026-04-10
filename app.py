@@ -3,7 +3,7 @@
 #然后再pnpm build
 #插件包版本如果更新需要pnpm copy
 #打包命令
-#pyinstaller --noconfirm --clean --onefile --name AutoPlan_V7.5.2 -i "D:/Agilebot-Autoplan/static/favicon.ico" --add-data "templates;templates" --add-data "static;static" --add-data "config.json;." --collect-all numpy --collect-all matplotlib --hidden-import numpy._core._exceptions app.py
+#pyinstaller --noconfirm --clean --onefile --name AutoPlan_V7.5.3 -i "D:/Agilebot-Autoplan/static/favicon.ico" --add-data "templates;templates" --add-data "static;static" --add-data "config.json;." --collect-all numpy --collect-all matplotlib --hidden-import numpy._core._exceptions app.py
 #安装依赖
 #pip install fastapi[standard]
 
@@ -869,6 +869,12 @@ async def write_p_data(request: Request):
         return JSONResponse({'error': '未连接机器人'}, 400)
 
     try:
+        def _to_int_or_default(value, default_value):
+            # 前端可能显式传 null/空字符串，这里按默认值处理
+            if value is None or value == '':
+                return default_value
+            return int(value)
+
         # 检查机器人状态
         state, ret = robot_arm.get_robot_status()
         if ret != StatusCodeEnum.OK:
@@ -891,9 +897,9 @@ async def write_p_data(request: Request):
             y = float(p['y'])  # 确保Y是浮点数
             z = float(p['z'])  # 确保Z是浮点数
             c = float(p['c'])  # 确保C是浮点数
-            uf = int(p.get('uf', 0))  # 确保UF是整数，默认从0开始
-            tf = int(p.get('tf', 1))  # 确保TF是整数
-            left_right = int(p.get('left_right', 1))  # 确保坐标系方向是整数
+            uf = _to_int_or_default(p.get('uf', 0), 0)  # 确保UF是整数，默认从0开始
+            tf = _to_int_or_default(p.get('tf', 1), 1)  # 确保TF是整数
+            left_right = _to_int_or_default(p.get('left_right', 1), 1)  # 确保坐标系方向是整数
 
             # 读取当前P点的位姿数据
             if robot_arm is None:

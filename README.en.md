@@ -1,6 +1,6 @@
 # Agilebot Intelligent Palletizing Planning System
 
-**Version v7.5.2 | Updated: April 9, 2026**
+**Version v7.5.3 | Updated: April 10, 2026**
 
 ---
 
@@ -215,6 +215,10 @@ The system provides the following 5 main feature modules:
 
 ## Version History
 
+### v7.5.3 (April 10, 2026)
+- Version bumped to 7.5.3
+- Fixed an issue where writing P-points could fail when `None` values were passed to `int()`
+
 ### v7.5.2 (April 9, 2026)
 - Added desktop edition
 - Tool count range adjusted to 0-10
@@ -241,4 +245,4 @@ The system provides the following 5 main feature modules:
 
 ---
 
-**Agilebot Intelligent Palletizing Planning System | Version v7.5.2 | Updated: April 9, 2026 | © 2026**
+**Agilebot Intelligent Palletizing Planning System | Version v7.5.3 | Updated: April 10, 2026 | © 2026**
