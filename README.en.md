@@ -1,6 +1,6 @@
 # Agilebot Intelligent Palletizing Planning System
 
-**Version v7.5.3 | Updated: April 10, 2026**
+**Version v7.5.4 | Updated: April 10, 2026**
 
 ---
 
@@ -215,6 +215,10 @@ The system provides the following 5 main feature modules:
 
 ## Version History
 
+### v7.5.4 (April 10, 2026)
+- Fixed an issue where writing P-points still ended up with TF1 when tool count was set to 0
+- Added version query parameters for static assets to prevent stale browser cache from using old scripts
+
 ### v7.5.3 (April 10, 2026)
 - Version bumped to 7.5.3
 - Fixed an issue where writing P-points could fail when `None` values were passed to `int()`
@@ -245,4 +249,4 @@ The system provides the following 5 main feature modules:
 
 ---
 
-**Agilebot Intelligent Palletizing Planning System | Version v7.5.3 | Updated: April 10, 2026 | © 2026**
+**Agilebot Intelligent Palletizing Planning System | Version v7.5.4 | Updated: April 10, 2026 | © 2026**

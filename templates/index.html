@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智能摆盘规划系统</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='styles.css')  }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css')  }}?v={{ version }}">
 </head>
 <body data-is-tp="{{ 'true' if is_tp else 'false' }}">
     <!-- 标题栏 -->
@@ -770,9 +770,9 @@
         // 从HTML data属性获取TP状态
         window.isTP = document.body.dataset.isTp === 'true';
     </script>
-    <script src="{{ url_for('static', path='i18n.js')  }}"></script>
-    <script src="{{ url_for('static', path='language-switcher.js')  }}"></script>
-    <script src="{{ url_for('static', path='extension-runtime.js')  }}"></script>
-    <script src="{{ url_for('static', path='script-compiled.js')  }}"></script>
+    <script src="{{ url_for('static', path='i18n.js')  }}?v={{ version }}"></script>
+    <script src="{{ url_for('static', path='language-switcher.js')  }}?v={{ version }}"></script>
+    <script src="{{ url_for('static', path='extension-runtime.js')  }}?v={{ version }}"></script>
+    <script src="{{ url_for('static', path='script-compiled.js')  }}?v={{ version }}"></script>
 </body>
 </html>

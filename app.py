@@ -3,7 +3,7 @@
 #然后再pnpm build
 #插件包版本如果更新需要pnpm copy
 #打包命令
-#pyinstaller --noconfirm --clean --onefile --name AutoPlan_V7.5.3 -i "D:/Agilebot-Autoplan/static/favicon.ico" --add-data "templates;templates" --add-data "static;static" --add-data "config.json;." --collect-all numpy --collect-all matplotlib --hidden-import numpy._core._exceptions app.py
+#pyinstaller --noconfirm --clean --onefile --name AutoPlan_V7.5.4 -i "D:/Agilebot-Autoplan/static/favicon.ico" --add-data "templates;templates" --add-data "static;static" --add-data "config.json;." --collect-all numpy --collect-all matplotlib --hidden-import numpy._core._exceptions app.py
 #安装依赖
 #pip install fastapi[standard]
 
@@ -891,6 +891,7 @@ async def write_p_data(request: Request):
             return JSONResponse({'error': f'机器人当前不处于空闲状态（实际状态：{state.msg}），无法写入P点'}, 400)
 
         # 批量写入P点数据
+        print(f"[DEBUG] 收到 p_data 共 {len(p_data)} 个点, 前3个点的原始tf值: {[p.get('tf') for p in p_data[:3]]}")
         for p in p_data:
             pose_id = p['id']
             x = float(p['x'])  # 确保X是浮点数
@@ -900,6 +901,7 @@ async def write_p_data(request: Request):
             uf = _to_int_or_default(p.get('uf', 0), 0)  # 确保UF是整数，默认从0开始
             tf = _to_int_or_default(p.get('tf', 1), 1)  # 确保TF是整数
             left_right = _to_int_or_default(p.get('left_right', 1), 1)  # 确保坐标系方向是整数
+            print(f"[DEBUG] P点{pose_id}: 原始tf={p.get('tf')}, 转换后tf={tf}, uf={uf}")
 
             # 读取当前P点的位姿数据
             if robot_arm is None:

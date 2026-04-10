@@ -1274,6 +1274,9 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         });
     });
 
+    console.log('[DEBUG] toolCount =', toolCount, ', typeof =', typeof toolCount);
+    console.log('[DEBUG] pData tf values =', pData.map(p => p.tf));
+
     // 发送请求到后端读取PR寄存器的Z和C值
     fetch('/read_pr_register', {
         method: 'POST',
@@ -1299,6 +1302,8 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         pData.forEach(p => {
             p.z = zValue;
         });
+
+        console.log('[DEBUG] 即将发送给后端的 p_data:', JSON.stringify(pData.slice(0, 3)));
 
         // 发送请求到后端写入P点数据
         return fetch('/write_p_data', {
