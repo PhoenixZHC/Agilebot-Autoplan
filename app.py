@@ -3,7 +3,7 @@
 #然后再pnpm build
 #插件包版本如果更新需要pnpm copy
 #打包命令
-#pyinstaller --noconfirm --clean --onefile --name AutoPlan_V7.5.4 -i "D:/Agilebot-Autoplan/static/favicon.ico" --add-data "templates;templates" --add-data "static;static" --add-data "config.json;." --collect-all numpy --collect-all matplotlib --hidden-import numpy._core._exceptions app.py
+#pyinstaller --noconfirm --clean --onefile --name AutoPlan_V7.5.5 -i "D:/Agilebot-Autoplan/static/favicon.ico" --add-data "templates;templates" --add-data "static;static" --add-data "config.json;." --collect-all numpy --collect-all matplotlib --hidden-import numpy._core._exceptions app.py
 #安装依赖
 #pip install fastapi[standard]
 
@@ -46,6 +46,76 @@ def calculate_bounding_box(vertices):
     min_y, max_y = min(y_cords), max(y_cords)
     return min_x, min_y, max_x - min_x, max_y - min_y
 
+def fit_count(effective_size, item_size, step_size):
+    if effective_size <= 0 or item_size <= 0 or step_size <= 0:
+        return 0
+    return max(0, math.floor((effective_size - item_size) / step_size) + 1)
+
+def parse_float_field(data, field):
+    try:
+        value = float(data[field])
+    except (TypeError, ValueError):
+        raise ValueError(f"{field} must be a number")
+    if not math.isfinite(value):
+        raise ValueError(f"{field} must be finite")
+    return value
+
+def validate_positive(field, value):
+    if value <= 0:
+        raise ValueError(f"{field} must be greater than 0")
+
+def validate_non_negative(field, value):
+    if value < 0:
+        raise ValueError(f"{field} must be greater than or equal to 0")
+
+def parse_recipe_id(recipe_id):
+    try:
+        value = int(recipe_id)
+    except (TypeError, ValueError):
+        raise ValueError("recipeId must be a positive integer")
+    if value <= 0:
+        raise ValueError("recipeId must be a positive integer")
+    return value
+
+def read_recipe_id(recipe_data):
+    try:
+        return parse_recipe_id(recipe_data.get('recipeId'))
+    except ValueError:
+        return None
+
+def get_recipe_path(recipe_name):
+    if recipe_name is None:
+        raise ValueError("recipeName is required")
+    recipe_name = str(recipe_name).strip()
+    if not recipe_name:
+        raise ValueError("recipeName is required")
+    if recipe_name.endswith('.json'):
+        recipe_name = recipe_name[:-5]
+    if (
+        os.path.isabs(recipe_name)
+        or recipe_name in {'.', '..'}
+        or os.path.basename(recipe_name) != recipe_name
+        or any(ch in recipe_name for ch in ('/', '\\', ':', '*', '?', '"', '<', '>', '|'))
+        or any(ord(ch) < 32 for ch in recipe_name)
+    ):
+        raise ValueError("recipeName contains invalid characters")
+    recipe_dir = 'data'
+    os.makedirs(recipe_dir, exist_ok=True)
+    return os.path.join(recipe_dir, f'{recipe_name}.json'), recipe_name
+
+def sync_filesystem():
+    if platform.system().lower() != 'windows':
+        os.system("sync")
+        os.system("sync")
+
+def opposite_triangle_orientation(orientation):
+    return {
+        "up": "down",
+        "down": "up",
+        "left": "right",
+        "right": "left",
+    }[orientation]
+
 def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width, horizontal_spacing, vertical_spacing, horizontal_border_distance, vertical_border_distance,
                             is_circle=False, is_rectangle=False, polygon_sides=None, is_triangle=False, triangle_type=None, triangle_orientation=None, is_honeycomb=False, place_type='row', polygon_arrangement='diagonal'):
     """计算给定框内可填充的指定形状的中心位置及数量"""
@@ -59,13 +129,8 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
 
             if is_honeycomb:
                 # 蜂窝式排布
-                circles_per_row = math.floor((effective_row_length - diameter) / (diameter + horizontal_spacing))
-                if effective_row_length - (circles_per_row * (diameter + horizontal_spacing) + diameter) >= 0:
-                    circles_per_row += 1
-
-                circles_per_column = math.floor((effective_column_width - diameter) / (diameter * math.sqrt(3) / 2 + vertical_spacing))
-                if effective_column_width - (circles_per_column * (diameter * math.sqrt(3) / 2 + vertical_spacing) + diameter) >= 0:
-                    circles_per_column += 1
+                circles_per_row = fit_count(effective_row_length, diameter, diameter + horizontal_spacing)
+                circles_per_column = fit_count(effective_column_width, diameter, diameter * math.sqrt(3) / 2 + vertical_spacing)
 
                 total_shapes = 0
                 shape_centers = []
@@ -102,13 +167,8 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
 
             else:
                 # 阵列式排布
-                circles_per_row = math.floor((effective_row_length - diameter) / (diameter + horizontal_spacing))
-                if effective_row_length - (circles_per_row * (diameter + horizontal_spacing) + diameter) >= 0:
-                    circles_per_row += 1
-
-                circles_per_column = math.floor((effective_column_width - diameter) / (diameter + vertical_spacing))
-                if effective_column_width - (circles_per_column * (diameter + vertical_spacing) + diameter) >= 0:
-                    circles_per_column += 1
+                circles_per_row = fit_count(effective_row_length, diameter, diameter + horizontal_spacing)
+                circles_per_column = fit_count(effective_column_width, diameter, diameter + vertical_spacing)
 
                 total_shapes = circles_per_row * circles_per_column
 
@@ -139,13 +199,8 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
 
             if is_honeycomb:
                 # 蜂窝式排布
-                rectangles_per_row = math.floor((effective_row_length - shape_length) / (shape_length + horizontal_spacing))
-                if effective_row_length - (rectangles_per_row * (shape_length + horizontal_spacing) + shape_length) >= 0:
-                    rectangles_per_row += 1
-
-                rectangles_per_column = math.floor((effective_column_width - shape_width) / (shape_width * math.sqrt(3) / 2 + vertical_spacing))
-                if effective_column_width - (rectangles_per_column * (shape_width * math.sqrt(3) / 2 + vertical_spacing) + shape_width) >= 0:
-                    rectangles_per_column += 1
+                rectangles_per_row = fit_count(effective_row_length, shape_length, shape_length + horizontal_spacing)
+                rectangles_per_column = fit_count(effective_column_width, shape_width, shape_width * math.sqrt(3) / 2 + vertical_spacing)
 
                 total_shapes = 0
                 shape_centers = []
@@ -182,13 +237,8 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
 
             else:
                 # 阵列式排布
-                rectangles_per_row = math.floor((effective_row_length - shape_length) / (shape_length + horizontal_spacing))
-                if effective_row_length - (rectangles_per_row * (shape_length + horizontal_spacing) + shape_length) >= 0:
-                    rectangles_per_row += 1
-
-                rectangles_per_column = math.floor((effective_column_width - shape_width) / (shape_width + vertical_spacing))
-                if effective_column_width - (rectangles_per_column * (shape_width + vertical_spacing) + shape_width) >= 0:
-                    rectangles_per_column += 1
+                rectangles_per_row = fit_count(effective_row_length, shape_length, shape_length + horizontal_spacing)
+                rectangles_per_column = fit_count(effective_column_width, shape_width, shape_width + vertical_spacing)
 
                 total_shapes = rectangles_per_row * rectangles_per_column
 
@@ -220,9 +270,11 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
             # 计算一个示例多边形的顶点
             example_center = (0, 0)
             vertices = []
+            start_angle = math.pi / 6 if polygon_sides == 6 and polygon_arrangement == 'edge' else 0
             for i in range(polygon_sides):
-                x = example_center[0] + circumradius * math.cos(i * math.pi * 2 / polygon_sides)
-                y = example_center[1] + circumradius * math.sin(i * math.pi * 2 / polygon_sides)
+                angle = start_angle + i * math.pi * 2 / polygon_sides
+                x = example_center[0] + circumradius * math.cos(angle)
+                y = example_center[1] + circumradius * math.sin(angle)
                 vertices.append((x, y))
 
             # 计算最小外接矩形
@@ -246,13 +298,8 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                     center_distance = bounding_box_length + horizontal_spacing
                     vertical_distance = bounding_box_width + vertical_spacing
 
-                polygons_per_row = math.floor((effective_row_length - bounding_box_length) / center_distance)
-                if effective_row_length - (polygons_per_row * center_distance + bounding_box_length) >= 0:
-                    polygons_per_row += 1
-
-                polygons_per_column = math.floor((effective_column_width - bounding_box_width) / vertical_distance)
-                if effective_column_width - (polygons_per_column * vertical_distance + bounding_box_width) >= 0:
-                    polygons_per_column += 1
+                polygons_per_row = fit_count(effective_row_length, bounding_box_length, center_distance)
+                polygons_per_column = fit_count(effective_column_width, bounding_box_width, vertical_distance)
 
                 total_shapes = 0
                 shape_centers = []
@@ -302,13 +349,8 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                     center_distance = bounding_box_length + horizontal_spacing
                     vertical_distance = bounding_box_width + vertical_spacing
 
-                polygons_per_row = math.floor((effective_row_length - bounding_box_length) / center_distance)
-                if effective_row_length - (polygons_per_row * center_distance + bounding_box_length) >= 0:
-                    polygons_per_row += 1
-
-                polygons_per_column = math.floor((effective_column_width - bounding_box_width) / vertical_distance)
-                if effective_column_width - (polygons_per_column * vertical_distance + bounding_box_width) >= 0:
-                    polygons_per_column += 1
+                polygons_per_row = fit_count(effective_row_length, bounding_box_length, center_distance)
+                polygons_per_column = fit_count(effective_column_width, bounding_box_width, vertical_distance)
 
                 total_shapes = polygons_per_row * polygons_per_column
 
@@ -415,13 +457,8 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
 
             if is_honeycomb:
                 # 蜂窝式排布
-                triangles_per_row = math.floor((effective_row_length - bounding_box_length) / (bounding_box_length + horizontal_spacing))
-                if effective_row_length - (triangles_per_row * (bounding_box_length + horizontal_spacing) + bounding_box_length) >= 0:
-                    triangles_per_row += 1
-
-                triangles_per_column = math.floor((effective_column_width - bounding_box_width) / (height + vertical_spacing))
-                if effective_column_width - (triangles_per_column * (height + vertical_spacing) + bounding_box_width) >= 0:
-                    triangles_per_column += 1
+                triangles_per_row = fit_count(effective_row_length, bounding_box_length, bounding_box_length + horizontal_spacing)
+                triangles_per_column = fit_count(effective_column_width, bounding_box_width, height + vertical_spacing)
 
                 total_shapes = 0
                 shape_centers = []
@@ -458,15 +495,10 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
 
             else:
                 # 阵列式排布
-                triangles_per_row = math.floor((effective_row_length - bounding_box_length) / (bounding_box_length + horizontal_spacing))
-                if effective_row_length - (triangles_per_row * (bounding_box_length + horizontal_spacing) + bounding_box_length) >= 0:
-                    triangles_per_row += 1
+                triangles_per_row = fit_count(effective_row_length, bounding_box_length, bounding_box_length + horizontal_spacing)
+                triangles_per_column = fit_count(effective_column_width, bounding_box_width, bounding_box_width + vertical_spacing)
 
-                triangles_per_column = math.floor((effective_column_width - bounding_box_width) / (bounding_box_width + vertical_spacing))
-                if effective_column_width - (triangles_per_column * (bounding_box_width + vertical_spacing) + bounding_box_width) >= 0:
-                    triangles_per_column += 1
-
-                total_shapes = triangles_per_row * triangles_per_column
+                total_shapes = 0
                 shape_centers = []
                 row_col_info = []  # 用于存储每个点的行号和列号
 
@@ -491,6 +523,7 @@ def calculate_shape_centers(frame_length, frame_width, shape_length, shape_width
                             row_col_info.append((row + 1, col + 1))  # 记录行号和列号
                             total_shapes += 1
 
+        total_shapes = len(shape_centers)
         return total_shapes, shape_centers, shapes_per_row_or_col, row_col_info
 
     except Exception as e:
@@ -527,13 +560,13 @@ async def calculate(request: Request):
             if field not in data:
                 return JSONResponse({'error': f'缺少必需字段: {field}'}, 400)
 
-        frame_length = float(data['frame_length'])
-        frame_width = float(data['frame_width'])
-        shape_length = float(data['shape_length'])
-        horizontal_spacing = float(data['horizontal_spacing'])
-        vertical_spacing = float(data['vertical_spacing'])
-        horizontal_border_distance = float(data['horizontal_border_distance'])
-        vertical_border_distance = float(data['vertical_border_distance'])
+        frame_length = parse_float_field(data, 'frame_length')
+        frame_width = parse_float_field(data, 'frame_width')
+        shape_length = parse_float_field(data, 'shape_length')
+        horizontal_spacing = parse_float_field(data, 'horizontal_spacing')
+        vertical_spacing = parse_float_field(data, 'vertical_spacing')
+        horizontal_border_distance = parse_float_field(data, 'horizontal_border_distance')
+        vertical_border_distance = parse_float_field(data, 'vertical_border_distance')
         shape_type = data['shape_type']
         layout_type = data['layout_type']
         polygon_sides = int(data['polygon_sides']) if shape_type == 'polygon' else None
@@ -543,6 +576,40 @@ async def calculate(request: Request):
         remainder_turn = data.get('remainder_turn', 'off')  # 默认值为 'off'
         polygon_arrangement = data.get('polygon_arrangement', 'diagonal')  # 默认值为 'diagonal'
 
+        if shape_type not in {'circle', 'rectangle', 'polygon', 'triangle'}:
+            raise ValueError("shape_type is invalid")
+        if layout_type not in {'array', 'honeycomb'}:
+            raise ValueError("layout_type is invalid")
+        if place_type not in {'row', 'col'}:
+            raise ValueError("place_type is invalid")
+        if remainder_turn not in {'off', 'left', 'right'}:
+            raise ValueError("remainder_turn is invalid")
+        if polygon_arrangement not in {'diagonal', 'edge'}:
+            raise ValueError("polygon_arrangement is invalid")
+
+        for field, value in [
+            ('frame_length', frame_length),
+            ('frame_width', frame_width),
+            ('shape_length', shape_length),
+        ]:
+            validate_positive(field, value)
+        for field, value in [
+            ('horizontal_spacing', horizontal_spacing),
+            ('vertical_spacing', vertical_spacing),
+            ('horizontal_border_distance', horizontal_border_distance),
+            ('vertical_border_distance', vertical_border_distance),
+        ]:
+            validate_non_negative(field, value)
+        if frame_length - 2 * horizontal_border_distance < 0:
+            raise ValueError("horizontal_border_distance leaves a negative usable length")
+        if frame_width - 2 * vertical_border_distance < 0:
+            raise ValueError("vertical_border_distance leaves a negative usable width")
+        if polygon_sides is not None and not (4 < polygon_sides <= 8):
+            raise ValueError("polygon_sides must be between 5 and 8")
+        if triangle_type is not None and triangle_type not in {'equilateral', 'isosceles'}:
+            raise ValueError("triangle_type is invalid")
+        if triangle_orientation is not None and triangle_orientation not in {'up', 'down', 'left', 'right'}:
+            raise ValueError("triangle_orientation is invalid")
         # 处理 shape_width
         shape_width = data.get('shape_width', '')  # 获取 shape_width，默认为空字符串
         if shape_width == '':
@@ -551,7 +618,11 @@ async def calculate(request: Request):
             else:
                 return JSONResponse({'error': 'shape_width 不能为空'}, 400)
         else:
-            shape_width = float(shape_width)
+            shape_width = parse_float_field(data, 'shape_width')
+
+        validate_positive('shape_width', shape_width)
+        if shape_type == 'triangle' and triangle_type == 'isosceles' and shape_length <= shape_width / 2:
+            raise ValueError("triangle_side_length must be greater than half of triangle_base_length")
 
         # 计算图形填充
         total_shapes, shape_centers, shapes_per_row_or_col, row_col_info = calculate_shape_centers(
@@ -615,29 +686,34 @@ async def calculate(request: Request):
                 ax.add_patch(bounding_box)
 
         elif shape_type == 'triangle':
-            for center in shape_centers:
+            for index, center in enumerate(shape_centers):
                 x_center, y_center = center
+                draw_orientation = triangle_orientation
+                if layout_type == 'honeycomb' and index < len(row_col_info):
+                    row_number, col_number = row_col_info[index]
+                    if (row_number + col_number) % 2 == 1:
+                        draw_orientation = opposite_triangle_orientation(triangle_orientation)
                 if triangle_type == "equilateral":
                     height = math.sqrt(3) / 2 * shape_length
-                    if triangle_orientation == "up":
+                    if draw_orientation == "up":
                         vertices = [
                             (x_center, y_center + height / 3),
                             (x_center - shape_length / 2, y_center - height / 3),
                             (x_center + shape_length / 2, y_center - height / 3)
                         ]
-                    elif triangle_orientation == "down":
+                    elif draw_orientation == "down":
                         vertices = [
                             (x_center, y_center - height / 3),
                             (x_center - shape_length / 2, y_center + height / 3),
                             (x_center + shape_length / 2, y_center + height / 3)
                         ]
-                    elif triangle_orientation == "left":
+                    elif draw_orientation == "left":
                         vertices = [
                             (x_center - height / 3, y_center),
                             (x_center + height / 3, y_center - shape_length / 2),
                             (x_center + height / 3, y_center + shape_length / 2)
                         ]
-                    elif triangle_orientation == "right":
+                    elif draw_orientation == "right":
                         vertices = [
                             (x_center + height / 3, y_center),
                             (x_center - height / 3, y_center - shape_length / 2),
@@ -647,25 +723,25 @@ async def calculate(request: Request):
                         raise ValueError("无效的三角形朝向")
                 elif triangle_type == "isosceles":
                     height = math.sqrt(shape_length ** 2 - (shape_width / 2) ** 2)
-                    if triangle_orientation == "up":
+                    if draw_orientation == "up":
                         vertices = [
                             (x_center, y_center + height / 2),
                             (x_center - shape_width / 2, y_center - height / 2),
                             (x_center + shape_width / 2, y_center - height / 2)
                         ]
-                    elif triangle_orientation == "down":
+                    elif draw_orientation == "down":
                         vertices = [
                             (x_center, y_center - height / 2),
                             (x_center - shape_width / 2, y_center + height / 2),
                             (x_center + shape_width / 2, y_center + height / 2)
                         ]
-                    elif triangle_orientation == "left":
+                    elif draw_orientation == "left":
                         vertices = [
                             (x_center - height / 2, y_center),
                             (x_center + height / 2, y_center - shape_width / 2),
                             (x_center + height / 2, y_center + shape_width / 2)
                         ]
-                    elif triangle_orientation == "right":
+                    elif draw_orientation == "right":
                         vertices = [
                             (x_center + height / 2, y_center),
                             (x_center - height / 2, y_center - shape_width / 2),
@@ -1358,6 +1434,8 @@ async def save_recipe(request: Request):
 
         if not recipe_name or not recipe_id:
             return JSONResponse({'error': '缺少配方名或配方编号'}, 400)
+        recipe_file_path, recipe_name = get_recipe_path(recipe_name)
+        recipe_id = parse_recipe_id(recipe_id)
 
         # 检查ID冲突并自动分配新ID
         recipe_dir = 'data'
@@ -1374,19 +1452,23 @@ async def save_recipe(request: Request):
         for f in os.listdir(recipe_dir):
             if f.endswith('.json'):
                 existing_name, _ = os.path.splitext(f)  # 从文件名获取配方名
-                with open(os.path.join(recipe_dir, f), 'r') as file:
-                    existing_recipe_data = json.load(file)
-                    existing_id = existing_recipe_data.get('recipeId')
+                try:
+                    with open(os.path.join(recipe_dir, f), 'r') as file:
+                        existing_recipe_data = json.load(file)
+                except Exception as e:
+                    print(f"Skipping invalid recipe file {f}: {e}")
+                    continue
+                existing_id = read_recipe_id(existing_recipe_data)
 
-                    print(f"检查现有配方: {existing_name}, ID: {existing_id} (类型: {type(existing_id)})")
+                print(f"检查现有配方: {existing_name}, ID: {existing_id} (类型: {type(existing_id)})")
 
-                    if existing_id is not None:
-                        used_ids.add(int(existing_id))
+                if existing_id is not None:
+                    used_ids.add(existing_id)
 
-                        # 检查ID冲突（排除同名配方的情况）
-                        if int(existing_id) == int(recipe_id) and existing_name != recipe_name:
-                            id_conflict = True
-                            print(f"检测到ID冲突：配方 {recipe_name} (ID:{recipe_id}) 与现有配方 {existing_name} (ID:{existing_id}) 冲突")
+                    # 检查ID冲突（排除同名配方的情况）
+                    if existing_id == recipe_id and existing_name != recipe_name:
+                        id_conflict = True
+                        print(f"检测到ID冲突：配方 {recipe_name} (ID:{recipe_id}) 与现有配方 {existing_name} (ID:{existing_id}) 冲突")
 
         print(f"已使用的ID列表: {sorted(used_ids)}")
         print(f"ID冲突状态: {id_conflict}")
@@ -1494,12 +1576,10 @@ async def save_recipe(request: Request):
             }
 
         # 保存到文件
-        recipe_file_path = f'data/{recipe_name}.json'
         with open(recipe_file_path, 'w') as f:
             json.dump(recipe_data, f)
         # 确保数据写入磁盘
-        os.system("sync")
-        os.system("sync")
+        sync_filesystem()
 
         print(f'Recipe saved successfully to {recipe_file_path}')
 
@@ -1534,9 +1614,10 @@ async def check_recipe(request: Request):
 
         if not recipe_name or not recipe_id:
             return JSONResponse({'error': '缺少配方名或配方编号'}, 400)
+        recipe_file_path, recipe_name = get_recipe_path(recipe_name)
+        recipe_id = parse_recipe_id(recipe_id)
 
         # 检查配方文件是否存在
-        recipe_file_path = f'data/{recipe_name}.json'
         exists = os.path.exists(recipe_file_path)
 
         # 检查配方编号是否重复并获取所有已使用的ID
@@ -1551,17 +1632,21 @@ async def check_recipe(request: Request):
         for f in os.listdir(recipe_dir):
             if f.endswith('.json'):
                 existing_name, _ = os.path.splitext(f)  # 从文件名获取配方名
-                with open(os.path.join(recipe_dir, f), 'r') as file:
-                    recipe_data = json.load(file)
-                    existing_id = recipe_data.get('recipeId')
+                try:
+                    with open(os.path.join(recipe_dir, f), 'r') as file:
+                        recipe_data = json.load(file)
+                except Exception as e:
+                    print(f"Skipping invalid recipe file {f}: {e}")
+                    continue
+                existing_id = read_recipe_id(recipe_data)
 
-                    if existing_id is not None:
-                        used_ids.add(int(existing_id))
+                if existing_id is not None:
+                    used_ids.add(existing_id)
 
-                        # 检查ID冲突（排除同名配方的情况）
-                        if int(existing_id) == int(recipe_id) and existing_name != recipe_name:
-                            id_exists = True
-                            conflicting_recipe_name = existing_name
+                    # 检查ID冲突（排除同名配方的情况）
+                    if existing_id == recipe_id and existing_name != recipe_name:
+                        id_exists = True
+                        conflicting_recipe_name = existing_name
 
         # 如果ID冲突，找到下一个可用的ID
         suggested_id = None
@@ -1576,7 +1661,7 @@ async def check_recipe(request: Request):
             'id_exists': id_exists,  # 配方编号是否存在冲突
             'conflicting_recipe_name': conflicting_recipe_name,  # 冲突的配方名
             'suggested_id': suggested_id,  # 建议的新ID
-            'original_id': int(recipe_id)  # 原始ID
+            'original_id': recipe_id  # 原始ID
         }, 200)
 
     except Exception as e:
@@ -1593,15 +1678,19 @@ async def get_recipe_list(request: Request):
         for f in os.listdir(recipe_dir):
             if f.endswith('.json'):
                 recipe_name, _ = os.path.splitext(f)
-                with open(os.path.join(recipe_dir, f), 'r') as file:
-                    recipe_data = json.load(file)
+                try:
+                    with open(os.path.join(recipe_dir, f), 'r') as file:
+                        recipe_data = json.load(file)
+                    recipe_id = read_recipe_id(recipe_data)
                     recipes.append({
                         'recipeName': recipe_name, # 确保配方名与文件名一致
-                        'recipeId': recipe_data.get('recipeId')  # 确保返回 recipeId
+                        'recipeId': recipe_id  # 确保返回 recipeId
                     })
+                except Exception as e:
+                    print(f"Skipping invalid recipe file {f}: {e}")
 
         # 按配方ID升序排序
-        recipes.sort(key=lambda x: int(x['recipeId']) if x['recipeId'] is not None else 0)
+        recipes.sort(key=lambda x: x['recipeId'] if x['recipeId'] is not None else 0)
 
         return JSONResponse({'recipes': recipes}, 200)
     except Exception as e:
@@ -1621,7 +1710,7 @@ async def get_recipe(request: Request):
         return JSONResponse({'error': '缺少配方名'}, 400)
 
     try:
-        recipe_file_path = f'data/{recipe_name}.json'
+        recipe_file_path, recipe_name = get_recipe_path(recipe_name)
         if not os.path.exists(recipe_file_path):
             return JSONResponse({'error': '配方不存在'}, 404)
 
@@ -1649,7 +1738,7 @@ async def delete_recipe(request: Request):
         return JSONResponse({'error': '缺少配方名'}, 400)
 
     try:
-        recipe_file_path = f'data/{recipe_name}.json'
+        recipe_file_path, recipe_name = get_recipe_path(recipe_name)
         if not os.path.exists(recipe_file_path):
             return JSONResponse({'error': '配方不存在'}, 404)
 
@@ -1937,17 +2026,20 @@ async def export_recipe(request: Request):
             if f.endswith('.json'):
                 with open(os.path.join(recipe_dir, f), 'r') as file:
                     recipe_data = json.load(file)
-                    recipe_id = recipe_data.get('recipeId')
+                    recipe_id = read_recipe_id(recipe_data)
                     # 确保配方名与文件名一致
 
                     if recipe_id:
                         recipe_name_from_file, _ = os.path.splitext(f)
-                        id_to_name[int(recipe_id)] = recipe_name_from_file
+                        id_to_name[recipe_id] = recipe_name_from_file
 
         # 5. 复制配方文件到时间目录
         exported_count = 0
         for recipe_id in recipe_ids:
-            recipe_name = id_to_name.get(int(recipe_id))
+            try:
+                recipe_name = id_to_name.get(parse_recipe_id(recipe_id))
+            except ValueError:
+                recipe_name = None
             if recipe_name:
                 source_file = f"data/{recipe_name}.json"
                 target_file = f"{time_backup_path}/{recipe_name}.json"
@@ -2158,7 +2250,12 @@ async def import_recipes_from_usb(request: Request):
                     continue
 
         # 5. 创建已使用ID集合，用于跟踪所有已分配的ID
-        used_ids = set(int(recipe['recipeId']) for recipe in local_recipes if recipe['recipeId'] is not None)
+        used_ids = set()
+        for recipe in local_recipes:
+            try:
+                used_ids.add(parse_recipe_id(recipe.get('recipeId')))
+            except ValueError:
+                pass
 
         # 6. 逐个导入选中的配方
         imported_count = 0
@@ -2169,6 +2266,11 @@ async def import_recipes_from_usb(request: Request):
 
         for filename in selected_filenames:
             try:
+                safe_filename = os.path.basename(filename)
+                import_recipe_name, ext = os.path.splitext(safe_filename)
+                if safe_filename != filename or ext.lower() != '.json':
+                    error_list.append(f"{filename}: invalid recipe filename")
+                    continue
                 source_file = os.path.join(timestamp_path, filename)
 
                 # 检查源文件是否存在
@@ -2180,14 +2282,13 @@ async def import_recipes_from_usb(request: Request):
                 with open(source_file, 'r', encoding='utf-8') as f:
                     import_data = json.load(f)
 
-                import_recipe_name, _ = os.path.splitext(filename)  # 从文件名获取配方名
-                import_recipe_id = import_data.get('recipeId')
+                import_recipe_id = read_recipe_id(import_data)
 
                 # 检查重名冲突
                 name_conflict = any(recipe['recipeName'] == import_recipe_name for recipe in local_recipes)
 
                 # 检查配方号冲突
-                id_conflict = import_recipe_id is not None and int(import_recipe_id) in used_ids
+                id_conflict = import_recipe_id is not None and import_recipe_id in used_ids
 
                 # 处理重名冲突
                 if name_conflict:
@@ -2236,7 +2337,7 @@ async def import_recipes_from_usb(request: Request):
 
                 # 将导入的配方ID也加入已使用列表
                 if recipe_id is not None:
-                    used_ids.add(int(recipe_id))
+                    used_ids.add(parse_recipe_id(recipe_id))
 
             except Exception as e:
                 error_msg = f"{filename}: {str(e)}"
@@ -2327,10 +2428,19 @@ async def check_import_conflicts(request: Request):
         name_conflicts = []
         id_reassignments = []
 
-        used_ids = set(int(recipe['recipeId']) for recipe in local_recipes if recipe['recipeId'] is not None)
+        used_ids = set()
+        for recipe in local_recipes:
+            try:
+                used_ids.add(parse_recipe_id(recipe.get('recipeId')))
+            except ValueError:
+                pass
 
         for filename in selected_filenames:
             try:
+                safe_filename = os.path.basename(filename)
+                import_recipe_name, ext = os.path.splitext(safe_filename)
+                if safe_filename != filename or ext.lower() != '.json':
+                    continue
                 source_file = os.path.join(timestamp_path, filename)
 
                 if not os.path.exists(source_file):
@@ -2340,14 +2450,13 @@ async def check_import_conflicts(request: Request):
                 with open(source_file, 'r', encoding='utf-8') as f:
                     import_data = json.load(f)
 
-                import_recipe_name, _ = os.path.splitext(filename)  # 从文件名获取配方名
-                import_recipe_id = import_data.get('recipeId')
+                import_recipe_id = read_recipe_id(import_data)
 
                 # 检查重名冲突
                 name_conflict = any(recipe['recipeName'] == import_recipe_name for recipe in local_recipes)
 
                 # 检查配方号冲突
-                id_conflict = import_recipe_id is not None and int(import_recipe_id) in used_ids
+                id_conflict = import_recipe_id is not None and import_recipe_id in used_ids
 
                 if name_conflict:
                     # 找到重名的本地配方
@@ -2626,7 +2735,7 @@ async def auto_write_recipe(request: Request):
             return JSONResponse({'error': f'当前有程序在运行：{running_programs}，无法自动写入'}, 400)
 
         # 3. 读取配方数据
-        recipe_file_path = f'data/{recipe_name}.json'
+        recipe_file_path, recipe_name = get_recipe_path(recipe_name)
         if not os.path.exists(recipe_file_path):
             return JSONResponse({'error': '配方不存在'}, 404)
 
@@ -2646,7 +2755,7 @@ async def auto_write_recipe(request: Request):
             pose_id = p['pId']  # 使用pId而不是id
             x = float(p['x'])
             y = float(p['y'])
-            z = float(p.get('z', 0))  # 添加默认值，因为配方数据中可能没有z字段
+            z = float(p.get('z') or 0)  # 添加默认值，因为配方数据中可能没有z字段
             c = float(p['c'])
             uf = int(p.get('uf', 0))  # 使用默认值0
             tf = int(p.get('tf', 1))  # 使用默认值1

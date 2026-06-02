@@ -1,6 +1,6 @@
 # Agilebot Intelligent Palletizing Planning System
 
-**Version v7.5.4 | Updated: April 10, 2026**
+**Version v7.5.5 | Updated: June 2, 2026**
 
 ---
 
@@ -215,6 +215,20 @@ The system provides the following 5 main feature modules:
 
 ## Version History
 
+### v7.5.5 (June 2, 2026)
+- Fixed inconsistent triangle fill counts; the frontend no longer halves triangle totals
+- Aligned hexagon edge/diagonal arrangement calculations with preview drawing angles
+- Added planning parameter validation to prevent invalid sizes, spacing, borders, and triangle dimensions
+- Hardened recipe library validation for recipe names and IDs, preventing invalid recipe files from breaking the list
+- Fixed row/column values when loading a recipe and writing registers without recalculating
+- Unified the P/R/TF write flow to avoid duplicate legacy write handlers
+- Added a Z column to the data list; column order is now X, X compensation, Y, Y compensation, Z, C, C compensation
+- In manual planning, X/Y are calculated from reference points 1, 2, and 3 using the diagonal grid; Z/C use reference point 1 and are shown in the data list
+- In smart planning, X/Y come from the planning result; Z/C use the Z&C reference register from Robot Settings and are shown in the data list
+- P-point writing now reads X/Y/Z/C from the data list; older recipes without Z fall back to the Z value from the Z&C reference register to avoid writing 0 by mistake
+- The write button now runs P-point data, R registers, and TF data in a single ordered sequence, and is disabled while writing to prevent repeated clicks
+- Added data-source notes and related i18n keys for manual planning; removed the smart planning source note from the UI for a cleaner interface
+
 ### v7.5.4 (April 10, 2026)
 - Fixed an issue where writing P-points still ended up with TF1 when tool count was set to 0
 - Added version query parameters for static assets to prevent stale browser cache from using old scripts
@@ -249,4 +263,4 @@ The system provides the following 5 main feature modules:
 
 ---
 
-**Agilebot Intelligent Palletizing Planning System | Version v7.5.4 | Updated: April 10, 2026 | © 2026**
+**Agilebot Intelligent Palletizing Planning System | Version v7.5.5 | Updated: June 2, 2026 | © 2026**

@@ -49,6 +49,7 @@ const translations = {
         'p_data_table_coord': '坐标系方向',
         
         // 智能规划
+        'smart_planning_source_note': '智能规划：X/Y由规划结果计算；Z和C取机器人设置页的Z&C参考寄存器，并显示到数据清单。',
         'frame_settings': '料框设置',
         'frame_length': '料框长度:',
         'frame_width': '料框宽度:',
@@ -133,6 +134,7 @@ const translations = {
         
         // 手动规划
         'grid_parameters': '网格参数',
+        'manual_planning_source_note': '手动规划：X/Y由参考点1、2、3计算；Z和C取参考点1的值，并显示到数据清单。',
         'manual_pr1_id': '参考点1PR ID:',
         'manual_pr2_id': '参考点2PR ID:',
         'manual_pr3_id': '参考点3PR ID:',
@@ -269,6 +271,7 @@ const translations = {
         'p_data_table_coord': 'Coordinate Direction',
         
         // Smart Planning
+        'smart_planning_source_note': 'Smart planning: X/Y are calculated from the planning result; Z and C use the Z&C reference register on the Robot Settings page and are shown in the data list.',
         'frame_settings': 'Frame Settings',
         'frame_length': 'Frame Length:',
         'frame_width': 'Frame Width:',
@@ -353,6 +356,7 @@ const translations = {
         
         // Manual Planning
         'grid_parameters': 'Grid Parameters',
+        'manual_planning_source_note': 'Manual planning: X/Y are calculated from reference points 1, 2, and 3; Z and C use reference point 1 and are shown in the data list.',
         'manual_pr1_id': 'Reference Point 1 PR ID:',
         'manual_pr2_id': 'Reference Point 2 PR ID:',
         'manual_pr3_id': 'Reference Point 3 PR ID:',
@@ -490,6 +494,7 @@ const translations = {
         'p_data_table_coord': 'Hướng Hệ Tọa Độ',
         
         // Smart Planning
+        'smart_planning_source_note': 'Lập kế hoạch thông minh: X/Y được tính từ kết quả lập kế hoạch; Z và C lấy từ thanh ghi tham chiếu Z&C trong trang Cài đặt robot và hiển thị trong danh sách dữ liệu.',
         'frame_settings': 'Cài Đặt Khung',
         'frame_length': 'Chiều Dài Khung:',
         'frame_width': 'Chiều Rộng Khung:',
@@ -574,6 +579,7 @@ const translations = {
         
         // Manual Planning
         'grid_parameters': 'Tham Số Lưới',
+        'manual_planning_source_note': 'Lập kế hoạch thủ công: X/Y được tính từ điểm tham chiếu 1, 2 và 3; Z và C lấy từ điểm tham chiếu 1 và hiển thị trong danh sách dữ liệu.',
         'manual_pr1_id': 'ID PR Điểm Tham Chiếu 1:',
         'manual_pr2_id': 'ID PR Điểm Tham Chiếu 2:',
         'manual_pr3_id': 'ID PR Điểm Tham Chiếu 3:',
@@ -711,6 +717,7 @@ const translations = {
         'p_data_table_coord': '座標系方向',
         
         // インテリジェント計画
+        'smart_planning_source_note': 'スマート計画：X/Yは計画結果から計算し、ZとCはロボット設定ページのZ&C参照レジスタを使用してデータ一覧に表示します。',
         'frame_settings': 'フレーム設定',
         'frame_length': 'フレーム長:',
         'frame_width': 'フレーム幅:',
@@ -795,6 +802,7 @@ const translations = {
         
         // 手動計画
         'grid_parameters': 'グリッドパラメータ',
+        'manual_planning_source_note': '手動計画：X/Yは参照点1、2、3から計算し、ZとCは参照点1の値を使用してデータ一覧に表示します。',
         'manual_pr1_id': '参照点1 PR ID:',
         'manual_pr2_id': '参照点2 PR ID:',
         'manual_pr3_id': '参照点3 PR ID:',
@@ -934,6 +942,7 @@ translations.ko = {
     'p_data_table_coord': '좌표계 방향',
 
     // Smart Planning
+    'smart_planning_source_note': '스마트 계획: X/Y는 계획 결과로 계산하고, Z와 C는 로봇 설정 페이지의 Z&C 참조 레지스터 값을 사용하여 데이터 목록에 표시합니다.',
     'frame_settings': '프레임 설정',
     'frame_length': '프레임 길이:',
     'frame_width': '프레임 너비:',
@@ -1018,6 +1027,7 @@ translations.ko = {
 
     // Manual Planning
     'grid_parameters': '그리드 파라미터',
+    'manual_planning_source_note': '수동 계획: X/Y는 참조점 1, 2, 3으로 계산하고, Z와 C는 참조점 1 값을 사용하여 데이터 목록에 표시합니다.',
     'manual_pr1_id': '참조점 1 PR ID:',
     'manual_pr2_id': '참조점 2 PR ID:',
     'manual_pr3_id': '참조점 3 PR ID:',

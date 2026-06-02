@@ -468,46 +468,7 @@ function performAutoWrite(recipeName) {
                 programNameInput.value = recipeName; // 使用配方名称作为程序名称
             }
 
-            // 创建一个Promise来等待所有写入操作完成
-            writeOperationPromise = new Promise((resolve, reject) => {
-                // 设置写入操作完成后的回调
-                // 注意：P点写入和R寄存器写入总是会执行，TF写入只有在自动TF功能开启时才会执行
-                window.onWriteOperationComplete = (success, message, operationType) => {
-                    console.log(`写入操作完成: ${operationType}, 成功: ${success}, 消息: ${message}`);
-
-                    // 记录操作结果
-                    writeOperationResults.push({
-                        type: operationType,
-                        success: success,
-                        message: message
-                    });
-
-                    completedOperations++;
-
-                    // 检查是否所有操作都完成了
-                    if (completedOperations >= writeOperationCount) {
-                        // 检查是否有失败的操作
-                        const failedOperations = writeOperationResults.filter(op => !op.success);
-
-                        if (failedOperations.length > 0) {
-                            // 有失败的操作
-                            const errorMessages = failedOperations.map(op => `${op.type}: ${op.message}`).join('; ');
-                            reject(new Error(errorMessages));
-                        } else {
-                            // 所有操作都成功
-                            const successMessages = writeOperationResults.map(op => `${op.type}: ${op.message}`).join('; ');
-                            resolve(successMessages);
-                        }
-                    }
-                };
-
-                // 模拟点击写入P点按钮
-                console.log('模拟点击写入P点按钮');
-                document.getElementById('write_p_data_button').click();
-            });
-
-            // 等待写入操作完成
-            return writeOperationPromise;
+            return runWriteSequence({ showAlerts: false });
         })
         .then((message) => {
             console.log('自动写入完成:', message);
@@ -734,13 +695,10 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
         cols = response.headers.get('X-Cols');  // 获取列数
         shapeCenters = JSON.parse(shapeCentersData);  // 将中心位置数据存储到全局变量中
         rowColInfoGlobal = rowColInfo;  // 将行号和列号信息存储到全局变量中
-
-        // 如果是三角形，将 totalShapes 除以 2
-        const adjustedTotalShapes = shape_type === 'triangle' ? Math.floor(totalShapes / 2) : totalShapes;
-
+        window.currentRecipeType = 'smart';
         // 显示填充的图形数量
         document.getElementById('shape-count').style.display = 'block';
-        document.getElementById('shape-count-value').textContent = adjustedTotalShapes;
+        document.getElementById('shape-count-value').textContent = totalShapes;
         document.getElementById('shapes-per-row-or-col').style.display = 'block';
         document.getElementById('shapes-per-row-or-col-value').textContent = shapesPerRowOrCol;
 
@@ -781,7 +739,7 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
         // 获取PR寄存器ID
         const pr_register_id = document.getElementById('pr_register_id').value;
 
-        // 读取PR寄存器的C值
+        // 读取Z&C参考寄存器的Z和C值
         return fetch('/read_pr_register', {
             method: 'POST',
             headers: {
@@ -799,8 +757,9 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
         return response.json();
     })
     .then(data => {
-        const cValue = parseFloat(data.c); // 获取PR寄存器的C值并转换为浮点数
-        console.log('从后端读取的C值:', cValue); // 打印C值
+        const zValue = parseFloat(data.z); // 获取Z&C参考寄存器的Z值并转换为浮点数
+        const cValue = parseFloat(data.c); // 获取Z&C参考寄存器的C值并转换为浮点数
+        console.log('从后端读取的Z/C值:', zValue, cValue);
 
         // 填充数据清单表格
         const tableBody = document.querySelector('#data-list-content table tbody');
@@ -859,19 +818,26 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
             cell7.style.padding = '8px';
             row.appendChild(cell7);
 
-            // C坐标（使用从PR寄存器读取的C值）
+            // Z坐标（使用从Z&C参考寄存器读取的Z值）
             const cell8 = document.createElement('td');
-            cell8.textContent = isNaN(cValue) ? '0.00' : cValue.toFixed(2); // 使用读取到的C值，如果无效则显示0.00
+            cell8.textContent = isNaN(zValue) ? '0.00' : zValue.toFixed(2);
             cell8.style.border = '1px solid #ddd';
             cell8.style.padding = '8px';
             row.appendChild(cell8);
 
-            // C补偿（初始为0）
+            // C坐标（使用从Z&C参考寄存器读取的C值）
             const cell9 = document.createElement('td');
-            cell9.textContent = '0.00';
+            cell9.textContent = isNaN(cValue) ? '0.00' : cValue.toFixed(2);
             cell9.style.border = '1px solid #ddd';
             cell9.style.padding = '8px';
             row.appendChild(cell9);
+
+            // C补偿（初始为0）
+            const cell10 = document.createElement('td');
+            cell10.textContent = '0.00';
+            cell10.style.border = '1px solid #ddd';
+            cell10.style.padding = '8px';
+            row.appendChild(cell10);
 
             tableBody.appendChild(row);
         });
@@ -1208,6 +1174,8 @@ document.getElementById('read_p_data_button').addEventListener('click', function
     });
 });
 
+// Legacy split write handlers are kept for reference, but registration is disabled.
+if (false) {
 // 处理写入P点数据的按钮点击事件
 document.getElementById('write_p_data_button').addEventListener('click', function () {
     const programName = document.getElementById('write_program_name').value || 'PUT'; // 如果用户没有输入，则使用默认值 'PUT'
@@ -1254,8 +1222,9 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         const xCompensation = parseFloat(row.cells[4].textContent); // X补偿
         const y = parseFloat(row.cells[5].textContent); // Y坐标
         const yCompensation = parseFloat(row.cells[6].textContent); // Y补偿
-        const c = parseFloat(row.cells[7].textContent); // C坐标
-        const cCompensation = parseFloat(row.cells[8].textContent); // C补偿
+        const z = parseFloat(row.cells[7].textContent); // Z坐标
+        const c = parseFloat(row.cells[8].textContent); // C坐标
+        const cCompensation = parseFloat(row.cells[9].textContent); // C补偿
 
         // 将XYC与对应的补偿值相加
         const finalX = x + xCompensation;
@@ -1266,7 +1235,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
             id: pId,
             x: finalX,
             y: finalY,
-            z: 0, // 暂时设置为0，稍后从PR寄存器中读取Z值并更新
+            z: Number.isFinite(z) ? z : null,
             c: finalC,
             uf: ufValue,
             tf: toolCount === 0 ? 0 : (index % toolCount) + 1, // 工具数量为0时写入TF0，否则按数量循环TF1..N
@@ -1298,9 +1267,11 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .then(data => {
         const zValue = data.z; // 获取PR寄存器的Z值
 
-        // 更新pData中的Z值
+        // 兼容旧配方：没有Z列时，回退使用Z&C参考寄存器的Z值
         pData.forEach(p => {
-            p.z = zValue;
+            if (p.z === null) {
+                p.z = zValue;
+            }
         });
 
         console.log('[DEBUG] 即将发送给后端的 p_data:', JSON.stringify(pData.slice(0, 3)));
@@ -1670,6 +1641,276 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         }
     });
 });
+}
+
+async function postWriteJson(url, body, fallbackMessage) {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        throw new Error(data.error || fallbackMessage);
+    }
+
+    return data;
+}
+
+function getTableRowsForWriting() {
+    const tableBody = document.querySelector('#data-list-content table tbody');
+    return tableBody ? tableBody.querySelectorAll('tr') : [];
+}
+
+function finiteNumberOrNull(value) {
+    const number = parseFloat(value);
+    return Number.isFinite(number) ? number : null;
+}
+
+function deriveRowsColsFromTableData(tableData) {
+    if (!Array.isArray(tableData)) {
+        return { rows: 0, cols: 0 };
+    }
+
+    return tableData.reduce((result, rowData) => {
+        const rowNumber = parseInt(rowData.rowNumber, 10);
+        const colNumber = parseInt(rowData.colNumber, 10);
+        return {
+            rows: Number.isFinite(rowNumber) ? Math.max(result.rows, rowNumber) : result.rows,
+            cols: Number.isFinite(colNumber) ? Math.max(result.cols, colNumber) : result.cols
+        };
+    }, { rows: 0, cols: 0 });
+}
+
+function syncRowsColsFromTableData(tableData) {
+    const derived = deriveRowsColsFromTableData(tableData);
+    rows = derived.rows;
+    cols = derived.cols;
+}
+
+function getCurrentRecipeTypeForSave() {
+    if (window.currentRecipeType === 'manual' || window.currentRecipeType === 'smart') {
+        return window.currentRecipeType;
+    }
+    const plotImg = document.getElementById('plot');
+    return plotImg && plotImg.getAttribute('data-base64') ? 'smart' : 'manual';
+}
+
+async function runPPointWriteStep() {
+    const programName = document.getElementById('write_program_name').value || 'PUT';
+    const startPPoint = parseInt(document.getElementById('start_p_point').value, 10);
+    const prRegisterId = parseInt(document.getElementById('pr_register_id').value, 10);
+    const ufValue = parseInt(document.getElementById('uf_value').value, 10);
+    const toolCount = parseInt(document.getElementById('tool_count').value, 10);
+    const leftRight = parseInt(document.getElementById('left_right').value, 10);
+
+    if (!programName) {
+        throw new Error('请输入程序名称');
+    }
+    if (isNaN(prRegisterId)) {
+        throw new Error('请输入有效的PR寄存器ID');
+    }
+    if (isNaN(startPPoint) || startPPoint < 1) {
+        throw new Error(t('error_invalid_start_p_point'));
+    }
+
+    const rows = getTableRowsForWriting();
+    if (rows.length === 0) {
+        throw new Error('没有可用的数据');
+    }
+
+    const pData = [];
+    rows.forEach((row, index) => {
+        const pId = startPPoint + index;
+        const x = finiteNumberOrNull(row.cells[3].textContent);
+        const xCompensation = finiteNumberOrNull(row.cells[4].textContent) ?? 0;
+        const y = finiteNumberOrNull(row.cells[5].textContent);
+        const yCompensation = finiteNumberOrNull(row.cells[6].textContent) ?? 0;
+        const z = finiteNumberOrNull(row.cells[7].textContent);
+        const c = finiteNumberOrNull(row.cells[8].textContent);
+        const cCompensation = finiteNumberOrNull(row.cells[9].textContent) ?? 0;
+
+        if (x === null || y === null || c === null) {
+            throw new Error(`第 ${index + 1} 行数据清单坐标无效`);
+        }
+
+        pData.push({
+            id: pId,
+            x: x + xCompensation,
+            y: y + yCompensation,
+            z: Number.isFinite(z) ? z : null,
+            c: c + cCompensation,
+            uf: ufValue,
+            tf: toolCount === 0 ? 0 : (index % toolCount) + 1,
+            left_right: leftRight
+        });
+    });
+
+    const prData = await postWriteJson('/read_pr_register', {
+        pr_register_id: prRegisterId
+    }, '读取PR寄存器失败');
+
+    pData.forEach(point => {
+        if (point.z === null) {
+            point.z = prData.z;
+        }
+    });
+
+    await postWriteJson('/write_p_data', {
+        program_name: programName,
+        p_data: pData
+    }, '写入P点数据失败');
+
+    return 'P点数据写入成功';
+}
+
+async function runRRegisterWriteStep() {
+    const currentRecipeType = window.currentRecipeType || 'smart';
+
+    if (currentRecipeType === 'manual') {
+        const rows = getTableRowsForWriting();
+        const totalPoints = rows.length;
+        const rowCount = parseInt(document.getElementById('row_count')?.value, 10) || 0;
+        const colCount = parseInt(document.getElementById('col_count')?.value, 10) || 0;
+        const calculationMethod = document.getElementById('calculation_method')?.value || 'row_priority';
+        const toolCount = document.getElementById('tool_count').value || 1;
+        const singleRowOrColCount = calculationMethod === 'row_priority' ? colCount : rowCount;
+
+        await postWriteJson('/write_r_registers', {
+            recipe_type: 'manual',
+            total_points: totalPoints,
+            row_count: rowCount,
+            col_count: colCount,
+            tool_count: toolCount,
+            single_row_or_col_count: singleRowOrColCount
+        }, '写入R寄存器失败');
+
+        return '手动规划R寄存器写入成功';
+    }
+
+    const shapeCountValue = document.getElementById('shape-count-value').textContent;
+    const toolCount = document.getElementById('tool_count').value;
+    if (!shapeCountValue || !toolCount) {
+        throw new Error('请先进行计算并确保工具数量已选择');
+    }
+
+    await postWriteJson('/write_r_registers', {
+        recipe_type: 'smart',
+        frame_length: document.getElementById('frame_length').value,
+        frame_width: document.getElementById('frame_width').value,
+        frame_depth: document.getElementById('frame_depth').value,
+        shape_height: document.getElementById('shape_height').value,
+        material_thickness: document.getElementById('material_thickness').value,
+        placement_layers: document.getElementById('placement_layers').value,
+        total_shapes: shapeCountValue,
+        tool_count: toolCount,
+        drop_Count: document.getElementById('drop_Count').value,
+        numofsingle_row_or_col_value: document.getElementById('shapes-per-row-or-col-value').textContent,
+        rows: rows,
+        cols: cols
+    }, '写入R寄存器失败');
+
+    return '智能规划R寄存器写入成功';
+}
+
+async function runTFWriteStep() {
+    const toolCount = parseInt(document.getElementById('tool_count').value, 10);
+    const toolSpacing = parseFloat(document.getElementById('tool_spacing').value);
+    const autoTF = parseInt(document.getElementById('auto_tf').value, 10);
+    const toolLayout = document.getElementById('tool_layout').value;
+    const toolDirection = document.getElementById('tool_direction').value;
+
+    if (isNaN(toolSpacing)) {
+        throw new Error('请输入有效的工具间距');
+    }
+    if (toolCount <= 1 || autoTF === 0) {
+        return null;
+    }
+
+    const data = await postWriteJson('/get_tf_data', { tf_id: 1 }, '读取TF1数据失败');
+    const tf1 = data.tf;
+    const tfUpdates = [];
+
+    if (toolLayout === 'double') {
+        if (toolCount !== 2) {
+            throw new Error('双向布局时，工具数量必须为2');
+        }
+        const offset = toolSpacing / 2;
+        tfUpdates.push({
+            coordinate_info: { coordinate_id: 1, name: tf1.coordinate_info.name, group_id: tf1.coordinate_info.group_id },
+            position: { x: toolDirection === 'x' ? offset : tf1.position.x, y: toolDirection === 'y' ? offset : tf1.position.y, z: tf1.position.z },
+            orientation: { r: tf1.orientation.r, p: tf1.orientation.p, y: tf1.orientation.y }
+        });
+        tfUpdates.push({
+            coordinate_info: { coordinate_id: 2, name: tf1.coordinate_info.name, group_id: tf1.coordinate_info.group_id },
+            position: { x: toolDirection === 'x' ? -offset : tf1.position.x, y: toolDirection === 'y' ? -offset : tf1.position.y, z: tf1.position.z },
+            orientation: { r: tf1.orientation.r, p: tf1.orientation.p, y: tf1.orientation.y }
+        });
+    } else {
+        for (let i = 2; i <= toolCount; i++) {
+            tfUpdates.push({
+                coordinate_info: { coordinate_id: i, name: tf1.coordinate_info.name, group_id: tf1.coordinate_info.group_id },
+                position: {
+                    x: toolDirection === 'x' ? tf1.position.x + (i - 1) * toolSpacing : tf1.position.x,
+                    y: toolDirection === 'y' ? tf1.position.y + (i - 1) * toolSpacing : tf1.position.y,
+                    z: tf1.position.z
+                },
+                orientation: { r: tf1.orientation.r, p: tf1.orientation.p, y: tf1.orientation.y }
+            });
+        }
+    }
+
+    await postWriteJson('/update_tf_data', { tf_updates: tfUpdates }, '更新TF数据失败');
+    return 'TF数据更新成功';
+}
+
+async function runWriteSequence({ showAlerts = true } = {}) {
+    if (isWriteOperationInProgress) {
+        throw new Error('写入操作正在进行中，请稍候');
+    }
+
+    isWriteOperationInProgress = true;
+    const writeButton = document.getElementById('write_p_data_button');
+    if (writeButton) {
+        writeButton.disabled = true;
+    }
+
+    try {
+        const results = [];
+        results.push(await runPPointWriteStep());
+        results.push(await runRRegisterWriteStep());
+        const tfResult = await runTFWriteStep();
+        if (tfResult) {
+            results.push(tfResult);
+        }
+
+        const message = results.join('；');
+        if (showAlerts) {
+            alertSuccess(`写入完成：${message}`);
+        }
+        return message;
+    } catch (error) {
+        console.error('写入流程失败:', error.message);
+        if (showAlerts) {
+            alertError('写入失败: ' + error.message);
+        }
+        throw error;
+    } finally {
+        isWriteOperationInProgress = false;
+        if (writeButton) {
+            writeButton.disabled = false;
+        }
+    }
+}
+
+document.getElementById('write_p_data_button').addEventListener('click', function (event) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    runWriteSequence({ showAlerts: true }).catch(() => {});
+}, true);
 
 // 新的手动规划功能
 // 读取参考点按钮事件
@@ -1767,14 +2008,24 @@ document.getElementById('calculate_points').addEventListener('click', function (
     // 获取计算方式选择
     const calculationMethod = document.getElementById('calculation_method').value;
     
-    // 计算所有点的坐标（使用当前输入框中的最新值）
-    const allPoints = calculateAllPoints(pr1, pr2, pr3, currentRowCount, currentColCount, calculationMethod);
+    let allPoints;
+    try {
+        // 计算所有点的坐标（使用当前输入框中的最新值）
+        allPoints = calculateAllPoints(pr1, pr2, pr3, currentRowCount, currentColCount, calculationMethod);
+    } catch (error) {
+        document.getElementById('calculation-status').style.display = 'none';
+        alertError(error.message);
+        return;
+    }
     
-    // 手动规划优先使用参考点1的C值，避免误读默认PR1导致报错
-    const cValue = Number.isFinite(pr1.c) ? pr1.c : 0;
+    // 手动规划使用参考点1的Z和C值
+    const zValue = Number.isFinite(Number(pr1.z)) ? Number(pr1.z) : 0;
+    const cValue = Number.isFinite(Number(pr1.c)) ? Number(pr1.c) : 0;
     
     // 将计算结果填入数据清单表格
-    fillDataListTable(allPoints, cValue);
+    fillDataListTable(allPoints, zValue, cValue);
+    rows = currentRowCount;
+    cols = currentColCount;
     
     // 隐藏计算状态
     document.getElementById('calculation-status').style.display = 'none';
@@ -1819,46 +2070,66 @@ function readPRRegister(prId) {
 // rowCount代表行数（Y方向），colCount代表列数（X方向）
 function calculateAllPoints(pr1, pr2, pr3, rowCount, colCount, calculationMethod = 'row_priority') {
     const points = [];
-    
-    // 计算行间距和列间距
-    // rowCount是行数，所以用rowSpacing计算Y方向间距
-    // colCount是列数，所以用colSpacing计算X方向间距
-    const rowSpacing = (pr2.y - pr1.y) / (rowCount - 1);  // Y方向间距，使用行数
-    const colSpacing = (pr3.x - pr1.x) / (colCount - 1);  // X方向间距，使用列数
+
+    const startPoint = {
+        x: Number(pr1.x),
+        y: Number(pr1.y)
+    };
+    const rowEndPoint = {
+        x: Number(pr2.x),
+        y: Number(pr2.y)
+    };
+    const colEndPoint = {
+        x: Number(pr3.x),
+        y: Number(pr3.y)
+    };
+
+    if (![startPoint.x, startPoint.y, rowEndPoint.x, rowEndPoint.y, colEndPoint.x, colEndPoint.y].every(Number.isFinite)) {
+        throw new Error('参考点坐标无效，请重新读取参考点');
+    }
+    if (rowCount > 1 && startPoint.x === rowEndPoint.x && startPoint.y === rowEndPoint.y) {
+        throw new Error('参考点1和参考点2重合，无法计算行方向');
+    }
+    if (colCount > 1 && startPoint.x === colEndPoint.x && startPoint.y === colEndPoint.y) {
+        throw new Error('参考点1和参考点3重合，无法计算列方向');
+    }
+
+    const rowDivisor = Math.max(rowCount - 1, 1);
+    const colDivisor = Math.max(colCount - 1, 1);
+    const rowVector = {
+        x: (rowEndPoint.x - startPoint.x) / rowDivisor,
+        y: (rowEndPoint.y - startPoint.y) / rowDivisor
+    };
+    const colVector = {
+        x: (colEndPoint.x - startPoint.x) / colDivisor,
+        y: (colEndPoint.y - startPoint.y) / colDivisor
+    };
+
+    const calculatePoint = (row, col) => {
+        const rowOffset = rowCount === 1 ? 0 : row - 1;
+        const colOffset = colCount === 1 ? 0 : col - 1;
+
+        return {
+            row: row,
+            col: col,
+            x: startPoint.x + rowOffset * rowVector.x + colOffset * colVector.x,
+            y: startPoint.y + rowOffset * rowVector.y + colOffset * colVector.y
+        };
+    };
     
     // 根据计算方式生成不同顺序的点位
     if (calculationMethod === 'row_priority') {
         // 行优先：先按行遍历，再按列遍历
         for (let row = 1; row <= rowCount; row++) {  // 行数使用rowCount
             for (let col = 1; col <= colCount; col++) {  // 列数使用colCount
-                const x = pr1.x + (col - 1) * colSpacing;
-                const y = pr1.y + (row - 1) * rowSpacing;
-                const z = pr1.z; // Z值保持与PR1相同
-                
-                points.push({
-                    row: row,
-                    col: col,
-                    x: x,
-                    y: y,
-                    z: z
-                });
+                points.push(calculatePoint(row, col));
             }
         }
     } else if (calculationMethod === 'col_priority') {
         // 列优先：先按列遍历，再按行遍历
         for (let col = 1; col <= colCount; col++) {  // 列数使用colCount
             for (let row = 1; row <= rowCount; row++) {  // 行数使用rowCount
-                const x = pr1.x + (col - 1) * colSpacing;
-                const y = pr1.y + (row - 1) * rowSpacing;
-                const z = pr1.z; // Z值保持与PR1相同
-                
-                points.push({
-                    row: row,
-                    col: col,
-                    x: x,
-                    y: y,
-                    z: z
-                });
+                points.push(calculatePoint(row, col));
             }
         }
     }
@@ -1867,7 +2138,7 @@ function calculateAllPoints(pr1, pr2, pr3, rowCount, colCount, calculationMethod
 }
 
 // 填充数据清单表格的函数
-function fillDataListTable(points, cValue) {
+function fillDataListTable(points, zValue, cValue) {
     const tableBody = document.querySelector('#data-list-content table tbody');
     tableBody.innerHTML = ''; // 清空现有数据
     
@@ -1923,19 +2194,26 @@ function fillDataListTable(points, cValue) {
         cell7.style.padding = '8px';
         row.appendChild(cell7);
         
-        // C值
+        // Z值
         const cell8 = document.createElement('td');
-        cell8.textContent = cValue.toFixed(2);
+        cell8.textContent = zValue.toFixed(2);
         cell8.style.border = '1px solid #ddd';
         cell8.style.padding = '8px';
         row.appendChild(cell8);
         
-        // C补偿 (初始为0)
+        // C值
         const cell9 = document.createElement('td');
-        cell9.textContent = '0.00';
+        cell9.textContent = cValue.toFixed(2);
         cell9.style.border = '1px solid #ddd';
         cell9.style.padding = '8px';
         row.appendChild(cell9);
+
+        // C补偿 (初始为0)
+        const cell10 = document.createElement('td');
+        cell10.textContent = '0.00';
+        cell10.style.border = '1px solid #ddd';
+        cell10.style.padding = '8px';
+        row.appendChild(cell10);
         
         tableBody.appendChild(row);
     });
@@ -1970,7 +2248,7 @@ document.getElementById('update-compensation').addEventListener('click', functio
             }
 
             // 更新C补偿值
-            row.cells[8].textContent = angleCompensation.toFixed(2); // C补偿
+            row.cells[9].textContent = angleCompensation.toFixed(2); // C补偿
         }
     });
 
@@ -1986,9 +2264,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
         return;
     }
 
-    // 检查是否为手动规划配方（没有预览图片）
-    const plotImg = document.getElementById('plot');
-    const isManualPlanning = !plotImg || !plotImg.getAttribute('data-base64');
+    const isManualPlanning = getCurrentRecipeTypeForSave() === 'manual';
     
     if (isManualPlanning) {
         // 手动规划配方：检查是否有数据清单数据
@@ -2001,6 +2277,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
         // 手动规划配方可以继续保存，不需要预览图片
     } else {
         // 智能规划配方：检查图片是否已经生成
+        const plotImg = document.getElementById('plot');
         if (!plotImg || !plotImg.getAttribute('data-base64')) {
             alertError('请先生成规划结果图片');
             return;
@@ -2072,18 +2349,17 @@ function saveRecipeData(recipeName, recipeId) {
             rowNumber: cells[0].textContent,
             colNumber: cells[1].textContent,
             pId: cells[2].textContent,
-            x: parseFloat(cells[3].textContent),
-            xCompensation: parseFloat(cells[4].textContent),
-            y: parseFloat(cells[5].textContent),
-            yCompensation: parseFloat(cells[6].textContent),
-            c: parseFloat(cells[7].textContent),
-            cCompensation: parseFloat(cells[8].textContent)
+            x: finiteNumberOrNull(cells[3].textContent),
+            xCompensation: finiteNumberOrNull(cells[4].textContent),
+            y: finiteNumberOrNull(cells[5].textContent),
+            yCompensation: finiteNumberOrNull(cells[6].textContent),
+            z: finiteNumberOrNull(cells[7].textContent),
+            c: finiteNumberOrNull(cells[8].textContent),
+            cCompensation: finiteNumberOrNull(cells[9].textContent)
         });
     }
 
-    // 检查是否为手动规划配方（没有预览图片）
-    const plotImg = document.getElementById('plot');
-    const isManualPlanning = !plotImg || !plotImg.getAttribute('data-base64');
+    const isManualPlanning = getCurrentRecipeTypeForSave() === 'manual';
     
     if (isManualPlanning) {
         // 手动规划配方：只保存基本数据和表格数据
@@ -2162,6 +2438,7 @@ function saveRecipeData(recipeName, recipeId) {
     const polygonArrangement = document.getElementById('polygon_arrangement')?.value || 'diagonal';  // 添加多边形排布方式参数
 
     // 获取预览结果图的Base64编码
+    const plotImg = document.getElementById('plot');
     const plotImageBase64 = plotImg.getAttribute('data-base64'); // 使用存储的 Base64 数据
     console.log('Saving smart planning recipe with base64 data:', plotImageBase64.substring(0, 50) + '...');
 
@@ -2737,6 +3014,7 @@ function resetRecipePreview() {
 function fillDataListTableFromRecipe(tableData) {
     const tableBody = document.querySelector('#data-list-content table tbody');
     tableBody.innerHTML = ''; // 清空现有数据
+    syncRowsColsFromTableData(tableData);
     
     if (tableData && Array.isArray(tableData)) {
         tableData.forEach((rowData) => {
@@ -2791,19 +3069,27 @@ function fillDataListTableFromRecipe(tableData) {
             cell7.style.padding = '8px';
             row.appendChild(cell7);
             
-            // C坐标
+            // Z坐标
             const cell8 = document.createElement('td');
-            cell8.textContent = (parseFloat(rowData.c) || 0).toFixed(2);
+            const zValue = parseFloat(rowData.z);
+            cell8.textContent = Number.isFinite(zValue) ? zValue.toFixed(2) : '';
             cell8.style.border = '1px solid #ddd';
             cell8.style.padding = '8px';
             row.appendChild(cell8);
             
-            // C补偿
+            // C坐标
             const cell9 = document.createElement('td');
-            cell9.textContent = (parseFloat(rowData.cCompensation) || 0).toFixed(2);
+            cell9.textContent = (parseFloat(rowData.c) || 0).toFixed(2);
             cell9.style.border = '1px solid #ddd';
             cell9.style.padding = '8px';
             row.appendChild(cell9);
+
+            // C补偿
+            const cell10 = document.createElement('td');
+            cell10.textContent = (parseFloat(rowData.cCompensation) || 0).toFixed(2);
+            cell10.style.border = '1px solid #ddd';
+            cell10.style.padding = '8px';
+            row.appendChild(cell10);
             
             tableBody.appendChild(row);
         });
@@ -2945,6 +3231,7 @@ function loadRecipeToPlanning(recipeName) {
         // 填充数据清单页面
         const tableBody = document.querySelector('#data-list-content table tbody');
         tableBody.innerHTML = ''; // 清空表格内容
+        syncRowsColsFromTableData(data.tableData);
 
         if (data.tableData && Array.isArray(data.tableData)) {
             data.tableData.forEach((rowData) => {
@@ -2999,19 +3286,27 @@ function loadRecipeToPlanning(recipeName) {
                 cell7.style.padding = '8px';
                 row.appendChild(cell7);
 
-                // C坐标
+                // Z坐标
                 const cell8 = document.createElement('td');
-                cell8.textContent = (parseFloat(rowData.c) || 0).toFixed(2);
+                const zValue = parseFloat(rowData.z);
+                cell8.textContent = Number.isFinite(zValue) ? zValue.toFixed(2) : '';
                 cell8.style.border = '1px solid #ddd';
                 cell8.style.padding = '8px';
                 row.appendChild(cell8);
 
-                // C补偿
+                // C坐标
                 const cell9 = document.createElement('td');
-                cell9.textContent = (parseFloat(rowData.cCompensation) || 0).toFixed(2);
+                cell9.textContent = (parseFloat(rowData.c) || 0).toFixed(2);
                 cell9.style.border = '1px solid #ddd';
                 cell9.style.padding = '8px';
                 row.appendChild(cell9);
+
+                // C补偿
+                const cell10 = document.createElement('td');
+                cell10.textContent = (parseFloat(rowData.cCompensation) || 0).toFixed(2);
+                cell10.style.border = '1px solid #ddd';
+                cell10.style.padding = '8px';
+                row.appendChild(cell10);
 
                 tableBody.appendChild(row);
             });
