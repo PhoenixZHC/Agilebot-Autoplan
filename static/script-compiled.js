@@ -12,18 +12,180 @@ function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 var isExtension = gbtExtension.isInExtension();
 // 是否处在TP中，两种情况，1. 插件环境 2. 直接访问此插件的端口
 var isTP = window.isTP;
+function getActiveLanguage() {
+  return typeof getCurrentLanguage === 'function' ? getCurrentLanguage() : 'zh';
+}
+var notificationTranslations = {
+  en: {
+    exact: {
+      '请输入机器人IP地址': 'Please enter the robot IP address',
+      '请输入程序名称': 'Please enter the program name',
+      '请输入有效的PR寄存器ID': 'Please enter a valid PR register ID',
+      '没有可用的数据': 'No data is available',
+      'P点数据写入成功': 'P point data written successfully',
+      '手动规划R寄存器写入成功': 'Manual planning R registers written successfully',
+      '智能规划R寄存器写入成功': 'Smart planning R registers written successfully',
+      'TF数据更新成功': 'TF data updated successfully',
+      '请先读取参考点': 'Please read the reference points first',
+      '请输入有效的行数和列数': 'Please enter valid row and column counts',
+      '参考点坐标无效，请重新读取参考点': 'Reference point coordinates are invalid. Please read them again',
+      '参考点1和参考点2重合，无法计算行方向': 'Reference point 1 and 2 overlap; row direction cannot be calculated',
+      '参考点1和参考点3重合，无法计算列方向': 'Reference point 1 and 3 overlap; column direction cannot be calculated',
+      '请输入有效的行号/列号、补偿值和角度补偿值': 'Please enter a valid row/column number, compensation value, and angle compensation',
+      '补偿值更新成功': 'Compensation updated successfully',
+      '请选择要导出的配方': 'Please select recipes to export',
+      'U盘中没有找到配方备份目录': 'No recipe backup folder was found on the USB drive',
+      '请选择要导入的配方': 'Please select recipes to import',
+      '所有配方都被跳过，导入已取消': 'All recipes were skipped. Import was cancelled'
+    },
+    prefixes: {
+      '写入完成：': 'Write complete: ',
+      '写入失败: ': 'Write failed: ',
+      '写入P点数据失败: ': 'Failed to write P point data: ',
+      '获取P点数据失败: ': 'Failed to get P point data: ',
+      '手动规划R寄存器写入失败: ': 'Failed to write manual planning R registers: ',
+      '智能规划R寄存器写入失败: ': 'Failed to write smart planning R registers: ',
+      '更新TF数据失败: ': 'Failed to update TF data: ',
+      '读取参考点失败: ': 'Failed to read reference points: ',
+      '计算完成！共生成 ': 'Calculation complete. Generated ',
+      '导出配方失败: ': 'Failed to export recipes: ',
+      '读取U盘备份目录失败: ': 'Failed to read USB backup folder: ',
+      '读取配方失败: ': 'Failed to read recipes: ',
+      '导入失败: ': 'Import failed: ',
+      '确认导入 ': 'Confirm import of '
+    }
+  },
+  vi: {
+    exact: {
+      '请输入机器人IP地址': 'Vui lòng nhập địa chỉ IP robot',
+      '请输入程序名称': 'Vui lòng nhập tên chương trình',
+      '请输入有效的PR寄存器ID': 'Vui lòng nhập ID thanh ghi PR hợp lệ',
+      '没有可用的数据': 'Không có dữ liệu khả dụng',
+      'P点数据写入成功': 'Ghi dữ liệu điểm P thành công',
+      '手动规划R寄存器写入成功': 'Ghi thanh ghi R cho lập kế hoạch thủ công thành công',
+      '智能规划R寄存器写入成功': 'Ghi thanh ghi R cho lập kế hoạch thông minh thành công',
+      'TF数据更新成功': 'Cập nhật dữ liệu TF thành công',
+      '请先读取参考点': 'Vui lòng đọc điểm tham chiếu trước',
+      '请输入有效的行数和列数': 'Vui lòng nhập số hàng và số cột hợp lệ',
+      '参考点坐标无效，请重新读取参考点': 'Tọa độ điểm tham chiếu không hợp lệ. Vui lòng đọc lại',
+      '补偿值更新成功': 'Cập nhật giá trị bù thành công'
+    },
+    prefixes: {
+      '写入完成：': 'Ghi hoàn tất: ',
+      '写入失败: ': 'Ghi thất bại: ',
+      '写入P点数据失败: ': 'Ghi dữ liệu điểm P thất bại: ',
+      '读取参考点失败: ': 'Đọc điểm tham chiếu thất bại: ',
+      '计算完成！共生成 ': 'Tính toán hoàn tất. Đã tạo '
+    }
+  },
+  ja: {
+    exact: {
+      '请输入机器人IP地址': 'ロボットIPアドレスを入力してください',
+      '请输入程序名称': 'プログラム名を入力してください',
+      '请输入有效的PR寄存器ID': '有効なPRレジスタIDを入力してください',
+      '没有可用的数据': '利用可能なデータがありません',
+      'P点数据写入成功': 'P点データの書き込みに成功しました',
+      '手动规划R寄存器写入成功': '手動計画のRレジスタ書き込みに成功しました',
+      '智能规划R寄存器写入成功': 'スマート計画のRレジスタ書き込みに成功しました',
+      'TF数据更新成功': 'TFデータの更新に成功しました',
+      '请先读取参考点': '先に参照点を読み取ってください',
+      '请输入有效的行数和列数': '有効な行数と列数を入力してください',
+      '参考点坐标无效，请重新读取参考点': '参照点座標が無効です。再度読み取ってください',
+      '补偿值更新成功': '補正値の更新に成功しました'
+    },
+    prefixes: {
+      '写入完成：': '書き込み完了: ',
+      '写入失败: ': '書き込み失敗: ',
+      '写入P点数据失败: ': 'P点データの書き込みに失敗しました: ',
+      '读取参考点失败: ': '参照点の読み取りに失敗しました: ',
+      '计算完成！共生成 ': '計算完了。生成数: '
+    }
+  },
+  ko: {
+    exact: {
+      '请输入机器人IP地址': '로봇 IP 주소를 입력하세요',
+      '请输入程序名称': '프로그램 이름을 입력하세요',
+      '请输入有效的PR寄存器ID': '올바른 PR 레지스터 ID를 입력하세요',
+      '没有可用的数据': '사용 가능한 데이터가 없습니다',
+      'P点数据写入成功': 'P 포인트 데이터 쓰기 성공',
+      '手动规划R寄存器写入成功': '수동 계획 R 레지스터 쓰기 성공',
+      '智能规划R寄存器写入成功': '스마트 계획 R 레지스터 쓰기 성공',
+      'TF数据更新成功': 'TF 데이터 업데이트 성공',
+      '请先读取参考点': '먼저 기준점을 읽어 주세요',
+      '请输入有效的行数和列数': '올바른 행 수와 열 수를 입력하세요',
+      '参考点坐标无效，请重新读取参考点': '기준점 좌표가 올바르지 않습니다. 다시 읽어 주세요',
+      '补偿值更新成功': '보정값 업데이트 성공'
+    },
+    prefixes: {
+      '写入完成：': '쓰기 완료: ',
+      '写入失败: ': '쓰기 실패: ',
+      '写入P点数据失败: ': 'P 포인트 데이터 쓰기 실패: ',
+      '读取参考点失败: ': '기준점 읽기 실패: ',
+      '计算完成！共生成 ': '계산 완료. 생성된 포인트: '
+    }
+  }
+};
+function translateNotificationMessage(message) {
+  if (typeof message !== 'string') {
+    return message;
+  }
+  var lang = getActiveLanguage();
+  var pack = notificationTranslations[lang];
+  if (!pack) {
+    return message;
+  }
+  if (pack.exact[message]) {
+    return pack.exact[message];
+  }
+  var pointCountMatch = message.match(/^计算完成！共生成\s+(\d+)\s+个点位$/);
+  if (pointCountMatch) {
+    var pointCountText = {
+      en: "Calculation complete. Generated ".concat(pointCountMatch[1], " points"),
+      vi: "T\xEDnh to\xE1n ho\xE0n t\u1EA5t. \u0110\xE3 t\u1EA1o ".concat(pointCountMatch[1], " \u0111i\u1EC3m"),
+      ja: "\u8A08\u7B97\u5B8C\u4E86\u3002".concat(pointCountMatch[1], " \u70B9\u3092\u751F\u6210\u3057\u307E\u3057\u305F"),
+      ko: "\uACC4\uC0B0 \uC644\uB8CC. ".concat(pointCountMatch[1], "\uAC1C \uD3EC\uC778\uD2B8\uB97C \uC0DD\uC131\uD588\uC2B5\uB2C8\uB2E4")
+    };
+    return pointCountText[lang] || message;
+  }
+  var importCountMatch = message.match(/^确认导入\s+(\d+)\s+个配方？$/);
+  if (importCountMatch) {
+    var importCountText = {
+      en: "Import ".concat(importCountMatch[1], " recipes?"),
+      vi: "Nh\u1EADp ".concat(importCountMatch[1], " c\xF4ng th\u1EE9c?"),
+      ja: "".concat(importCountMatch[1], " \u4EF6\u306E\u30EC\u30B7\u30D4\u3092\u30A4\u30F3\u30DD\u30FC\u30C8\u3057\u307E\u3059\u304B\uFF1F"),
+      ko: "".concat(importCountMatch[1], "\uAC1C \uB808\uC2DC\uD53C\uB97C \uAC00\uC838\uC62C\uAE4C\uC694?")
+    };
+    return importCountText[lang] || message;
+  }
+  var prefix = Object.keys(pack.prefixes).find(function (item) {
+    return message.startsWith(item);
+  });
+  return prefix ? pack.prefixes[prefix] + message.slice(prefix.length) : message;
+}
+function createNotification(method) {
+  return function (message) {
+    method(translateNotificationMessage(message));
+  };
+}
 
 // TP插件环境中，alert无法使用
-var alertSuccess = !isExtension ? alert : gbtExtension.rtmNotification.success;
-var alertError = !isExtension ? alert : gbtExtension.rtmNotification.error;
-var alertInfo = !isExtension ? alert : gbtExtension.rtmNotification.info;
+var alertSuccess = createNotification(!isExtension ? alert : function (message) {
+  return gbtExtension.rtmNotification.success(message);
+});
+var alertError = createNotification(!isExtension ? alert : function (message) {
+  return gbtExtension.rtmNotification.error(message);
+});
+var alertInfo = createNotification(!isExtension ? alert : function (message) {
+  return gbtExtension.rtmNotification.info(message);
+});
 // TP插件环境中，confirm无法使用
 var myConfirm = function myConfirm(message) {
+  var translatedMessage = translateNotificationMessage(message);
   if (!isExtension) {
-    return confirm(message);
+    return confirm(translatedMessage);
   }
   return new Promise(function (resolve) {
-    gbtExtension.rtmMessageBox.confirm(message).then(function () {
+    gbtExtension.rtmMessageBox.confirm(translatedMessage).then(function () {
       resolve(true);
     }).catch(function () {
       resolve(false);
@@ -1641,6 +1803,13 @@ function finiteNumberOrNull(value) {
   var number = parseFloat(value);
   return Number.isFinite(number) ? number : null;
 }
+function requireFiniteRegisterAxis(registerData, axisName, sourceName) {
+  var value = Number(registerData === null || registerData === void 0 ? void 0 : registerData[axisName]);
+  if (!Number.isFinite(value)) {
+    throw new Error("".concat(sourceName).concat(axisName.toUpperCase(), "\u503C\u65E0\u6548"));
+  }
+  return value;
+}
 function deriveRowsColsFromTableData(tableData) {
   if (!Array.isArray(tableData)) {
     return {
@@ -1677,7 +1846,8 @@ function runPPointWriteStep() {
 }
 function _runPPointWriteStep() {
   _runPPointWriteStep = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
-    var programName, startPPoint, prRegisterId, ufValue, toolCount, leftRight, rows, pData, prData;
+    var _window$referencePoin2;
+    var programName, startPPoint, prRegisterId, ufValue, toolCount, leftRight, rows, pData, prData, currentRecipeType, angleSource, angleSourceName, aValue, bValue;
     return _regeneratorRuntime().wrap(function _callee3$(_context3) {
       while (1) switch (_context3.prev = _context3.next) {
         case 0:
@@ -1743,19 +1913,26 @@ function _runPPointWriteStep() {
           }, '读取PR寄存器失败');
         case 19:
           prData = _context3.sent;
+          currentRecipeType = window.currentRecipeType || 'smart';
+          angleSource = currentRecipeType === 'manual' ? (_window$referencePoin2 = window.referencePoints) === null || _window$referencePoin2 === void 0 ? void 0 : _window$referencePoin2.pr1 : prData;
+          angleSourceName = currentRecipeType === 'manual' ? '参考点1' : 'Z&C参考寄存器';
+          aValue = requireFiniteRegisterAxis(angleSource, 'a', angleSourceName);
+          bValue = requireFiniteRegisterAxis(angleSource, 'b', angleSourceName);
           pData.forEach(function (point) {
             if (point.z === null) {
               point.z = prData.z;
             }
+            point.a = aValue;
+            point.b = bValue;
           });
-          _context3.next = 23;
+          _context3.next = 28;
           return postWriteJson('/write_p_data', {
             program_name: programName,
             p_data: pData
           }, '写入P点数据失败');
-        case 23:
+        case 28:
           return _context3.abrupt("return", 'P点数据写入成功');
-        case 24:
+        case 29:
         case "end":
           return _context3.stop();
       }
@@ -2182,6 +2359,8 @@ function readPRRegister(prId) {
       x: data.x,
       y: data.y,
       z: data.z,
+      a: data.a,
+      b: data.b,
       c: data.c
     };
   });

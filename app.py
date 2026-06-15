@@ -3,7 +3,7 @@
 #然后再pnpm build
 #插件包版本如果更新需要pnpm copy
 #打包命令
-#pyinstaller --noconfirm --clean --onefile --name AutoPlan_V7.5.5 -i "D:/Agilebot-Autoplan/static/favicon.ico" --add-data "templates;templates" --add-data "static;static" --add-data "config.json;." --collect-all numpy --collect-all matplotlib --hidden-import numpy._core._exceptions app.py
+#pyinstaller --noconfirm --clean --onefile --name AutoPlan_V7.5.6 -i "D:/Agilebot-Autoplan/static/favicon.ico" --add-data "templates;templates" --add-data "static;static" --add-data "config.json;." --collect-all numpy --collect-all matplotlib --hidden-import numpy._core._exceptions app.py
 #安装依赖
 #pip install fastapi[standard]
 
@@ -973,6 +973,8 @@ async def write_p_data(request: Request):
             x = float(p['x'])  # 确保X是浮点数
             y = float(p['y'])  # 确保Y是浮点数
             z = float(p['z'])  # 确保Z是浮点数
+            a = float(p['a']) if 'a' in p else None
+            b = float(p['b']) if 'b' in p else None
             c = float(p['c'])  # 确保C是浮点数
             uf = _to_int_or_default(p.get('uf', 0), 0)  # 确保UF是整数，默认从0开始
             tf = _to_int_or_default(p.get('tf', 1), 1)  # 确保TF是整数
@@ -991,6 +993,10 @@ async def write_p_data(request: Request):
             pose.poseData.cartData.baseCart.position.x = x
             pose.poseData.cartData.baseCart.position.y = y
             pose.poseData.cartData.baseCart.position.z = z
+            if a is not None:
+                pose.poseData.cartData.baseCart.position.a = a
+            if b is not None:
+                pose.poseData.cartData.baseCart.position.b = b
             pose.poseData.cartData.baseCart.position.c = c
             pose.poseData.cartData.uf = uf  # 更新UF值
             pose.poseData.cartData.tf = tf  # 更新TF值
@@ -1044,6 +1050,8 @@ async def read_pr_register(request: Request):
         print(f"PR寄存器 {pr_register_id} 的X值: {pose_register.poseRegisterData.cartData.position.x}")
         print(f"PR寄存器 {pr_register_id} 的Y值: {pose_register.poseRegisterData.cartData.position.y}")
         print(f"PR寄存器 {pr_register_id} 的Z值: {pose_register.poseRegisterData.cartData.position.z}")
+        print(f"PR寄存器 {pr_register_id} 的A值: {pose_register.poseRegisterData.cartData.position.a}")
+        print(f"PR寄存器 {pr_register_id} 的B值: {pose_register.poseRegisterData.cartData.position.b}")
         print(f"PR寄存器 {pr_register_id} 的C值: {pose_register.poseRegisterData.cartData.position.c}")
 
         # 返回完整的X, Y, Z, C值
@@ -1051,6 +1059,8 @@ async def read_pr_register(request: Request):
             'x': pose_register.poseRegisterData.cartData.position.x,
             'y': pose_register.poseRegisterData.cartData.position.y,
             'z': pose_register.poseRegisterData.cartData.position.z,
+            'a': pose_register.poseRegisterData.cartData.position.a,
+            'b': pose_register.poseRegisterData.cartData.position.b,
             'c': pose_register.poseRegisterData.cartData.position.c
         }, 200)
 
@@ -2756,6 +2766,8 @@ async def auto_write_recipe(request: Request):
             x = float(p['x'])
             y = float(p['y'])
             z = float(p.get('z') or 0)  # 添加默认值，因为配方数据中可能没有z字段
+            a = float(p['a']) if 'a' in p else None
+            b = float(p['b']) if 'b' in p else None
             c = float(p['c'])
             uf = int(p.get('uf', 0))  # 使用默认值0
             tf = int(p.get('tf', 1))  # 使用默认值1
@@ -2773,6 +2785,10 @@ async def auto_write_recipe(request: Request):
             pose.poseData.cartData.baseCart.position.x = x
             pose.poseData.cartData.baseCart.position.y = y
             pose.poseData.cartData.baseCart.position.z = z
+            if a is not None:
+                pose.poseData.cartData.baseCart.position.a = a
+            if b is not None:
+                pose.poseData.cartData.baseCart.position.b = b
             pose.poseData.cartData.baseCart.position.c = c
             pose.poseData.cartData.uf = uf
             pose.poseData.cartData.tf = tf

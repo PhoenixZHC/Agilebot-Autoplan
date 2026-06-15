@@ -1,6 +1,6 @@
 # Agilebot Intelligent Palletizing Planning System
 
-**Version v7.5.5 | Updated: June 2, 2026**
+**Version v7.5.6 | Updated: June 15, 2026**
 
 ---
 
@@ -215,6 +215,11 @@ The system provides the following 5 main feature modules:
 
 ## Version History
 
+### v7.5.6 (June 15, 2026)
+- Fixed alert and confirm messages staying in Chinese after switching languages
+- Added A/B angle fields when writing P-points: manual planning reads them from reference point 1, smart planning reads them from the Z&C reference register
+- PR register reads now return A/B, and P-point writes plus automatic recipe writes now update A/B
+
 ### v7.5.5 (June 2, 2026)
 - Fixed inconsistent triangle fill counts; the frontend no longer halves triangle totals
 - Aligned hexagon edge/diagonal arrangement calculations with preview drawing angles
@@ -263,4 +268,4 @@ The system provides the following 5 main feature modules:
 
 ---
 
-**Agilebot Intelligent Palletizing Planning System | Version v7.5.5 | Updated: June 2, 2026 | © 2026**
+**Agilebot Intelligent Palletizing Planning System | Version v7.5.6 | Updated: June 15, 2026 | © 2026**
