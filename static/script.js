@@ -1911,8 +1911,19 @@ async function runPPointWriteStep() {
     }, '读取PR寄存器失败');
 
     const currentRecipeType = window.currentRecipeType || 'smart';
-    const angleSource = currentRecipeType === 'manual' ? window.referencePoints?.pr1 : prData;
+    let angleSource = currentRecipeType === 'manual' ? window.referencePoints?.pr1 : prData;
     const angleSourceName = currentRecipeType === 'manual' ? '参考点1' : 'Z&C参考寄存器';
+
+    if (currentRecipeType === 'manual' && !Number.isFinite(Number(angleSource?.a))) {
+        const pr1Id = window.referencePoints?.pr1Id
+            || parseInt(document.getElementById('manual_pr1_id')?.value, 10);
+        if (Number.isFinite(pr1Id) && pr1Id >= 1) {
+            angleSource = await postWriteJson('/read_pr_register', {
+                pr_register_id: pr1Id
+            }, '读取参考点1失败');
+        }
+    }
+
     const aValue = requireFiniteRegisterAxis(angleSource, 'a', angleSourceName);
     const bValue = requireFiniteRegisterAxis(angleSource, 'b', angleSourceName);
 
@@ -3325,6 +3336,11 @@ function loadRecipeToPlanning(recipeName) {
                 }
                 if (calculationMethodInput) {
                     calculationMethodInput.value = data.manualPlanningInfo.calculationMethod || 'row_priority';
+                }
+
+                const savedReferencePoints = data.manualPlanningInfo.referencePoints;
+                if (savedReferencePoints?.pr1) {
+                    window.referencePoints = savedReferencePoints;
                 }
             }
             

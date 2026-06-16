@@ -2760,20 +2760,46 @@ async def auto_write_recipe(request: Request):
         if not table_data:
             return JSONResponse({'error': '配方中没有P点数据'}, 400)
 
+        # 5.1 解析默认 A/B 角度：手动规划从参考点1，智能规划从 Z&C 参考寄存器
+        default_a = None
+        default_b = None
+        pr_register_id = data.get('pr_register_id', 1)
+        try:
+            pr_register_id = int(pr_register_id)
+        except (TypeError, ValueError):
+            pr_register_id = 1
+
+        if recipe_data.get('isManualPlanning'):
+            pr1 = recipe_data.get('manualPlanningInfo', {}).get('referencePoints', {}).get('pr1', {})
+            if pr1.get('a') is not None and pr1.get('b') is not None:
+                default_a = float(pr1['a'])
+                default_b = float(pr1['b'])
+            else:
+                pr1_id = recipe_data.get('manualPlanningInfo', {}).get('referencePoints', {}).get('pr1Id', 1)
+                pose_register, ret = robot_arm.register.read_PR(int(pr1_id))
+                if ret == StatusCodeEnum.OK:
+                    default_a = float(pose_register.poseRegisterData.cartData.position.a)
+                    default_b = float(pose_register.poseRegisterData.cartData.position.b)
+        else:
+            pose_register, ret = robot_arm.register.read_PR(pr_register_id)
+            if ret == StatusCodeEnum.OK:
+                default_a = float(pose_register.poseRegisterData.cartData.position.a)
+                default_b = float(pose_register.poseRegisterData.cartData.position.b)
+
         # 6. 批量写入P点数据
         for p in table_data:
             pose_id = p['pId']  # 使用pId而不是id
             x = float(p['x'])
             y = float(p['y'])
             z = float(p.get('z') or 0)  # 添加默认值，因为配方数据中可能没有z字段
-            a = float(p['a']) if 'a' in p else None
-            b = float(p['b']) if 'b' in p else None
+            a = float(p['a']) if 'a' in p else default_a
+            b = float(p['b']) if 'b' in p else default_b
             c = float(p['c'])
             uf = int(p.get('uf', 0))  # 使用默认值0
             tf = int(p.get('tf', 1))  # 使用默认值1
             left_right = int(p.get('left_right', 1))  # 使用默认值1
 
-            print(f"正在写入P点 {pose_id}: x={x}, y={y}, z={z}, c={c}, uf={uf}, tf={tf}, left_right={left_right}")
+            print(f"正在写入P点 {pose_id}: x={x}, y={y}, z={z}, a={a}, b={b}, c={c}, uf={uf}, tf={tf}, left_right={left_right}")
 
             # 读取当前P点的位姿数据
             assert robot_arm is not None  # 类型检查器断言

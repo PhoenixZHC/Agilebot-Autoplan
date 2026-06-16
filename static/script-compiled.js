@@ -1846,8 +1846,8 @@ function runPPointWriteStep() {
 }
 function _runPPointWriteStep() {
   _runPPointWriteStep = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
-    var _window$referencePoin2;
-    var programName, startPPoint, prRegisterId, ufValue, toolCount, leftRight, rows, pData, prData, currentRecipeType, angleSource, angleSourceName, aValue, bValue;
+    var _window$referencePoin2, _window$referencePoin3, _document$getElementB40;
+    var programName, startPPoint, prRegisterId, ufValue, toolCount, leftRight, rows, pData, prData, currentRecipeType, angleSource, angleSourceName, aValue, bValue, pr1Id;
     return _regeneratorRuntime().wrap(function _callee3$(_context3) {
       while (1) switch (_context3.prev = _context3.next) {
         case 0:
@@ -1916,6 +1916,22 @@ function _runPPointWriteStep() {
           currentRecipeType = window.currentRecipeType || 'smart';
           angleSource = currentRecipeType === 'manual' ? (_window$referencePoin2 = window.referencePoints) === null || _window$referencePoin2 === void 0 ? void 0 : _window$referencePoin2.pr1 : prData;
           angleSourceName = currentRecipeType === 'manual' ? '参考点1' : 'Z&C参考寄存器';
+          if (!(currentRecipeType === 'manual' && !Number.isFinite(Number(angleSource === null || angleSource === void 0 ? void 0 : angleSource.a)))) {
+            _context3.next = 26;
+            break;
+          }
+          pr1Id = ((_window$referencePoin3 = window.referencePoints) === null || _window$referencePoin3 === void 0 ? void 0 : _window$referencePoin3.pr1Id) || parseInt((_document$getElementB40 = document.getElementById('manual_pr1_id')) === null || _document$getElementB40 === void 0 ? void 0 : _document$getElementB40.value, 10);
+          if (!(Number.isFinite(pr1Id) && pr1Id >= 1)) {
+            _context3.next = 26;
+            break;
+          }
+          _context3.next = 25;
+          return postWriteJson('/read_pr_register', {
+            pr_register_id: pr1Id
+          }, '读取参考点1失败');
+        case 25:
+          angleSource = _context3.sent;
+        case 26:
           aValue = requireFiniteRegisterAxis(angleSource, 'a', angleSourceName);
           bValue = requireFiniteRegisterAxis(angleSource, 'b', angleSourceName);
           pData.forEach(function (point) {
@@ -1925,14 +1941,14 @@ function _runPPointWriteStep() {
             point.a = aValue;
             point.b = bValue;
           });
-          _context3.next = 28;
+          _context3.next = 31;
           return postWriteJson('/write_p_data', {
             program_name: programName,
             p_data: pData
           }, '写入P点数据失败');
-        case 28:
+        case 31:
           return _context3.abrupt("return", 'P点数据写入成功');
-        case 29:
+        case 32:
         case "end":
           return _context3.stop();
       }
@@ -3435,6 +3451,10 @@ function loadRecipeToPlanning(recipeName) {
         }
         if (calculationMethodInput) {
           calculationMethodInput.value = data.manualPlanningInfo.calculationMethod || 'row_priority';
+        }
+        var savedReferencePoints = data.manualPlanningInfo.referencePoints;
+        if (savedReferencePoints !== null && savedReferencePoints !== void 0 && savedReferencePoints.pr1) {
+          window.referencePoints = savedReferencePoints;
         }
       }
 
