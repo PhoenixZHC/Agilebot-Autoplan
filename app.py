@@ -3,7 +3,7 @@
 #然后再pnpm build
 #插件包版本如果更新需要pnpm copy
 #打包命令
-#pyinstaller --noconfirm --clean --onefile --name AutoPlan_V7.5.6 -i "D:/Agilebot-Autoplan/static/favicon.ico" --add-data "templates;templates" --add-data "static;static" --add-data "config.json;." --collect-all numpy --collect-all matplotlib --hidden-import numpy._core._exceptions app.py
+#pyinstaller --noconfirm --clean --onefile --name AutoPlan_V7.5.7 -i "D:/Agilebot-Autoplan/static/favicon.ico" --add-data "templates;templates" --add-data "static;static" --add-data "config.json;." --collect-all numpy --collect-all matplotlib --hidden-import numpy._core._exceptions app.py
 #安装依赖
 #pip install fastapi[standard]
 
@@ -29,6 +29,7 @@ from Agilebot.IR.A.status_code import StatusCodeEnum
 from Agilebot.IR.A.sdk_types import CoordinateSystemType, SignalType, SignalValue
 from Agilebot.IR.A.sdk_classes import PoseRegister, Posture, PoseType
 from Agilebot.IR.A.extension import Extension
+from api_responses import api_error, api_success
 
 # 获取插件端口号，无未提供，默认5000
 PORT = os.getenv("PORT", "5000")
@@ -558,7 +559,7 @@ async def calculate(request: Request):
         ]
         for field in required_fields:
             if field not in data:
-                return JSONResponse({'error': f'缺少必需字段: {field}'}, 400)
+                return api_error('error_missing_required_field', field=field)
 
         frame_length = parse_float_field(data, 'frame_length')
         frame_width = parse_float_field(data, 'frame_width')
@@ -616,7 +617,7 @@ async def calculate(request: Request):
             if shape_type == 'triangle' and triangle_type == 'equilateral':
                 shape_width = shape_length  # 等边三角形的底边长等于边长
             else:
-                return JSONResponse({'error': 'shape_width 不能为空'}, 400)
+                return api_error('error_shape_width_required')
         else:
             shape_width = parse_float_field(data, 'shape_width')
 
@@ -788,7 +789,7 @@ async def calculate(request: Request):
         )
 
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 @app.post('/connect_robot')
 async def connect_robot(request: Request):
@@ -796,12 +797,12 @@ async def connect_robot(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     robot_ip = data.get('robot_ip')
 
     if not robot_ip:
-        return JSONResponse({'error': '缺少机器人IP地址'}, 400)
+        return api_error('error_missing_robot_ip')
 
     try:
         # 如果IP地址是970215，模拟连接成功
@@ -821,18 +822,14 @@ async def connect_robot(request: Request):
         ret = robot_arm.connect(robot_ip)
         if ret != StatusCodeEnum.OK:
             # 根据状态码返回具体的错误信息
-            if ret == StatusCodeEnum.INVALID_IP_ADDRESS:
-                error_msg = '连接失败: IP 地址无效'
-            elif ret == StatusCodeEnum.CONNECTION_TIMEOUT:
-                error_msg = '连接失败: 连接超时'
-            elif ret == StatusCodeEnum.CONTROLLER_ERROR:
-                error_msg = '连接失败: 控制器错误，详情请联系开发人员'
-            else:
-                error_msg = f'连接失败: {ret.errmsg}'
-
-            # 清理连接状态
             robot_arm = None
-            return JSONResponse({'error': error_msg}, 400)
+            if ret == StatusCodeEnum.INVALID_IP_ADDRESS:
+                return api_error('error_connect_invalid_ip')
+            if ret == StatusCodeEnum.CONNECTION_TIMEOUT:
+                return api_error('error_connect_timeout')
+            if ret == StatusCodeEnum.CONTROLLER_ERROR:
+                return api_error('error_connect_controller')
+            return api_error('error_connect_failed', error=ret.errmsg)
 
         # 获取型号
         model_info, ret = robot_arm.get_arm_model_info()
@@ -840,7 +837,7 @@ async def connect_robot(request: Request):
             # 获取型号失败时，清理连接状态
             robot_arm.disconnect()
             robot_arm = None
-            return JSONResponse({'error': '获取型号失败: ' + ret.errmsg}, 400)
+            return api_error('error_get_model_failed', error=ret.errmsg)
 
         # 获取控制柜版本 - 使用新版本SDK的接口
         version_info, ret = robot_arm.get_version()
@@ -848,7 +845,7 @@ async def connect_robot(request: Request):
             # 获取版本失败时，清理连接状态
             robot_arm.disconnect()
             robot_arm = None
-            return JSONResponse({'error': '获取控制柜版本失败: ' + ret.errmsg}, 400)
+            return api_error('error_get_controller_version_failed', error=ret.errmsg)
 
         # 返回型号和控制柜版本信息，保持连接状态
         return JSONResponse({
@@ -861,7 +858,7 @@ async def connect_robot(request: Request):
         if robot_arm is not None:
             robot_arm.disconnect()
             robot_arm = None
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 @app.post('/disconnect_robot')
 async def disconnect_robot_route(request: Request):
@@ -869,9 +866,9 @@ async def disconnect_robot_route(request: Request):
     if robot_arm is not None:
         robot_arm.disconnect()
         robot_arm = None
-        return JSONResponse({'message': '已断开连接'}, 200)
+        return api_success('success_disconnected')
     else:
-        return JSONResponse({'error': '未连接机器人'}, 400)
+        return api_error('error_not_connected')
 
 
 @app.post('/get_p_data')
@@ -880,22 +877,22 @@ async def get_p_data(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     program_name = data.get('program_name')
 
     if not program_name:
-        return JSONResponse({'error': '缺少程序名称'}, 400)
+        return api_error('error_missing_program_name')
 
     if robot_arm is None:
-        return JSONResponse({'error': '未连接机器人'}, 400)
+        return api_error('error_not_connected')
 
     try:
         # 读取所有位姿
         assert robot_arm is not None  # 类型检查器断言
         poses, ret = robot_arm.program_pose.read_all_poses(program_name)
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '读取P点数据失败'}, 400)
+            return api_error('error_read_p_data_failed')
 
         # 将位姿数据转换为JSON格式
         poses_data = []
@@ -925,7 +922,7 @@ async def get_p_data(request: Request):
         return JSONResponse({'poses': poses_data}, 200)
 
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 @app.post('/write_p_data')
 async def write_p_data(request: Request):
@@ -933,16 +930,16 @@ async def write_p_data(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     program_name = data.get('program_name')
     p_data = data.get('p_data')
 
     if not program_name or not p_data:
-        return JSONResponse({'error': '缺少程序名称或P点数据'}, 400)
+        return api_error('error_missing_program_or_p_data')
 
     if robot_arm is None:
-        return JSONResponse({'error': '未连接机器人'}, 400)
+        return api_error('error_not_connected')
 
     try:
         def _to_int_or_default(value, default_value):
@@ -954,7 +951,7 @@ async def write_p_data(request: Request):
         # 检查机器人状态
         state, ret = robot_arm.get_robot_status()
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '获取机器人状态失败'}, 400)
+            return api_error('error_get_robot_status_failed')
 
         # 添加调试信息：打印实际状态值
         print(f"写入P点前检查 - 机器人运行状态：{state.msg}")
@@ -964,7 +961,7 @@ async def write_p_data(request: Request):
 
         # 检查机器人是否处于空闲状态
         if state.msg != "机器人空闲":
-            return JSONResponse({'error': f'机器人当前不处于空闲状态（实际状态：{state.msg}），无法写入P点'}, 400)
+            return api_error('error_robot_not_idle', status=state.msg)
 
         # 批量写入P点数据
         print(f"[DEBUG] 收到 p_data 共 {len(p_data)} 个点, 前3个点的原始tf值: {[p.get('tf') for p in p_data[:3]]}")
@@ -983,11 +980,11 @@ async def write_p_data(request: Request):
 
             # 读取当前P点的位姿数据
             if robot_arm is None:
-                return JSONResponse({'error': '机器人连接已断开'}, 400)
+                return api_error('error_robot_disconnected')
             assert robot_arm is not None  # 类型检查器断言
             pose, ret = robot_arm.program_pose.read(program_name, pose_id)
             if ret != StatusCodeEnum.OK:
-                return JSONResponse({'error': f'读取P点 {pose_id} 数据失败'}, 400)
+                return api_error('error_read_p_point_failed', id=pose_id)
 
             # 修改位姿数据的X、Y、Z、C坐标，并更新UF和TF值
             pose.poseData.cartData.baseCart.position.x = x
@@ -1004,15 +1001,15 @@ async def write_p_data(request: Request):
 
             # 将修改后的位姿数据写回
             if robot_arm is None:
-                return JSONResponse({'error': '机器人连接已断开'}, 400)
+                return api_error('error_robot_disconnected')
             ret = robot_arm.program_pose.write(program_name, pose_id, pose)
             if ret != StatusCodeEnum.OK:
-                return JSONResponse({'error': f'写入P点 {pose_id} 数据失败'}, 400)
+                return api_error('error_write_p_point_failed', id=pose_id)
 
-        return JSONResponse({'message': 'P点数据写入成功'}, 200)
+        return api_success('success_p_data_written')
 
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 @app.post('/read_pr_register')
 async def read_pr_register(request: Request):
@@ -1020,31 +1017,31 @@ async def read_pr_register(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     # 支持两种参数名：pr_register_id 和 pr_id
     pr_register_id = data.get('pr_register_id') or data.get('pr_id')
     print(f"读取PR寄存器 {pr_register_id} 的完整数据")  # 打印调试信息
 
     if pr_register_id is None:
-        return JSONResponse({'error': '缺少PR寄存器ID'}, 400)
+        return api_error('error_missing_pr_id')
 
     try:
         pr_register_id = int(pr_register_id)  # 确保PR寄存器ID是整数
     except ValueError:
-        return JSONResponse({'error': 'PR寄存器ID必须是整数'}, 400)
+        return api_error('error_pr_id_must_be_int')
 
     if robot_arm is None:
-        return JSONResponse({'error': '未连接机器人'}, 400)
+        return api_error('error_not_connected')
 
     try:
         # 读取位姿寄存器 - 使用新版本SDK的接口
         if robot_arm is None:
-            return JSONResponse({'error': '机器人连接已断开'}, 400)
+            return api_error('error_robot_disconnected')
         assert robot_arm is not None  # 类型检查器断言
         pose_register, ret = robot_arm.register.read_PR(pr_register_id)
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '读取PR寄存器失败'}, 400)
+            return api_error('error_read_pr_failed')
 
         # 打印调试信息
         print(f"PR寄存器 {pr_register_id} 的X值: {pose_register.poseRegisterData.cartData.position.x}")
@@ -1065,7 +1062,7 @@ async def read_pr_register(request: Request):
         }, 200)
 
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 # 新增：写入R寄存器的路由
 @app.post('/write_r_registers')
@@ -1073,11 +1070,11 @@ async def write_r_registers(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     # 检查机器人是否已连接
     if robot_arm is None:
-        return JSONResponse({'error': '未连接机器人'}, 400)
+        return api_error('error_not_connected')
 
     # 获取配方类型
     recipe_type = data.get('recipe_type', 'smart')  # 默认为智能规划
@@ -1092,34 +1089,34 @@ async def write_r_registers(request: Request):
             single_row_or_col_count = data.get('single_row_or_col_count')
 
             if total_points is None or row_count is None or col_count is None or tool_count is None or single_row_or_col_count is None:
-                return JSONResponse({'error': '手动规划配方缺少必要参数'}, 400)
+                return api_error('error_manual_recipe_missing_params')
 
             # 写入R4寄存器（点位总数）
             ret = robot_arm.register.write_R(4, int(total_points))
             if ret != StatusCodeEnum.OK:
-                return JSONResponse({'error': '写入R4寄存器失败'}, 400)
+                return api_error('error_write_r_register_failed', register='R4')
 
             # 写入R5寄存器（工具数量）
             ret = robot_arm.register.write_R(5, int(tool_count))
             if ret != StatusCodeEnum.OK:
-                return JSONResponse({'error': '写入R5寄存器失败'}, 400)
+                return api_error('error_write_r_register_failed', register='R5')
 
             # 写入R10寄存器（单行列数量）
             ret = robot_arm.register.write_R(10, int(single_row_or_col_count))
             if ret != StatusCodeEnum.OK:
-                return JSONResponse({'error': '写入R10寄存器失败'}, 400)
+                return api_error('error_write_r_register_failed', register='R10')
 
             # 写入R11寄存器（行数）
             ret = robot_arm.register.write_R(11, int(row_count))
             if ret != StatusCodeEnum.OK:
-                return JSONResponse({'error': '写入R11寄存器失败'}, 400)
+                return api_error('error_write_r_register_failed', register='R11')
 
             # 写入R12寄存器（列数）
             ret = robot_arm.register.write_R(12, int(col_count))
             if ret != StatusCodeEnum.OK:
-                return JSONResponse({'error': '写入R12寄存器失败'}, 400)
+                return api_error('error_write_r_register_failed', register='R12')
 
-            return JSONResponse({'message': '手动规划R寄存器写入成功'}, 200)
+            return api_success('success_manual_r_written')
 
         else:
             # 智能规划配方：写入所有参数
@@ -1138,94 +1135,94 @@ async def write_r_registers(request: Request):
 
         # 写入R1寄存器（图形高度）- 使用新版本SDK的接口
         if robot_arm is None:
-            return JSONResponse({'error': '机器人连接已断开'}, 400)
+            return api_error('error_robot_disconnected')
         assert robot_arm is not None  # 类型检查器断言
         ret = robot_arm.register.write_R(1, float(shape_height))
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '写入R1寄存器失败'}, 400)
+            return api_error('error_write_r_register_failed', register='R1')
 
         # 写入R2寄存器（包材厚度）
         if robot_arm is None:
-            return JSONResponse({'error': '机器人连接已断开'}, 400)
+            return api_error('error_robot_disconnected')
         assert robot_arm is not None  # 类型检查器断言
         ret = robot_arm.register.write_R(2, float(material_thickness))
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '写入R2寄存器失败'}, 400)
+            return api_error('error_write_r_register_failed', register='R2')
 
         # 写入R3寄存器（摆放层数）
         if robot_arm is None:
-            return JSONResponse({'error': '机器人连接已断开'}, 400)
+            return api_error('error_robot_disconnected')
         ret = robot_arm.register.write_R(3, int(placement_layers))
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '写入R3寄存器失败'}, 400)
+            return api_error('error_write_r_register_failed', register='R3')
 
          # 写入R4寄存器（填充数量）
         if robot_arm is None:
-            return JSONResponse({'error': '机器人连接已断开'}, 400)
+            return api_error('error_robot_disconnected')
         ret = robot_arm.register.write_R(4, int(total_shapes))
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '写入R4寄存器失败'}, 400)
+            return api_error('error_write_r_register_failed', register='R4')
 
         # 写入R5寄存器（工具数量）
         if robot_arm is None:
-            return JSONResponse({'error': '机器人连接已断开'}, 400)
+            return api_error('error_robot_disconnected')
         ret = robot_arm.register.write_R(5, int(tool_count))
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '写入R5寄存器失败'}, 400)
+            return api_error('error_write_r_register_failed', register='R5')
 
         # 写入R6寄存器（边框深度）
         if robot_arm is None:
-            return JSONResponse({'error': '机器人连接已断开'}, 400)
+            return api_error('error_robot_disconnected')
         ret = robot_arm.register.write_R(6, float(frame_depth))
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '写入R6寄存器失败'}, 400)
+            return api_error('error_write_r_register_failed', register='R6')
 
         # 写入R7寄存器（料框长度）
         if robot_arm is None:
-            return JSONResponse({'error': '机器人连接已断开'}, 400)
+            return api_error('error_robot_disconnected')
         ret = robot_arm.register.write_R(7, int(frame_length))
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '写入R7寄存器失败'}, 400)
+            return api_error('error_write_r_register_failed', register='R7')
 
         # 写入R8寄存器（料框宽度）
         if robot_arm is None:
-            return JSONResponse({'error': '机器人连接已断开'}, 400)
+            return api_error('error_robot_disconnected')
         ret = robot_arm.register.write_R(8, int(frame_width))
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '写入R8寄存器失败'}, 400)
+            return api_error('error_write_r_register_failed', register='R8')
 
         # 写入R9寄存器（前端下料数量）
         if robot_arm is None:
-            return JSONResponse({'error': '机器人连接已断开'}, 400)
+            return api_error('error_robot_disconnected')
         ret = robot_arm.register.write_R(9, int(drop_Count))
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '写入R9寄存器失败'}, 400)
+            return api_error('error_write_r_register_failed', register='R9')
 
          # 写入R10寄存器（单行列数量）
         if robot_arm is None:
-            return JSONResponse({'error': '机器人连接已断开'}, 400)
+            return api_error('error_robot_disconnected')
         ret = robot_arm.register.write_R(10, int(numofsingle_row_or_col_value))
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '写入R10寄存器失败'}, 400)
+            return api_error('error_write_r_register_failed', register='R10')
 
         # 写入R11寄存器（行数）
         if robot_arm is None:
-            return JSONResponse({'error': '机器人连接已断开'}, 400)
+            return api_error('error_robot_disconnected')
         ret = robot_arm.register.write_R(11, int(rows))
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '写入R11寄存器失败'}, 400)
+            return api_error('error_write_r_register_failed', register='R11')
 
          # 写入R12寄存器（列数）
         if robot_arm is None:
-            return JSONResponse({'error': '机器人连接已断开'}, 400)
+            return api_error('error_robot_disconnected')
         ret = robot_arm.register.write_R(12, int(cols))
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '写入R12寄存器失败'}, 400)
+            return api_error('error_write_r_register_failed', register='R12')
 
-        return JSONResponse({'message': '智能规划R寄存器写入成功'}, 200)
+        return api_success('success_smart_r_written')
 
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 @app.post('/get_tf_data')
 async def get_tf_data(request: Request):
@@ -1233,21 +1230,21 @@ async def get_tf_data(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     tf_id = data.get('tf_id')
 
     if tf_id is None:
-        return JSONResponse({'error': '缺少TF ID'}, 400)
+        return api_error('error_missing_tf_id')
 
     if robot_arm is None:
-        return JSONResponse({'error': '未连接机器人'}, 400)
+        return api_error('error_not_connected')
 
     try:
         # 读取指定TF的值
         tf, ret = robot_arm.coordinate_system.get(CoordinateSystemType.ToolFrame, tf_id)
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '读取TF数据失败'}, 400)
+            return api_error('error_read_tf_data_failed')
 
         print(
             f"TF序号：{tf.coordinate_info.coordinate_id}\n"
@@ -1282,7 +1279,7 @@ async def get_tf_data(request: Request):
         }, 200)
 
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 @app.post('/update_tf_data')
 async def update_tf_data(request: Request):
@@ -1290,15 +1287,15 @@ async def update_tf_data(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     tf_updates = data.get('tf_updates')
 
     if not tf_updates:
-        return JSONResponse({'error': '缺少TF更新数据'}, 400)
+        return api_error('error_missing_tf_update_data')
 
     if robot_arm is None:
-        return JSONResponse({'error': '未连接机器人'}, 400)
+        return api_error('error_not_connected')
 
     try:
         # 批量更新TF数据
@@ -1306,7 +1303,7 @@ async def update_tf_data(request: Request):
             tf_id = tf_update['coordinate_info']['coordinate_id']
             tf, ret = robot_arm.coordinate_system.get(CoordinateSystemType.ToolFrame, tf_id)
             if ret != StatusCodeEnum.OK:
-                return JSONResponse({'error': f'读取TF {tf_id} 数据失败'}, 400)
+                return api_error('error_read_tf_failed', id=tf_id)
 
             # 更新TF的值
             tf.coordinate_info.name = tf_update['coordinate_info']['name']
@@ -1332,12 +1329,12 @@ async def update_tf_data(request: Request):
             # 将修改后的TF数据写回
             ret = robot_arm.coordinate_system.update(CoordinateSystemType.ToolFrame, tf)
             if ret != StatusCodeEnum.OK:
-                return JSONResponse({'error': f'更新TF {tf_id} 数据失败'}, 400)
+                return api_error('error_update_tf_failed', id=tf_id)
 
-        return JSONResponse({'message': 'TF数据更新成功'}, 200)
+        return api_success('success_tf_updated')
 
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 # 仿形计算器
 @app.post('/get_pr_data')
@@ -1345,7 +1342,7 @@ async def get_pr_data(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     shape_type = data.get('shape_type')
     diameter = data.get('diameter')
@@ -1353,30 +1350,30 @@ async def get_pr_data(request: Request):
     width = data.get('width')
 
     if not shape_type:
-        return JSONResponse({'error': '缺少仿形形状类型'}, 400)
+        return api_error('error_missing_shape_type')
 
     if robot_arm is None:
-        return JSONResponse({'error': '未连接机器人'}, 400)
+        return api_error('error_not_connected')
 
     try:
         # 读取PR寄存器的值 - 使用新版本SDK的接口
         if robot_arm is None:
-            return JSONResponse({'error': '机器人连接已断开'}, 400)
+            return api_error('error_robot_disconnected')
         pr1, ret1 = robot_arm.register.read_PR(1)
         if ret1 != StatusCodeEnum.OK:
-            return JSONResponse({'error': '读取PR1寄存器失败'}, 400)
+            return api_error('error_read_pr_register_failed', register='PR1')
 
         if robot_arm is None:
-            return JSONResponse({'error': '机器人连接已断开'}, 400)
+            return api_error('error_robot_disconnected')
         pr2, ret2 = robot_arm.register.read_PR(2)
         if ret2 != StatusCodeEnum.OK:
-            return JSONResponse({'error': '读取PR2寄存器失败'}, 400)
+            return api_error('error_read_pr_register_failed', register='PR2')
 
         if robot_arm is None:
-            return JSONResponse({'error': '机器人连接已断开'}, 400)
+            return api_error('error_robot_disconnected')
         pr3, ret3 = robot_arm.register.read_PR(3)
         if ret3 != StatusCodeEnum.OK:
-            return JSONResponse({'error': '读取PR3寄存器失败'}, 400)
+            return api_error('error_read_pr_register_failed', register='PR3')
 
         # 获取PR寄存器的X和Y值
         pr1_x = pr1.poseRegisterData.cartData.position.x
@@ -1412,7 +1409,7 @@ async def get_pr_data(request: Request):
                 f"col_spacing：{col_spacing}\n"
             )
         else:
-            return JSONResponse({'error': '无效的仿形形状类型'}, 400)
+            return api_error('error_invalid_shape_type')
 
         return JSONResponse({
             'row_spacing': row_spacing,
@@ -1426,14 +1423,14 @@ async def get_pr_data(request: Request):
         }, 200)
 
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 @app.post('/save_recipe')
 async def save_recipe(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     try:
         # 获取配方名和配方编号
@@ -1443,7 +1440,7 @@ async def save_recipe(request: Request):
         print(f"开始保存配方：名称={recipe_name}, ID={recipe_id} (类型: {type(recipe_id)})")
 
         if not recipe_name or not recipe_id:
-            return JSONResponse({'error': '缺少配方名或配方编号'}, 400)
+            return api_error('error_missing_recipe_name_id')
         recipe_file_path, recipe_name = get_recipe_path(recipe_name)
         recipe_id = parse_recipe_id(recipe_id)
 
@@ -1596,26 +1593,30 @@ async def save_recipe(request: Request):
         # 根据是否有ID重新分配返回不同的信息
         if id_reassigned:
             print(f"返回ID重新分配结果: 原ID={original_id}, 新ID={recipe_id}")
-            return JSONResponse({
-                'message': f'配方保存成功，配方ID已从 {original_id} 重新分配为 {recipe_id}',
-                'id_reassigned': True,
-                'original_id': int(original_id),
-                'new_id': int(recipe_id)
-            }, 200)
+            return api_success(
+                'success_recipe_saved_reassigned',
+                original_id=int(original_id),
+                recipe_id=int(recipe_id),
+                extra={
+                    'id_reassigned': True,
+                    'original_id': int(original_id),
+                    'new_id': int(recipe_id),
+                },
+            )
         else:
             print("返回普通保存成功结果")
-            return JSONResponse({'message': '配方保存成功'}, 200)
+            return api_success('success_recipe_saved')
 
     except Exception as e:
         print(f'Error saving recipe: {str(e)}')
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 @app.post('/check_recipe')
 async def check_recipe(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     try:
         # 获取配方名和配方编号
@@ -1623,7 +1624,7 @@ async def check_recipe(request: Request):
         recipe_id = data.get('recipeId')  # 获取配方编号
 
         if not recipe_name or not recipe_id:
-            return JSONResponse({'error': '缺少配方名或配方编号'}, 400)
+            return api_error('error_missing_recipe_name_id')
         recipe_file_path, recipe_name = get_recipe_path(recipe_name)
         recipe_id = parse_recipe_id(recipe_id)
 
@@ -1675,7 +1676,7 @@ async def check_recipe(request: Request):
         }, 200)
 
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 @app.get('/get_recipe_list')
 async def get_recipe_list(request: Request):
@@ -1704,7 +1705,7 @@ async def get_recipe_list(request: Request):
 
         return JSONResponse({'recipes': recipes}, 200)
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 @app.post('/get_recipe')
 async def get_recipe(request: Request):
@@ -1712,17 +1713,17 @@ async def get_recipe(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     recipe_name = data.get('recipeName')
 
     if not recipe_name:
-        return JSONResponse({'error': '缺少配方名'}, 400)
+        return api_error('error_missing_recipe_name')
 
     try:
         recipe_file_path, recipe_name = get_recipe_path(recipe_name)
         if not os.path.exists(recipe_file_path):
-            return JSONResponse({'error': '配方不存在'}, 404)
+            return api_error('error_recipe_not_found', status_code=404)
 
         with open(recipe_file_path, 'r') as f:
             recipe_data = json.load(f)
@@ -1732,7 +1733,7 @@ async def get_recipe(request: Request):
 
         return JSONResponse(recipe_data, 200)
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 @app.post('/delete_recipe')
 async def delete_recipe(request: Request):
@@ -1740,22 +1741,22 @@ async def delete_recipe(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     recipe_name = data.get('recipeName')
 
     if not recipe_name:
-        return JSONResponse({'error': '缺少配方名'}, 400)
+        return api_error('error_missing_recipe_name')
 
     try:
         recipe_file_path, recipe_name = get_recipe_path(recipe_name)
         if not os.path.exists(recipe_file_path):
-            return JSONResponse({'error': '配方不存在'}, 404)
+            return api_error('error_recipe_not_found', status_code=404)
 
         os.remove(recipe_file_path)
         return JSONResponse({'success': True}, 200)
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 def verify_udisk_mount(mount_path, mount_info):
     """
@@ -2004,19 +2005,19 @@ def unmount_udisk(mount_path=None):
 @app.post('/export_recipe')
 async def export_recipe(request: Request):
     if platform.system().lower() == 'windows':
-        return JSONResponse({'error': '暂不支持PC版'}, 400)
+        return api_error('error_pc_not_supported')
 
     data = await request.json()
     recipe_ids = data.get('recipe_ids')
     if not recipe_ids or len(recipe_ids) == 0:
-        return JSONResponse({'error': '缺少配方ID'}, 400)
+        return api_error('error_missing_recipe_id')
 
     try:
         # 1. 检查U盘是否挂载
         print("开始检查U盘状态...")
         udisk_status, mount_point = check_udisk()
         if not udisk_status:
-            return JSONResponse({'error': 'U盘未插入或挂载失败，请插入U盘后重试'}, 400)
+            return api_error('error_usb_mount_failed')
 
         # 2. 创建autoplan_data目录
         autoplan_data_path = f"{mount_point}/autoplan_data"
@@ -2072,34 +2073,37 @@ async def export_recipe(request: Request):
         # if not unmount_success:
         #     print("警告：U盘卸载失败，但文件已导出完成")
 
-        return JSONResponse({
-            'message': f"成功导出 {exported_count} 个配方到U盘 ({current_time})",
-            'timestamp': current_time,
-            'backup_path': current_time,
-            # 'unmount_success': unmount_success
-        }, 200)
+        return api_success(
+            'success_export_recipes_with_time',
+            count=exported_count,
+            time=current_time,
+            extra={
+                'timestamp': current_time,
+                'backup_path': current_time,
+            },
+        )
 
     except Exception as e:
-        return JSONResponse({'error': f'导出失败: {str(e)}'}, 400)
+        return api_error('error_export_failed', detail=str(e))
 
 # 获取U盘中的备份时间目录列表
 @app.post('/get_backup_timestamps')
 async def get_backup_timestamps(request: Request):
     """获取U盘中autoplan_data目录下的所有时间备份目录"""
     if platform.system().lower() == 'windows':
-        return JSONResponse({'error': '暂不支持PC版'}, 400)
+        return api_error('error_pc_not_supported')
 
     try:
         # 1. 检查U盘是否挂载
         print("开始检查U盘状态...")
         udisk_status, mount_point = check_udisk()
         if not udisk_status:
-            return JSONResponse({'error': 'U盘未插入或挂载失败，请插入U盘后重试'}, 400)
+            return api_error('error_usb_mount_failed')
 
         # 2. 检查autoplan_data目录是否存在
         autoplan_data_path = f"{mount_point}/autoplan_data"
         if not os.path.exists(autoplan_data_path):
-            return JSONResponse({'error': 'U盘中未找到autoplan_data目录'}, 400)
+            return api_error('error_usb_autoplan_dir_not_found')
 
         # 3. 读取目录中的所有子目录（时间备份目录）
         backup_timestamps = []
@@ -2138,36 +2142,36 @@ async def get_backup_timestamps(request: Request):
         }, 200)
 
     except Exception as e:
-        return JSONResponse({'error': f'读取备份目录失败: {str(e)}'}, 400)
+        return api_error('error_read_backup_dir_failed', detail=str(e))
 
 # 获取U盘中的配方列表
 @app.post('/get_usb_recipes')
 async def get_usb_recipes(request: Request):
     """获取U盘中指定时间目录下的所有配方文件"""
     if platform.system().lower() == 'windows':
-        return JSONResponse({'error': '暂不支持PC版'}, 400)
+        return api_error('error_pc_not_supported')
 
     data = await request.json()
     timestamp = data.get('timestamp')  # 时间戳目录名
     if not timestamp:
-        return JSONResponse({'error': '缺少时间戳参数'}, 400)
+        return api_error('error_missing_timestamp')
 
     try:
         # 1. 检查U盘是否挂载
         print("开始检查U盘状态...")
         udisk_status, mount_point = check_udisk()
         if not udisk_status:
-            return JSONResponse({'error': 'U盘未插入或挂载失败，请插入U盘后重试'}, 400)
+            return api_error('error_usb_mount_failed')
 
         # 2. 检查autoplan_data目录是否存在
         autoplan_data_path = f"{mount_point}/autoplan_data"
         if not os.path.exists(autoplan_data_path):
-            return JSONResponse({'error': 'U盘中未找到autoplan_data目录'}, 400)
+            return api_error('error_usb_autoplan_dir_not_found')
 
         # 3. 检查指定的时间目录是否存在
         timestamp_path = os.path.join(autoplan_data_path, timestamp)
         if not os.path.exists(timestamp_path):
-            return JSONResponse({'error': f'时间目录 {timestamp} 不存在'}, 400)
+            return api_error('error_timestamp_dir_not_found', timestamp=timestamp)
 
         # 4. 读取时间目录中的所有json文件（排除备份信息文件）
         usb_recipes = []
@@ -2192,7 +2196,7 @@ async def get_usb_recipes(request: Request):
                         'recipeName': filename.replace('.json', ''),
                         'recipeId': '',
                         'size': os.path.getsize(file_path),
-                        'error': '文件读取失败'
+                        'error_code': 'error_file_read_failed'
                     })
 
         print(f"在U盘时间目录 {timestamp} 中找到 {len(usb_recipes)} 个配方文件")
@@ -2203,14 +2207,14 @@ async def get_usb_recipes(request: Request):
         }, 200)
 
     except Exception as e:
-        return JSONResponse({'error': f'读取U盘配方失败: {str(e)}'}, 400)
+        return api_error('error_read_usb_recipes_failed', detail=str(e))
 
 # 从U盘导入配方
 @app.post('/import_recipes_from_usb')
 async def import_recipes_from_usb(request: Request):
     """从U盘导入选中的配方到本地data目录"""
     if platform.system().lower() == 'windows':
-        return JSONResponse({'error': '暂不支持PC版'}, 400)
+        return api_error('error_pc_not_supported')
 
     data = await request.json()
     selected_filenames = data.get('filenames')
@@ -2218,21 +2222,21 @@ async def import_recipes_from_usb(request: Request):
     conflict_action = data.get('conflict_action', 'ask')  # ask, skip, overwrite
 
     if not selected_filenames or len(selected_filenames) == 0:
-        return JSONResponse({'error': '未选择要导入的配方'}, 400)
+        return api_error('error_no_import_recipes_selected')
     if not timestamp:
-        return JSONResponse({'error': '缺少时间戳参数'}, 400)
+        return api_error('error_missing_timestamp')
 
     try:
         # 1. 检查U盘是否挂载
         print("开始检查U盘状态...")
         udisk_status, mount_point = check_udisk()
         if not udisk_status:
-            return JSONResponse({'error': 'U盘未插入或挂载失败，请插入U盘后重试'}, 400)
+            return api_error('error_usb_mount_failed')
 
         # 2. 检查autoplan_data目录是否存在
         autoplan_data_path = f"{mount_point}/autoplan_data"
         if not os.path.exists(autoplan_data_path):
-            return JSONResponse({'error': 'U盘中未找到autoplan_data目录'}, 400)
+            return api_error('error_usb_autoplan_dir_not_found')
 
         # 3. 确保本地data目录存在
         local_data_path = "data"
@@ -2241,7 +2245,7 @@ async def import_recipes_from_usb(request: Request):
         # 3. 检查指定的时间目录是否存在
         timestamp_path = os.path.join(autoplan_data_path, timestamp)
         if not os.path.exists(timestamp_path):
-            return JSONResponse({'error': f'时间目录 {timestamp} 不存在'}, 400)
+            return api_error('error_timestamp_dir_not_found', timestamp=timestamp)
 
         # 4. 获取当前所有本地配方，用于检查冲突
         local_recipes = []
@@ -2361,58 +2365,55 @@ async def import_recipes_from_usb(request: Request):
         #     print("警告：U盘卸载失败，但文件已导入完成")
 
         # 7. 返回导入结果
-        result_msg = f"成功导入 {imported_count} 个配方"
-        if skipped_count > 0:
-            result_msg += f"，跳过 {skipped_count} 个重名配方"
-        if id_reassigned_count > 0:
-            result_msg += f"，{id_reassigned_count} 个配方重新分配了配方号"
-        if error_list:
-            result_msg += f"，{len(error_list)} 个配方导入失败"
-
-        return JSONResponse({
-            'message': result_msg,
-            'imported_count': imported_count,
-            'skipped_count': skipped_count,
-            'id_reassigned_count': id_reassigned_count,
-            'error_count': len(error_list),
-            'errors': error_list,
-            'reassigned_list': reassigned_list,
-            # 'unmount_success': unmount_success
-        }, 200)
+        return api_success(
+            'success_import_result',
+            imported_count=imported_count,
+            skipped_count=skipped_count,
+            id_reassigned_count=id_reassigned_count,
+            error_count=len(error_list),
+            extra={
+                'imported_count': imported_count,
+                'skipped_count': skipped_count,
+                'id_reassigned_count': id_reassigned_count,
+                'error_count': len(error_list),
+                'errors': error_list,
+                'reassigned_list': reassigned_list,
+            },
+        )
 
     except Exception as e:
-        return JSONResponse({'error': f'导入失败: {str(e)}'}, 400)
+        return api_error('error_import_failed', detail=str(e))
 
 @app.post('/check_import_conflicts')
 async def check_import_conflicts(request: Request):
     """检查导入配方的冲突情况"""
     if platform.system().lower() == 'windows':
-        return JSONResponse({'error': '暂不支持PC版'}, 400)
+        return api_error('error_pc_not_supported')
 
     data = await request.json()
     selected_filenames = data.get('filenames')
     timestamp = data.get('timestamp')  # 时间戳目录名
 
     if not selected_filenames or len(selected_filenames) == 0:
-        return JSONResponse({'error': '未选择要检查的配方'}, 400)
+        return api_error('error_no_import_recipes_selected')
     if not timestamp:
-        return JSONResponse({'error': '缺少时间戳参数'}, 400)
+        return api_error('error_missing_timestamp')
 
     try:
         # 1. 检查U盘是否挂载
         udisk_status, mount_point = check_udisk()
         if not udisk_status:
-            return JSONResponse({'error': 'U盘未插入或挂载失败，请插入U盘后重试'}, 400)
+            return api_error('error_usb_mount_failed')
 
         # 2. 检查autoplan_data目录是否存在
         autoplan_data_path = f"{mount_point}/autoplan_data"
         if not os.path.exists(autoplan_data_path):
-            return JSONResponse({'error': 'U盘中未找到autoplan_data目录'}, 400)
+            return api_error('error_usb_autoplan_dir_not_found')
 
         # 3. 检查指定的时间目录是否存在
         timestamp_path = os.path.join(autoplan_data_path, timestamp)
         if not os.path.exists(timestamp_path):
-            return JSONResponse({'error': f'时间目录 {timestamp} 不存在'}, 400)
+            return api_error('error_timestamp_dir_not_found', timestamp=timestamp)
 
         # 4. 确保本地data目录存在
         local_data_path = "data"
@@ -2506,14 +2507,14 @@ async def check_import_conflicts(request: Request):
         }, 200)
 
     except Exception as e:
-        return JSONResponse({'error': f'检查冲突失败: {str(e)}'}, 400)
+        return api_error('error_check_conflicts_failed', detail=str(e))
 
 # 手动卸载U盘
 @app.post('/unmount_udisk')
 async def unmount_udisk_route(request: Request):
     """手动卸载U盘，确保数据写入完成"""
     if platform.system().lower() == 'windows':
-        return JSONResponse({'error': '暂不支持PC版'}, 400)
+        return api_error('error_pc_not_supported')
 
     try:
         # 执行U盘卸载操作
@@ -2521,18 +2522,11 @@ async def unmount_udisk_route(request: Request):
         unmount_success = unmount_udisk()
 
         if unmount_success:
-            return JSONResponse({
-                'message': 'U盘卸载成功，可以安全拔出',
-                'unmount_success': True
-            }, 200)
-        else:
-            return JSONResponse({
-                'message': 'U盘卸载失败，请检查是否有程序正在使用U盘',
-                'unmount_success': False
-            }, 400)
+            return api_success('success_usb_unmount', extra={'unmount_success': True})
+        return api_error('error_usb_unmount_in_use', extra={'unmount_success': False})
 
     except Exception as e:
-        return JSONResponse({'error': f'卸载U盘失败: {str(e)}'}, 400)
+        return api_error('error_usb_unmount_failed', detail=str(e))
 
 # 读取DI信号状态
 @app.post('/read_di_signal')
@@ -2541,21 +2535,21 @@ async def read_di_signal(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     di_number = data.get('di_number')
 
     if di_number is None:
-        return JSONResponse({'error': '缺少DI信号编号'}, 400)
+        return api_error('error_missing_di_number')
 
     if robot_arm is None:
-        return JSONResponse({'error': '未连接机器人'}, 400)
+        return api_error('error_not_connected')
 
     try:
         # 读取指定DI信号的状态
         di_value, ret = robot_arm.signals.read(SignalType.DI, int(di_number))
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '读取DI信号失败'}, 400)
+            return api_error('error_read_di_failed')
 
         # 打印DI信号状态
         print(f"DI{di_number} 信号状态: {di_value}")
@@ -2565,7 +2559,7 @@ async def read_di_signal(request: Request):
         }, 200)
 
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 # 读取MH寄存器值
 @app.post('/read_mh_register')
@@ -2574,21 +2568,21 @@ async def read_mh_register(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     mh_number = data.get('mh_number')
 
     if mh_number is None:
-        return JSONResponse({'error': '缺少MH寄存器编号'}, 400)
+        return api_error('error_missing_mh_number')
 
     if robot_arm is None:
-        return JSONResponse({'error': '未连接机器人'}, 400)
+        return api_error('error_not_connected')
 
     try:
         # 读取指定MH寄存器的值
         mh_value, ret = robot_arm.register.read_MH(int(mh_number))
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '读取MH寄存器失败'}, 400)
+            return api_error('error_read_mh_failed')
 
         # 打印MH寄存器值
         print(f"MH{mh_number} 寄存器值: {mh_value}")
@@ -2598,7 +2592,7 @@ async def read_mh_register(request: Request):
         }, 200)
 
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 # 外部调用监控
 @app.post('/start_external_call_monitor')
@@ -2607,22 +2601,22 @@ async def start_external_call_monitor(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     mh_number = data.get('mh_number')
     di_number = data.get('di_number')
 
     if mh_number is None or di_number is None:
-        return JSONResponse({'error': '缺少MH编号或DI编号'}, 400)
+        return api_error('error_missing_mh_or_di')
 
     if robot_arm is None:
-        return JSONResponse({'error': '未连接机器人'}, 400)
+        return api_error('error_not_connected')
 
     try:
         # 读取指定DI信号的状态
         di_value, ret = robot_arm.signals.read(SignalType.DI, int(di_number))
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '读取DI信号失败'}, 400)
+            return api_error('error_read_di_failed')
 
         # 打印DI信号状态
         print(f"监控 - DI{di_number} 信号状态: {di_value}")
@@ -2631,7 +2625,7 @@ async def start_external_call_monitor(request: Request):
         if di_value == 1:
             mh_value, ret = robot_arm.register.read_MH(int(mh_number))
             if ret != StatusCodeEnum.OK:
-                return JSONResponse({'error': '读取MH寄存器失败'}, 400)
+                return api_error('error_read_mh_failed')
 
             # 打印MH寄存器值
             print(f"监控 - DI{di_number} 触发，MH{mh_number} 寄存器值: {mh_value}")
@@ -2648,7 +2642,7 @@ async def start_external_call_monitor(request: Request):
             }, 200)
 
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 # 检查机器人状态
 @app.post('/check_robot_status')
@@ -2656,13 +2650,13 @@ async def check_robot_status(request: Request):
     global robot_arm
 
     if robot_arm is None:
-        return JSONResponse({'error': '未连接机器人'}, 400)
+        return api_error('error_not_connected')
 
     try:
         # 获取机器人运行状态
         state, ret = robot_arm.get_robot_status()
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '获取机器人状态失败'}, 400)
+            return api_error('error_get_robot_status_failed')
 
         # 打印机器人状态
         print(f"机器人运行状态：{state.msg}")
@@ -2676,7 +2670,7 @@ async def check_robot_status(request: Request):
         }, 200)
 
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 # 检查运行中的程序
 @app.post('/check_running_programs')
@@ -2684,13 +2678,13 @@ async def check_running_programs(request: Request):
     global robot_arm
 
     if robot_arm is None:
-        return JSONResponse({'error': '未连接机器人'}, 400)
+        return api_error('error_not_connected')
 
     try:
         # 获取所有正在运行的程序
         programs_list, ret = robot_arm.execution.all_running_programs()
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '获取运行程序列表失败'}, 400)
+            return api_error('error_get_running_programs_failed')
 
         # 打印运行中的程序
         running_programs = []
@@ -2707,7 +2701,7 @@ async def check_running_programs(request: Request):
         }, 200)
 
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 # 自动写入配方到机器人
 @app.post('/auto_write_recipe')
@@ -2716,38 +2710,38 @@ async def auto_write_recipe(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     recipe_name = data.get('recipe_name')
 
     if not recipe_name:
-        return JSONResponse({'error': '缺少配方名称'}, 400)
+        return api_error('error_missing_recipe_name')
 
     if robot_arm is None:
-        return JSONResponse({'error': '未连接机器人'}, 400)
+        return api_error('error_not_connected')
 
     try:
         # 1. 检查机器人状态
         state, ret = robot_arm.get_robot_status()
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '获取机器人状态失败'}, 400)
+            return api_error('error_get_robot_status_failed')
 
         if state.msg != "机器人空闲":
-            return JSONResponse({'error': f'机器人当前状态：{state.msg}，无法自动写入'}, 400)
+            return api_error('error_robot_status_cannot_auto_write', status=state.msg)
 
         # 2. 检查运行中的程序
         programs_list, ret = robot_arm.execution.all_running_programs()
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '获取运行程序列表失败'}, 400)
+            return api_error('error_get_running_programs_failed')
 
         if len(programs_list) > 0:
             running_programs = [p.program_name for p in programs_list]
-            return JSONResponse({'error': f'当前有程序在运行：{running_programs}，无法自动写入'}, 400)
+            return api_error('error_program_running_cannot_auto_write', programs=', '.join(running_programs))
 
         # 3. 读取配方数据
         recipe_file_path, recipe_name = get_recipe_path(recipe_name)
         if not os.path.exists(recipe_file_path):
-            return JSONResponse({'error': '配方不存在'}, 404)
+            return api_error('error_recipe_not_found', status_code=404)
 
         with open(recipe_file_path, 'r') as f:
             recipe_data = json.load(f)
@@ -2758,7 +2752,7 @@ async def auto_write_recipe(request: Request):
         # 5. 获取配方中的P点数据
         table_data = recipe_data.get('tableData', [])
         if not table_data:
-            return JSONResponse({'error': '配方中没有P点数据'}, 400)
+            return api_error('error_recipe_no_p_data')
 
         # 5.1 解析默认 A/B 角度：手动规划从参考点1，智能规划从 Z&C 参考寄存器
         default_a = None
@@ -2805,7 +2799,7 @@ async def auto_write_recipe(request: Request):
             assert robot_arm is not None  # 类型检查器断言
             pose, ret = robot_arm.program_pose.read(program_name, pose_id)
             if ret != StatusCodeEnum.OK:
-                return JSONResponse({'error': f'读取P点 {pose_id} 数据失败'}, 400)
+                return api_error('error_read_p_point_failed', id=pose_id)
 
             # 修改位姿数据
             pose.poseData.cartData.baseCart.position.x = x
@@ -2824,14 +2818,14 @@ async def auto_write_recipe(request: Request):
             assert robot_arm is not None  # 类型检查器断言
             ret = robot_arm.program_pose.write(program_name, pose_id, pose)
             if ret != StatusCodeEnum.OK:
-                return JSONResponse({'error': f'写入P点 {pose_id} 数据失败'}, 400)
+                return api_error('error_write_p_point_failed', id=pose_id)
 
         print(f"自动写入配方 {recipe_name} 成功")
 
-        return JSONResponse({'message': f'配方 {recipe_name} 自动写入成功'}, 200)
+        return api_success('success_recipe_auto_write', name=recipe_name)
 
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 @app.get('/get_robot_ip')
 async def get_robot_ip(request: Request):
@@ -2851,14 +2845,15 @@ async def get_robot_ip(request: Request):
             return JSONResponse({
                 'success': False,
                 'robot_ip': None,
-                'message': '无法获取机器人IP地址'
+                'message_code': 'error_cannot_get_robot_ip',
             }, 200)
 
     except Exception as e:
         return JSONResponse({
             'success': False,
             'robot_ip': None,
-            'error': str(e)
+            'error_code': 'error_internal',
+            'params': {'detail': str(e)},
         }, 400)
 
 # 设置DO信号值
@@ -2868,33 +2863,30 @@ async def set_do_signal(request: Request):
     data = await request.json()
 
     if data is None:
-        return JSONResponse({'error': '无效的请求数据'}, 400)
+        return api_error('error_invalid_request')
 
     do_number = data.get('do_number')
     do_value = data.get('do_value')
 
     if do_number is None or do_value is None:
-        return JSONResponse({'error': '缺少DO编号或DO值'}, 400)
+        return api_error('error_missing_do_params')
 
     if robot_arm is None:
-        return JSONResponse({'error': '未连接机器人'}, 400)
+        return api_error('error_not_connected')
 
     try:
         # 设置指定DO信号的值
         ret = robot_arm.signals.write(SignalType.DO, int(do_number), int(do_value))
         if ret != StatusCodeEnum.OK:
-            return JSONResponse({'error': '设置DO信号失败'}, 400)
+            return api_error('error_set_do_failed')
 
         # 打印DO信号设置状态
         print(f"DO{do_number} 信号设置为: {do_value}")
 
-        return JSONResponse({
-            'success': True,
-            'message': f'DO{do_number} 信号设置为 {do_value}'
-        }, 200)
+        return api_success('success_do_set', do_number=do_number, do_value=do_value, extra={'success': True})
 
     except Exception as e:
-        return JSONResponse({'error': str(e)}, 400)
+        return api_error('error_internal', detail=str(e))
 
 if __name__ == '__main__':
     # Windows下使用Debug，部署后关闭

@@ -1,8 +1,11 @@
 // 语言切换功能
-document.addEventListener('DOMContentLoaded', function() {
-    // 初始化语言
-    const currentLang = getCurrentLanguage();
-    applyLanguage(currentLang);
+document.addEventListener('DOMContentLoaded', async function() {
+    // 初始化语言（插件环境会同步 AgileLink 当前语言）
+    if (window.initLanguageFromApp) {
+        await window.initLanguageFromApp();
+    } else {
+        applyLanguage(getCurrentLanguage());
+    }
     
     // 语言切换按钮事件
     const languageBtn = document.getElementById('language-btn');

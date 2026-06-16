@@ -15,152 +15,15 @@ var isTP = window.isTP;
 function getActiveLanguage() {
   return typeof getCurrentLanguage === 'function' ? getCurrentLanguage() : 'zh';
 }
-var notificationTranslations = {
-  en: {
-    exact: {
-      '请输入机器人IP地址': 'Please enter the robot IP address',
-      '请输入程序名称': 'Please enter the program name',
-      '请输入有效的PR寄存器ID': 'Please enter a valid PR register ID',
-      '没有可用的数据': 'No data is available',
-      'P点数据写入成功': 'P point data written successfully',
-      '手动规划R寄存器写入成功': 'Manual planning R registers written successfully',
-      '智能规划R寄存器写入成功': 'Smart planning R registers written successfully',
-      'TF数据更新成功': 'TF data updated successfully',
-      '请先读取参考点': 'Please read the reference points first',
-      '请输入有效的行数和列数': 'Please enter valid row and column counts',
-      '参考点坐标无效，请重新读取参考点': 'Reference point coordinates are invalid. Please read them again',
-      '参考点1和参考点2重合，无法计算行方向': 'Reference point 1 and 2 overlap; row direction cannot be calculated',
-      '参考点1和参考点3重合，无法计算列方向': 'Reference point 1 and 3 overlap; column direction cannot be calculated',
-      '请输入有效的行号/列号、补偿值和角度补偿值': 'Please enter a valid row/column number, compensation value, and angle compensation',
-      '补偿值更新成功': 'Compensation updated successfully',
-      '请选择要导出的配方': 'Please select recipes to export',
-      'U盘中没有找到配方备份目录': 'No recipe backup folder was found on the USB drive',
-      '请选择要导入的配方': 'Please select recipes to import',
-      '所有配方都被跳过，导入已取消': 'All recipes were skipped. Import was cancelled'
-    },
-    prefixes: {
-      '写入完成：': 'Write complete: ',
-      '写入失败: ': 'Write failed: ',
-      '写入P点数据失败: ': 'Failed to write P point data: ',
-      '获取P点数据失败: ': 'Failed to get P point data: ',
-      '手动规划R寄存器写入失败: ': 'Failed to write manual planning R registers: ',
-      '智能规划R寄存器写入失败: ': 'Failed to write smart planning R registers: ',
-      '更新TF数据失败: ': 'Failed to update TF data: ',
-      '读取参考点失败: ': 'Failed to read reference points: ',
-      '计算完成！共生成 ': 'Calculation complete. Generated ',
-      '导出配方失败: ': 'Failed to export recipes: ',
-      '读取U盘备份目录失败: ': 'Failed to read USB backup folder: ',
-      '读取配方失败: ': 'Failed to read recipes: ',
-      '导入失败: ': 'Import failed: ',
-      '确认导入 ': 'Confirm import of '
-    }
-  },
-  vi: {
-    exact: {
-      '请输入机器人IP地址': 'Vui lòng nhập địa chỉ IP robot',
-      '请输入程序名称': 'Vui lòng nhập tên chương trình',
-      '请输入有效的PR寄存器ID': 'Vui lòng nhập ID thanh ghi PR hợp lệ',
-      '没有可用的数据': 'Không có dữ liệu khả dụng',
-      'P点数据写入成功': 'Ghi dữ liệu điểm P thành công',
-      '手动规划R寄存器写入成功': 'Ghi thanh ghi R cho lập kế hoạch thủ công thành công',
-      '智能规划R寄存器写入成功': 'Ghi thanh ghi R cho lập kế hoạch thông minh thành công',
-      'TF数据更新成功': 'Cập nhật dữ liệu TF thành công',
-      '请先读取参考点': 'Vui lòng đọc điểm tham chiếu trước',
-      '请输入有效的行数和列数': 'Vui lòng nhập số hàng và số cột hợp lệ',
-      '参考点坐标无效，请重新读取参考点': 'Tọa độ điểm tham chiếu không hợp lệ. Vui lòng đọc lại',
-      '补偿值更新成功': 'Cập nhật giá trị bù thành công'
-    },
-    prefixes: {
-      '写入完成：': 'Ghi hoàn tất: ',
-      '写入失败: ': 'Ghi thất bại: ',
-      '写入P点数据失败: ': 'Ghi dữ liệu điểm P thất bại: ',
-      '读取参考点失败: ': 'Đọc điểm tham chiếu thất bại: ',
-      '计算完成！共生成 ': 'Tính toán hoàn tất. Đã tạo '
-    }
-  },
-  ja: {
-    exact: {
-      '请输入机器人IP地址': 'ロボットIPアドレスを入力してください',
-      '请输入程序名称': 'プログラム名を入力してください',
-      '请输入有效的PR寄存器ID': '有効なPRレジスタIDを入力してください',
-      '没有可用的数据': '利用可能なデータがありません',
-      'P点数据写入成功': 'P点データの書き込みに成功しました',
-      '手动规划R寄存器写入成功': '手動計画のRレジスタ書き込みに成功しました',
-      '智能规划R寄存器写入成功': 'スマート計画のRレジスタ書き込みに成功しました',
-      'TF数据更新成功': 'TFデータの更新に成功しました',
-      '请先读取参考点': '先に参照点を読み取ってください',
-      '请输入有效的行数和列数': '有効な行数と列数を入力してください',
-      '参考点坐标无效，请重新读取参考点': '参照点座標が無効です。再度読み取ってください',
-      '补偿值更新成功': '補正値の更新に成功しました'
-    },
-    prefixes: {
-      '写入完成：': '書き込み完了: ',
-      '写入失败: ': '書き込み失敗: ',
-      '写入P点数据失败: ': 'P点データの書き込みに失敗しました: ',
-      '读取参考点失败: ': '参照点の読み取りに失敗しました: ',
-      '计算完成！共生成 ': '計算完了。生成数: '
-    }
-  },
-  ko: {
-    exact: {
-      '请输入机器人IP地址': '로봇 IP 주소를 입력하세요',
-      '请输入程序名称': '프로그램 이름을 입력하세요',
-      '请输入有效的PR寄存器ID': '올바른 PR 레지스터 ID를 입력하세요',
-      '没有可用的数据': '사용 가능한 데이터가 없습니다',
-      'P点数据写入成功': 'P 포인트 데이터 쓰기 성공',
-      '手动规划R寄存器写入成功': '수동 계획 R 레지스터 쓰기 성공',
-      '智能规划R寄存器写入成功': '스마트 계획 R 레지스터 쓰기 성공',
-      'TF数据更新成功': 'TF 데이터 업데이트 성공',
-      '请先读取参考点': '먼저 기준점을 읽어 주세요',
-      '请输入有效的行数和列数': '올바른 행 수와 열 수를 입력하세요',
-      '参考点坐标无效，请重新读取参考点': '기준점 좌표가 올바르지 않습니다. 다시 읽어 주세요',
-      '补偿值更新成功': '보정값 업데이트 성공'
-    },
-    prefixes: {
-      '写入完成：': '쓰기 완료: ',
-      '写入失败: ': '쓰기 실패: ',
-      '写入P点数据失败: ': 'P 포인트 데이터 쓰기 실패: ',
-      '读取参考点失败: ': '기준점 읽기 실패: ',
-      '计算完成！共生成 ': '계산 완료. 생성된 포인트: '
-    }
-  }
-};
 function translateNotificationMessage(message) {
   if (typeof message !== 'string') {
     return message;
   }
-  var lang = getActiveLanguage();
-  var pack = notificationTranslations[lang];
-  if (!pack) {
-    return message;
-  }
-  if (pack.exact[message]) {
-    return pack.exact[message];
-  }
-  var pointCountMatch = message.match(/^计算完成！共生成\s+(\d+)\s+个点位$/);
-  if (pointCountMatch) {
-    var pointCountText = {
-      en: "Calculation complete. Generated ".concat(pointCountMatch[1], " points"),
-      vi: "T\xEDnh to\xE1n ho\xE0n t\u1EA5t. \u0110\xE3 t\u1EA1o ".concat(pointCountMatch[1], " \u0111i\u1EC3m"),
-      ja: "\u8A08\u7B97\u5B8C\u4E86\u3002".concat(pointCountMatch[1], " \u70B9\u3092\u751F\u6210\u3057\u307E\u3057\u305F"),
-      ko: "\uACC4\uC0B0 \uC644\uB8CC. ".concat(pointCountMatch[1], "\uAC1C \uD3EC\uC778\uD2B8\uB97C \uC0DD\uC131\uD588\uC2B5\uB2C8\uB2E4")
-    };
-    return pointCountText[lang] || message;
-  }
-  var importCountMatch = message.match(/^确认导入\s+(\d+)\s+个配方？$/);
-  if (importCountMatch) {
-    var importCountText = {
-      en: "Import ".concat(importCountMatch[1], " recipes?"),
-      vi: "Nh\u1EADp ".concat(importCountMatch[1], " c\xF4ng th\u1EE9c?"),
-      ja: "".concat(importCountMatch[1], " \u4EF6\u306E\u30EC\u30B7\u30D4\u3092\u30A4\u30F3\u30DD\u30FC\u30C8\u3057\u307E\u3059\u304B\uFF1F"),
-      ko: "".concat(importCountMatch[1], "\uAC1C \uB808\uC2DC\uD53C\uB97C \uAC00\uC838\uC62C\uAE4C\uC694?")
-    };
-    return importCountText[lang] || message;
-  }
-  var prefix = Object.keys(pack.prefixes).find(function (item) {
-    return message.startsWith(item);
-  });
-  return prefix ? pack.prefixes[prefix] + message.slice(prefix.length) : message;
+  return message;
+}
+function throwApiError(data) {
+  var fallbackKey = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'error_request_failed';
+  throw appError((data === null || data === void 0 ? void 0 : data.error_code) || fallbackKey, (data === null || data === void 0 ? void 0 : data.params) || {});
 }
 function createNotification(method) {
   return function (message) {
@@ -415,10 +278,10 @@ function checkExternalCall() {
   }).then(function (response) {
     return response.json();
   }).then(function (data) {
-    if (data.error) {
-      console.error('外部调用监控错误:', data.error);
+    if (hasApiError(data)) {
+      console.error('外部调用监控错误:', resolveApiError(data));
       updateStatusDisplay(t('error_monitoring_failed', {
-        error: data.error
+        error: resolveApiError(data)
       }), 'error');
       stopExternalCallMonitor();
       return;
@@ -464,7 +327,7 @@ function checkExternalCall() {
   }).catch(function (error) {
     console.error('外部调用监控请求失败:', error);
     updateStatusDisplay(t('error_monitoring_failed', {
-      error: error.message
+      error: formatAppError(error)
     }), 'error');
     stopExternalCallMonitor();
   });
@@ -480,9 +343,9 @@ function loadRecipeByMHValue(mhValue) {
   }).then(function (response) {
     return response.json();
   }).then(function (data) {
-    if (data.error) {
-      console.error('获取配方列表失败:', data.error);
-      updateStatusDisplay("\u83B7\u53D6\u914D\u65B9\u5217\u8868\u5931\u8D25: ".concat(data.error), 'error');
+    if (hasApiError(data)) {
+      console.error('获取配方列表失败:', resolveApiError(data));
+      updateStatusDisplay(t('error_get_recipe_list_failed') + resolveApiError(data), 'error');
       return;
     }
     console.log('获取到的配方列表:', data.recipes);
@@ -532,7 +395,7 @@ function loadRecipeByMHValue(mhValue) {
   }).catch(function (error) {
     console.error('根据MH值加载配方失败:', error);
     updateStatusDisplay(t('error_load_recipe_failed', {
-      error: error.message
+      error: formatAppError(error)
     }), 'error');
   });
 }
@@ -575,19 +438,23 @@ function performAutoWrite(recipeName) {
     }).then(function (response) {
       return response.json();
     }).then(function (data) {
-      if (data.error) {
-        console.error('检查机器人状态失败:', data.error);
-        updateStatusDisplay(t('error_robot_status_check_failed') + data.error, 'error');
-        alertError(t('error_robot_status_check_failed') + data.error);
+      if (hasApiError(data)) {
+        console.error('检查机器人状态失败:', resolveApiError(data));
+        updateStatusDisplay(t('error_robot_status_check_failed') + resolveApiError(data), 'error');
+        alertError(t('error_robot_status_check_failed') + resolveApiError(data));
         isAutoWriting = false; // 重置写入状态
-        throw new Error(data.error);
+        throwApiError(data);
       }
       console.log('机器人状态:', data.status, '是否空闲:', data.is_idle);
       if (!data.is_idle) {
         updateStatusDisplay("\u673A\u5668\u4EBA\u5F53\u524D\u72B6\u6001: ".concat(data.status, "\uFF0C\u65E0\u6CD5\u81EA\u52A8\u5199\u5165"), 'error');
-        alertError("\u673A\u5668\u4EBA\u5F53\u524D\u72B6\u6001: ".concat(data.status, "\uFF0C\u65E0\u6CD5\u81EA\u52A8\u5199\u5165"));
+        alertError(t('error_robot_status_cannot_auto_write', {
+          status: data.status
+        }));
         isAutoWriting = false; // 重置写入状态
-        throw new Error("\u673A\u5668\u4EBA\u5F53\u524D\u72B6\u6001: ".concat(data.status, "\uFF0C\u65E0\u6CD5\u81EA\u52A8\u5199\u5165"));
+        throw appError('error_robot_status_cannot_auto_write', {
+          status: data.status
+        });
       }
 
       // 3. 检查运行中的程序
@@ -602,19 +469,23 @@ function performAutoWrite(recipeName) {
     }).then(function (response) {
       return response.json();
     }).then(function (data) {
-      if (data.error) {
-        console.error('检查运行程序失败:', data.error);
-        updateStatusDisplay(t('error_check_running_program_failed') + data.error, 'error');
-        alertError(t('error_check_running_program_failed') + data.error);
+      if (hasApiError(data)) {
+        console.error('检查运行程序失败:', resolveApiError(data));
+        updateStatusDisplay(t('error_check_running_program_failed') + resolveApiError(data), 'error');
+        alertError(t('error_check_running_program_failed') + resolveApiError(data));
         isAutoWriting = false; // 重置写入状态
-        throw new Error(data.error);
+        throwApiError(data);
       }
       console.log('运行中的程序:', data.running_programs, '是否有程序运行:', data.has_running_programs);
       if (data.has_running_programs) {
         updateStatusDisplay("\u5F53\u524D\u6709\u7A0B\u5E8F\u5728\u8FD0\u884C: ".concat(data.running_programs.join(', '), "\uFF0C\u65E0\u6CD5\u81EA\u52A8\u5199\u5165"), 'error');
-        alertError("\u5F53\u524D\u6709\u7A0B\u5E8F\u5728\u8FD0\u884C: ".concat(data.running_programs.join(', '), "\uFF0C\u65E0\u6CD5\u81EA\u52A8\u5199\u5165"));
+        alertError(t('error_program_running_cannot_auto_write', {
+          programs: data.running_programs.join(', ')
+        }));
         isAutoWriting = false; // 重置写入状态
-        throw new Error("\u5F53\u524D\u6709\u7A0B\u5E8F\u5728\u8FD0\u884C: ".concat(data.running_programs.join(', '), "\uFF0C\u65E0\u6CD5\u81EA\u52A8\u5199\u5165"));
+        throw appError('error_program_running_cannot_auto_write', {
+          programs: data.running_programs.join(', ')
+        });
       }
 
       // 4. 状态检查通过，开始写入P点操作
@@ -640,8 +511,8 @@ function performAutoWrite(recipeName) {
       triggerFinishSignal();
     }).catch(function (error) {
       console.error('自动写入过程出错:', error);
-      updateStatusDisplay(t('monitoring_status_auto_write_failed') + error.message, 'error');
-      alertError(t('error_auto_write_failed') + error.message);
+      updateStatusDisplay(t('monitoring_status_auto_write_failed') + formatAppError(error), 'error');
+      alertError(t('error_auto_write_failed') + formatAppError(error));
       isAutoWriting = false; // 重置写入状态
     });
   }, 1000); // 等待1秒，确保页面加载完成
@@ -831,7 +702,7 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
   }).then(function (response) {
     if (!response.ok) {
       return response.json().then(function (err) {
-        throw new Error(err.error || '请求失败');
+        throwApiError(err, 'error_request_failed');
       });
     }
     // 获取填充的图形数量和中心位置数据
@@ -897,7 +768,7 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
     });
   }).then(function (response) {
     if (!response.ok) {
-      throw new Error('读取PR寄存器失败');
+      throw appError('error_read_pr_failed');
     }
     return response.json();
   }).then(function (data) {
@@ -989,7 +860,7 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
     showSection('data-list-content');
     setActiveButton('data-list-btn');
   }).catch(function (error) {
-    alertError(error.message);
+    alertError(formatAppError(error));
   });
 });
 
@@ -1068,7 +939,7 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
     .then(function (response) {
       if (!response.ok) {
         return response.json().then(function (err) {
-          throw new Error(err.error || '断开连接失败');
+          throwApiError(err, 'error_request_failed');
         });
       }
       return response.json();
@@ -1089,12 +960,12 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
       }
     }).catch(function (error) {
       console.error('断开连接失败:', error.message);
-      alertError(t('error_disconnect_failed') + error.message);
+      alertError(t('error_disconnect_failed') + formatAppError(error));
     });
   } else {
     // 如果当前是"连接"状态，则发送连接请求
     if (!robotIp) {
-      alertError('请输入机器人IP地址');
+      alertError(t('error_enter_robot_ip'));
       return;
     }
     fetchWithTimeout('/connect_robot', {
@@ -1111,7 +982,7 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
         // 连接失败时，重置按钮状态
         connectButton.textContent = t('connect');
         return response.json().then(function (err) {
-          throw new Error(err.error || '连接失败');
+          throwApiError(err, 'error_request_failed');
         });
       }
       return response.json();
@@ -1151,10 +1022,10 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
       }
 
       // 然后根据错误类型显示不同的提示
-      if (error.message === '请求超时' || error.message.includes('timeout')) {
+      if (error.message === t('error_request_timeout') || error.message === '请求超时' || error.message.includes('timeout')) {
         alertError(t('error_timeout'));
       } else {
-        alertError(t('error_connect_failed') + error.message);
+        alertError(t('error_connect_failed') + formatAppError(error));
       }
     });
   }
@@ -1166,7 +1037,7 @@ document.getElementById('read_p_data_button').addEventListener('click', function
   // 如果用户没有输入，则使用默认值 'PUT'
 
   if (!programName) {
-    alertError('请输入程序名称');
+    alertError(t('error_enter_program_name'));
     return;
   }
 
@@ -1182,7 +1053,7 @@ document.getElementById('read_p_data_button').addEventListener('click', function
   }).then(function (response) {
     if (!response.ok) {
       return response.json().then(function (err) {
-        throw new Error(err.error || '获取P点数据失败');
+        throwApiError(err, 'error_request_failed');
       });
     }
     return response.json();
@@ -1296,7 +1167,9 @@ document.getElementById('read_p_data_button').addEventListener('click', function
     tableContainer.style.display = 'block';
   }).catch(function (error) {
     console.error('获取P点数据失败:', error.message);
-    alertError('获取P点数据失败: ' + error.message);
+    alertError(t('error_get_p_data_failed', {
+      error: formatAppError(error)
+    }));
   });
 });
 
@@ -1312,12 +1185,12 @@ if (false) {
     var left_right = parseInt(document.getElementById('left_right').value, 10); // 获取工具数量
 
     if (!programName) {
-      alertError('请输入程序名称');
+      alertError(t('error_enter_program_name'));
       return;
     }
     if (isNaN(prRegisterId)) {
       // 检查PR寄存器ID是否为有效数字
-      alertError('请输入有效的PR寄存器ID');
+      alertError(t('error_invalid_pr_register_id'));
       return;
     }
     if (isNaN(startPPoint) || startPPoint < 1) {
@@ -1329,7 +1202,7 @@ if (false) {
     var tableBody = document.querySelector('#data-list-content table tbody');
     var rows = tableBody.querySelectorAll('tr');
     if (rows.length === 0) {
-      alertError('没有可用的数据');
+      alertError(t('error_no_data_available'));
       return;
     }
 
@@ -1384,7 +1257,7 @@ if (false) {
     }).then(function (response) {
       if (!response.ok) {
         return response.json().then(function (err) {
-          throw new Error(err.error || '读取PR寄存器失败');
+          throwApiError(err, 'error_request_failed');
         });
       }
       return response.json();
@@ -1413,25 +1286,29 @@ if (false) {
     }).then(function (response) {
       if (!response.ok) {
         return response.json().then(function (err) {
-          throw new Error(err.error || '写入P点数据失败');
+          throwApiError(err, 'error_request_failed');
         });
       }
       return response.json();
     }).then(function (data) {
       console.log('P点数据写入成功');
-      alertSuccess('P点数据写入成功');
+      alertSuccess(t('success_p_data_written'));
 
       // 如果有自动写入的回调函数，调用它
       if (window.onWriteOperationComplete) {
-        window.onWriteOperationComplete(true, 'P点数据写入成功', 'P点写入');
+        window.onWriteOperationComplete(true, t('success_p_data_written'), t('write_op_p_point'));
       }
     }).catch(function (error) {
       console.error('写入P点数据失败:', error.message);
-      alertError('写入P点数据失败: ' + error.message);
+      alertError(t('error_write_p_data_failed', {
+        error: formatAppError(error)
+      }));
 
       // 如果有自动写入的回调函数，调用它
       if (window.onWriteOperationComplete) {
-        window.onWriteOperationComplete(false, '写入P点数据失败: ' + error.message, 'P点写入');
+        window.onWriteOperationComplete(false, t('error_write_p_data_failed', {
+          error: formatAppError(error)
+        }), t('write_op_p_point'));
       }
     });
   });
@@ -1499,25 +1376,29 @@ if (false) {
       }).then(function (response) {
         if (!response.ok) {
           return response.json().then(function (err) {
-            throw new Error(err.error || '写入R寄存器失败');
+            throwApiError(err, 'error_request_failed');
           });
         }
         return response.json();
       }).then(function (data) {
         console.log('手动规划R寄存器写入成功');
-        alertSuccess('手动规划R寄存器写入成功');
+        alertSuccess(t('success_manual_r_written'));
 
         // 如果有自动写入的回调函数，调用它
         if (window.onWriteOperationComplete) {
-          window.onWriteOperationComplete(true, '手动规划R寄存器写入成功', 'R寄存器写入');
+          window.onWriteOperationComplete(true, t('success_manual_r_written'), t('write_op_r_register'));
         }
       }).catch(function (error) {
         console.error('手动规划R寄存器写入失败:', error.message);
-        alertError('手动规划R寄存器写入失败: ' + error.message);
+        alertError(t('error_manual_r_write_failed', {
+          error: formatAppError(error)
+        }));
 
         // 如果有自动写入的回调函数，调用它
         if (window.onWriteOperationComplete) {
-          window.onWriteOperationComplete(false, '手动规划R寄存器写入失败: ' + error.message, 'R寄存器写入');
+          window.onWriteOperationComplete(false, t('error_manual_r_write_failed', {
+            error: formatAppError(error)
+          }), t('write_op_r_register'));
         }
       });
       return; // 手动规划配方处理完毕，直接返回
@@ -1537,7 +1418,7 @@ if (false) {
 
     // 检查填充数量和工具数量是否有效
     if (!shapeCountValue || !toolCount) {
-      alertError('请先进行计算并确保工具数量已选择');
+      alertError(t('error_calculate_tool_count_first'));
       return;
     }
 
@@ -1568,25 +1449,29 @@ if (false) {
     }).then(function (response) {
       if (!response.ok) {
         return response.json().then(function (err) {
-          throw new Error(err.error || '写入R寄存器失败');
+          throwApiError(err, 'error_request_failed');
         });
       }
       return response.json();
     }).then(function (data) {
       console.log('智能规划R寄存器写入成功');
-      alertSuccess('智能规划R寄存器写入成功');
+      alertSuccess(t('success_smart_r_written'));
 
       // 如果有自动写入的回调函数，调用它
       if (window.onWriteOperationComplete) {
-        window.onWriteOperationComplete(true, '智能规划R寄存器写入成功', 'R寄存器写入');
+        window.onWriteOperationComplete(true, t('success_smart_r_written'), t('write_op_r_register'));
       }
     }).catch(function (error) {
       console.error('智能规划R寄存器写入失败:', error.message);
-      alertError('智能规划R寄存器写入失败: ' + error.message);
+      alertError(t('error_smart_r_write_failed', {
+        error: formatAppError(error)
+      }));
 
       // 如果有自动写入的回调函数，调用它
       if (window.onWriteOperationComplete) {
-        window.onWriteOperationComplete(false, '智能规划R寄存器写入失败: ' + error.message, 'R寄存器写入');
+        window.onWriteOperationComplete(false, t('error_smart_r_write_failed', {
+          error: formatAppError(error)
+        }), t('write_op_r_register'));
       }
     });
   });
@@ -1606,7 +1491,7 @@ if (false) {
     }
     if (isNaN(toolSpacing)) {
       // 检查工具间距是否为有效数字
-      alertError('请输入有效的工具间距');
+      alertError(t('error_invalid_tool_spacing'));
       return;
     }
 
@@ -1634,7 +1519,7 @@ if (false) {
     }).then(function (response) {
       if (!response.ok) {
         return response.json().then(function (err) {
-          throw new Error(err.error || '读取TF1数据失败');
+          throwApiError(err, 'error_request_failed');
         });
       }
       return response.json();
@@ -1646,7 +1531,7 @@ if (false) {
       if (toolLayout === 'double') {
         // 双向布局时，工具数量只能为2
         if (toolCount !== 2) {
-          alertError('双向布局时，工具数量必须为2');
+          alertError(t('error_double_layout_requires_two_tools'));
           return;
         }
 
@@ -1732,39 +1617,47 @@ if (false) {
     }).then(function (response) {
       if (!response.ok) {
         return response.json().then(function (err) {
-          throw new Error(err.error || '更新TF数据失败');
+          throwApiError(err, 'error_request_failed');
         });
       }
       return response.json();
     }).then(function (data) {
       console.log('TF数据更新成功');
-      alertSuccess('TF数据更新成功');
+      alertSuccess(t('success_tf_updated'));
 
       // 如果有自动写入的回调函数且自动TF功能开启，调用它
       if (window.onWriteOperationComplete && autoTF === 1) {
-        window.onWriteOperationComplete(true, 'TF数据更新成功', 'TF写入');
+        window.onWriteOperationComplete(true, t('success_tf_updated'), t('write_op_tf'));
       }
     }).catch(function (error) {
       console.error('更新TF数据失败:', error.message);
-      alertError('更新TF数据失败: ' + error.message);
+      alertError(t('error_tf_update_failed', {
+        error: formatAppError(error)
+      }));
 
       // 如果有自动写入的回调函数且自动TF功能开启，调用它
       if (window.onWriteOperationComplete && autoTF === 1) {
-        window.onWriteOperationComplete(false, '更新TF数据失败: ' + error.message, 'TF写入');
+        window.onWriteOperationComplete(false, t('error_tf_update_failed', {
+          error: formatAppError(error)
+        }), t('write_op_tf'));
       }
     });
   });
 }
-function postWriteJson(_x, _x2, _x3) {
+function postWriteJson(_x, _x2) {
   return _postWriteJson.apply(this, arguments);
 }
 function _postWriteJson() {
-  _postWriteJson = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2(url, body, fallbackMessage) {
-    var response, data;
+  _postWriteJson = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2(url, body) {
+    var fallbackKey,
+      response,
+      data,
+      _args2 = arguments;
     return _regeneratorRuntime().wrap(function _callee2$(_context2) {
       while (1) switch (_context2.prev = _context2.next) {
         case 0:
-          _context2.next = 2;
+          fallbackKey = _args2.length > 2 && _args2[2] !== undefined ? _args2[2] : 'error_request_failed';
+          _context2.next = 3;
           return fetch(url, {
             method: 'POST',
             headers: {
@@ -1772,22 +1665,28 @@ function _postWriteJson() {
             },
             body: JSON.stringify(body)
           });
-        case 2:
+        case 3:
           response = _context2.sent;
-          _context2.next = 5;
+          _context2.next = 6;
           return response.json().catch(function () {
             return {};
           });
-        case 5:
+        case 6:
           data = _context2.sent;
           if (response.ok) {
-            _context2.next = 8;
+            _context2.next = 11;
             break;
           }
-          throw new Error(data.error || fallbackMessage);
-        case 8:
+          if (!data.error_code) {
+            _context2.next = 10;
+            break;
+          }
+          throw appError(data.error_code, data.params || {});
+        case 10:
+          throw appError(fallbackKey, data.params || {});
+        case 11:
           return _context2.abrupt("return", data);
-        case 9:
+        case 12:
         case "end":
           return _context2.stop();
       }
@@ -1806,7 +1705,10 @@ function finiteNumberOrNull(value) {
 function requireFiniteRegisterAxis(registerData, axisName, sourceName) {
   var value = Number(registerData === null || registerData === void 0 ? void 0 : registerData[axisName]);
   if (!Number.isFinite(value)) {
-    throw new Error("".concat(sourceName).concat(axisName.toUpperCase(), "\u503C\u65E0\u6548"));
+    throw appError('error_invalid_axis_value', {
+      source: sourceName,
+      axis: axisName.toUpperCase()
+    });
   }
   return value;
 }
@@ -1846,8 +1748,8 @@ function runPPointWriteStep() {
 }
 function _runPPointWriteStep() {
   _runPPointWriteStep = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
-    var _window$referencePoin2, _window$referencePoin3, _document$getElementB40;
-    var programName, startPPoint, prRegisterId, ufValue, toolCount, leftRight, rows, pData, prData, currentRecipeType, angleSource, angleSourceName, aValue, bValue, pr1Id;
+    var _window$referencePoin2, _angleSource;
+    var programName, startPPoint, prRegisterId, ufValue, toolCount, leftRight, rows, pData, prData, currentRecipeType, angleSource, angleSourceName, _window$referencePoin3, _document$getElementB37, pr1Id, aValue, bValue;
     return _regeneratorRuntime().wrap(function _callee3$(_context3) {
       while (1) switch (_context3.prev = _context3.next) {
         case 0:
@@ -1861,26 +1763,26 @@ function _runPPointWriteStep() {
             _context3.next = 8;
             break;
           }
-          throw new Error('请输入程序名称');
+          throw appError('error_enter_program_name');
         case 8:
           if (!isNaN(prRegisterId)) {
             _context3.next = 10;
             break;
           }
-          throw new Error('请输入有效的PR寄存器ID');
+          throw appError('error_invalid_pr_register_id');
         case 10:
           if (!(isNaN(startPPoint) || startPPoint < 1)) {
             _context3.next = 12;
             break;
           }
-          throw new Error(t('error_invalid_start_p_point'));
+          throw appError('error_invalid_start_p_point');
         case 12:
           rows = getTableRowsForWriting();
           if (!(rows.length === 0)) {
             _context3.next = 15;
             break;
           }
-          throw new Error('没有可用的数据');
+          throw appError('error_no_data_available');
         case 15:
           pData = [];
           rows.forEach(function (row, index) {
@@ -1894,7 +1796,9 @@ function _runPPointWriteStep() {
             var c = finiteNumberOrNull(row.cells[8].textContent);
             var cCompensation = (_finiteNumberOrNull3 = finiteNumberOrNull(row.cells[9].textContent)) !== null && _finiteNumberOrNull3 !== void 0 ? _finiteNumberOrNull3 : 0;
             if (x === null || y === null || c === null) {
-              throw new Error("\u7B2C ".concat(index + 1, " \u884C\u6570\u636E\u6E05\u5355\u5750\u6807\u65E0\u6548"));
+              throw appError('error_data_list_row_invalid', {
+                row: index + 1
+              });
             }
             pData.push({
               id: pId,
@@ -1915,23 +1819,23 @@ function _runPPointWriteStep() {
           prData = _context3.sent;
           currentRecipeType = window.currentRecipeType || 'smart';
           angleSource = currentRecipeType === 'manual' ? (_window$referencePoin2 = window.referencePoints) === null || _window$referencePoin2 === void 0 ? void 0 : _window$referencePoin2.pr1 : prData;
-          angleSourceName = currentRecipeType === 'manual' ? '参考点1' : 'Z&C参考寄存器';
-          if (!(currentRecipeType === 'manual' && !Number.isFinite(Number(angleSource === null || angleSource === void 0 ? void 0 : angleSource.a)))) {
-            _context3.next = 26;
+          angleSourceName = currentRecipeType === 'manual' ? t('manual_planning_ref1_label') : t('smart_planning_zc_ref_label');
+          if (!(currentRecipeType === 'manual' && !Number.isFinite(Number((_angleSource = angleSource) === null || _angleSource === void 0 ? void 0 : _angleSource.a)))) {
+            _context3.next = 29;
             break;
           }
-          pr1Id = ((_window$referencePoin3 = window.referencePoints) === null || _window$referencePoin3 === void 0 ? void 0 : _window$referencePoin3.pr1Id) || parseInt((_document$getElementB40 = document.getElementById('manual_pr1_id')) === null || _document$getElementB40 === void 0 ? void 0 : _document$getElementB40.value, 10);
+          pr1Id = ((_window$referencePoin3 = window.referencePoints) === null || _window$referencePoin3 === void 0 ? void 0 : _window$referencePoin3.pr1Id) || parseInt((_document$getElementB37 = document.getElementById('manual_pr1_id')) === null || _document$getElementB37 === void 0 ? void 0 : _document$getElementB37.value, 10);
           if (!(Number.isFinite(pr1Id) && pr1Id >= 1)) {
-            _context3.next = 26;
+            _context3.next = 29;
             break;
           }
-          _context3.next = 25;
+          _context3.next = 28;
           return postWriteJson('/read_pr_register', {
             pr_register_id: pr1Id
-          }, '读取参考点1失败');
-        case 25:
+          }, 'error_read_reference1_failed');
+        case 28:
           angleSource = _context3.sent;
-        case 26:
+        case 29:
           aValue = requireFiniteRegisterAxis(angleSource, 'a', angleSourceName);
           bValue = requireFiniteRegisterAxis(angleSource, 'b', angleSourceName);
           pData.forEach(function (point) {
@@ -1941,14 +1845,14 @@ function _runPPointWriteStep() {
             point.a = aValue;
             point.b = bValue;
           });
-          _context3.next = 31;
+          _context3.next = 34;
           return postWriteJson('/write_p_data', {
             program_name: programName,
             p_data: pData
-          }, '写入P点数据失败');
-        case 31:
-          return _context3.abrupt("return", 'P点数据写入成功');
-        case 32:
+          }, 'error_write_p_data_failed');
+        case 34:
+          return _context3.abrupt("return", t('success_p_data_written'));
+        case 35:
         case "end":
           return _context3.stop();
       }
@@ -1961,7 +1865,7 @@ function runRRegisterWriteStep() {
 }
 function _runRRegisterWriteStep() {
   _runRRegisterWriteStep = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee4() {
-    var currentRecipeType, _document$getElementB37, _document$getElementB38, _document$getElementB39, _rows3, totalPoints, rowCount, colCount, calculationMethod, _toolCount2, singleRowOrColCount, shapeCountValue, toolCount;
+    var currentRecipeType, _document$getElementB38, _document$getElementB39, _document$getElementB40, _rows3, totalPoints, rowCount, colCount, calculationMethod, _toolCount2, singleRowOrColCount, shapeCountValue, toolCount;
     return _regeneratorRuntime().wrap(function _callee4$(_context4) {
       while (1) switch (_context4.prev = _context4.next) {
         case 0:
@@ -1972,9 +1876,9 @@ function _runRRegisterWriteStep() {
           }
           _rows3 = getTableRowsForWriting();
           totalPoints = _rows3.length;
-          rowCount = parseInt((_document$getElementB37 = document.getElementById('row_count')) === null || _document$getElementB37 === void 0 ? void 0 : _document$getElementB37.value, 10) || 0;
-          colCount = parseInt((_document$getElementB38 = document.getElementById('col_count')) === null || _document$getElementB38 === void 0 ? void 0 : _document$getElementB38.value, 10) || 0;
-          calculationMethod = ((_document$getElementB39 = document.getElementById('calculation_method')) === null || _document$getElementB39 === void 0 ? void 0 : _document$getElementB39.value) || 'row_priority';
+          rowCount = parseInt((_document$getElementB38 = document.getElementById('row_count')) === null || _document$getElementB38 === void 0 ? void 0 : _document$getElementB38.value, 10) || 0;
+          colCount = parseInt((_document$getElementB39 = document.getElementById('col_count')) === null || _document$getElementB39 === void 0 ? void 0 : _document$getElementB39.value, 10) || 0;
+          calculationMethod = ((_document$getElementB40 = document.getElementById('calculation_method')) === null || _document$getElementB40 === void 0 ? void 0 : _document$getElementB40.value) || 'row_priority';
           _toolCount2 = document.getElementById('tool_count').value || 1;
           singleRowOrColCount = calculationMethod === 'row_priority' ? colCount : rowCount;
           _context4.next = 11;
@@ -1985,9 +1889,9 @@ function _runRRegisterWriteStep() {
             col_count: colCount,
             tool_count: _toolCount2,
             single_row_or_col_count: singleRowOrColCount
-          }, '写入R寄存器失败');
+          }, 'error_write_r_register_failed');
         case 11:
-          return _context4.abrupt("return", '手动规划R寄存器写入成功');
+          return _context4.abrupt("return", t('success_manual_r_written'));
         case 12:
           shapeCountValue = document.getElementById('shape-count-value').textContent;
           toolCount = document.getElementById('tool_count').value;
@@ -1995,7 +1899,7 @@ function _runRRegisterWriteStep() {
             _context4.next = 16;
             break;
           }
-          throw new Error('请先进行计算并确保工具数量已选择');
+          throw appError('error_calculate_tool_count_first');
         case 16:
           _context4.next = 18;
           return postWriteJson('/write_r_registers', {
@@ -2012,9 +1916,9 @@ function _runRRegisterWriteStep() {
             numofsingle_row_or_col_value: document.getElementById('shapes-per-row-or-col-value').textContent,
             rows: rows,
             cols: cols
-          }, '写入R寄存器失败');
+          }, 'error_write_r_register_failed');
         case 18:
-          return _context4.abrupt("return", '智能规划R寄存器写入成功');
+          return _context4.abrupt("return", t('success_smart_r_written'));
         case 19:
         case "end":
           return _context4.stop();
@@ -2041,7 +1945,7 @@ function _runTFWriteStep() {
             _context5.next = 7;
             break;
           }
-          throw new Error('请输入有效的工具间距');
+          throw appError('error_invalid_tool_spacing');
         case 7:
           if (!(toolCount <= 1 || autoTF === 0)) {
             _context5.next = 9;
@@ -2052,7 +1956,7 @@ function _runTFWriteStep() {
           _context5.next = 11;
           return postWriteJson('/get_tf_data', {
             tf_id: 1
-          }, '读取TF1数据失败');
+          }, 'error_read_tf1_failed');
         case 11:
           data = _context5.sent;
           tf1 = data.tf;
@@ -2065,7 +1969,7 @@ function _runTFWriteStep() {
             _context5.next = 17;
             break;
           }
-          throw new Error('双向布局时，工具数量必须为2');
+          throw appError('error_double_layout_requires_two_tools');
         case 17:
           offset = toolSpacing / 2;
           tfUpdates.push({
@@ -2128,9 +2032,9 @@ function _runTFWriteStep() {
           _context5.next = 25;
           return postWriteJson('/update_tf_data', {
             tf_updates: tfUpdates
-          }, '更新TF数据失败');
+          }, 'error_tf_update_failed');
         case 25:
-          return _context5.abrupt("return", 'TF数据更新成功');
+          return _context5.abrupt("return", t('success_tf_updated'));
         case 26:
         case "end":
           return _context5.stop();
@@ -2160,7 +2064,7 @@ function _runWriteSequence() {
             _context6.next = 3;
             break;
           }
-          throw new Error('写入操作正在进行中，请稍候');
+          throw appError('error_write_in_progress');
         case 3:
           isWriteOperationInProgress = true;
           writeButton = document.getElementById('write_p_data_button');
@@ -2190,7 +2094,9 @@ function _runWriteSequence() {
           }
           message = results.join('；');
           if (showAlerts) {
-            alertSuccess("\u5199\u5165\u5B8C\u6210\uFF1A".concat(message));
+            alertSuccess(t('success_write_complete', {
+              message: message
+            }));
           }
           return _context6.abrupt("return", message);
         case 27:
@@ -2198,7 +2104,9 @@ function _runWriteSequence() {
           _context6.t4 = _context6["catch"](6);
           console.error('写入流程失败:', _context6.t4.message);
           if (showAlerts) {
-            alertError('写入失败: ' + _context6.t4.message);
+            alertError(t('error_write_failed', {
+              error: formatAppError(_context6.t4)
+            }));
           }
           throw _context6.t4;
         case 32:
@@ -2233,7 +2141,7 @@ document.getElementById('read_reference_points').addEventListener('click', funct
   var pr2Id = parseInt(document.getElementById('manual_pr2_id').value, 10);
   var pr3Id = parseInt(document.getElementById('manual_pr3_id').value, 10);
   if (isNaN(rowCount) || isNaN(colCount) || rowCount < 1 || colCount < 1) {
-    alertError('请输入有效的行数和列数（必须大于0）');
+    alertError(t('error_invalid_row_col_positive'));
     return;
   }
   if ([pr1Id, pr2Id, pr3Id].some(function (id) {
@@ -2287,7 +2195,9 @@ document.getElementById('read_reference_points').addEventListener('click', funct
     // alertSuccess('参考点读取成功！'); // 已禁用成功提示弹窗
   }).catch(function (error) {
     console.error('读取参考点失败:', error);
-    alertError('读取参考点失败: ' + error.message);
+    alertError(t('error_read_reference_failed', {
+      error: formatAppError(error)
+    }));
     document.getElementById('calculation-status').style.display = 'none';
   });
 });
@@ -2295,7 +2205,7 @@ document.getElementById('read_reference_points').addEventListener('click', funct
 // 计算所有点位按钮事件
 document.getElementById('calculate_points').addEventListener('click', function () {
   if (!window.referencePoints) {
-    alertError('请先读取参考点');
+    alertError(t('error_read_reference_first'));
     return;
   }
 
@@ -2305,7 +2215,7 @@ document.getElementById('calculate_points').addEventListener('click', function (
 
   // 验证输入值
   if (!currentRowCount || !currentColCount || currentRowCount < 1 || currentColCount < 1) {
-    alertError('请输入有效的行数和列数');
+    alertError(t('error_invalid_row_col'));
     return;
   }
 
@@ -2331,7 +2241,7 @@ document.getElementById('calculate_points').addEventListener('click', function (
     allPoints = calculateAllPoints(pr1, pr2, pr3, currentRowCount, currentColCount, calculationMethod);
   } catch (error) {
     document.getElementById('calculation-status').style.display = 'none';
-    alertError(error.message);
+    alertError(formatAppError(error));
     return;
   }
 
@@ -2350,7 +2260,9 @@ document.getElementById('calculate_points').addEventListener('click', function (
   // 切换到数据清单页面
   showSection('data-list-content');
   setActiveButton('data-list-btn');
-  alertSuccess("\u8BA1\u7B97\u5B8C\u6210\uFF01\u5171\u751F\u6210 ".concat(allPoints.length, " \u4E2A\u70B9\u4F4D"));
+  alertSuccess(t('success_calculation_complete', {
+    count: allPoints.length
+  }));
 });
 
 // 读取PR寄存器的函数
@@ -2366,7 +2278,7 @@ function readPRRegister(prId) {
   }).then(function (response) {
     if (!response.ok) {
       return response.json().then(function (err) {
-        throw new Error(err.error || '读取PR寄存器失败');
+        throwApiError(err, 'error_request_failed');
       });
     }
     return response.json();
@@ -2400,13 +2312,13 @@ function calculateAllPoints(pr1, pr2, pr3, rowCount, colCount) {
     y: Number(pr3.y)
   };
   if (![startPoint.x, startPoint.y, rowEndPoint.x, rowEndPoint.y, colEndPoint.x, colEndPoint.y].every(Number.isFinite)) {
-    throw new Error('参考点坐标无效，请重新读取参考点');
+    throw appError('error_reference_coords_invalid');
   }
   if (rowCount > 1 && startPoint.x === rowEndPoint.x && startPoint.y === rowEndPoint.y) {
-    throw new Error('参考点1和参考点2重合，无法计算行方向');
+    throw appError('error_reference_points_overlap_row');
   }
   if (colCount > 1 && startPoint.x === colEndPoint.x && startPoint.y === colEndPoint.y) {
-    throw new Error('参考点1和参考点3重合，无法计算列方向');
+    throw appError('error_reference_points_overlap_col');
   }
   var rowDivisor = Math.max(rowCount - 1, 1);
   var colDivisor = Math.max(colCount - 1, 1);
@@ -2540,7 +2452,7 @@ document.getElementById('update-compensation').addEventListener('click', functio
   var compensationValue = parseFloat(document.getElementById('compensation-value').value);
   var angleCompensation = parseFloat(document.getElementById('angle-compensation').value);
   if (isNaN(rowColNumber) || isNaN(compensationValue) || isNaN(angleCompensation)) {
-    alertError('请输入有效的行号/列号、补偿值和角度补偿值');
+    alertError(t('error_invalid_compensation_input'));
     return;
   }
   var tableBody = document.querySelector('#data-list-content table tbody');
@@ -2560,14 +2472,14 @@ document.getElementById('update-compensation').addEventListener('click', functio
       row.cells[9].textContent = angleCompensation.toFixed(2); // C补偿
     }
   });
-  alertSuccess('补偿值更新成功');
+  alertSuccess(t('success_compensation_updated'));
 });
 document.getElementById('save_recipe_button').addEventListener('click', function () {
   var recipeName = document.getElementById('recipe_name').value;
   var recipeId = document.getElementById('recipe_id').value; // 获取配方编号
 
   if (!recipeName || !recipeId) {
-    alertError('请输入配方名和配方编号');
+    alertError(t('error_enter_recipe_name_id'));
     return;
   }
   var isManualPlanning = getCurrentRecipeTypeForSave() === 'manual';
@@ -2577,7 +2489,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
     var _rows2 = table.getElementsByTagName('tr');
     if (_rows2.length <= 1) {
       // 只有表头，没有数据
-      alertError('请先计算手动规划点位数据');
+      alertError(t('error_calculate_manual_points_first'));
       return;
     }
     // 手动规划配方可以继续保存，不需要预览图片
@@ -2585,7 +2497,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
     // 智能规划配方：检查图片是否已经生成
     var plotImg = document.getElementById('plot');
     if (!plotImg || !plotImg.getAttribute('data-base64')) {
-      alertError('请先生成规划结果图片');
+      alertError(t('error_generate_plot_first'));
       return;
     }
   }
@@ -2603,7 +2515,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
   }).then(function (response) {
     if (!response.ok) {
       return response.json().then(function (err) {
-        throw new Error(err.error || '检查配方失败');
+        throwApiError(err, 'error_request_failed');
       });
     }
     return response.json();
@@ -2657,12 +2569,14 @@ document.getElementById('save_recipe_button').addEventListener('click', function
         }
       }, _callee);
     }));
-    return function (_x4) {
+    return function (_x3) {
       return _ref3.apply(this, arguments);
     };
   }()).catch(function (error) {
     console.error('检查配方失败:', error.message);
-    alertError('检查配方失败: ' + error.message);
+    alertError(t('error_check_recipe_failed', {
+      error: formatAppError(error)
+    }));
   });
 });
 function saveRecipeData(recipeName, recipeId) {
@@ -2715,7 +2629,7 @@ function saveRecipeData(recipeName, recipeId) {
     }).then(function (response) {
       if (!response.ok) {
         return response.json().then(function (err) {
-          throw new Error(err.error || '保存配方失败');
+          throwApiError(err, 'error_request_failed');
         });
       }
       return response.json();
@@ -2723,13 +2637,15 @@ function saveRecipeData(recipeName, recipeId) {
       console.log('手动规划配方保存成功');
       if (data.id_reassigned) {
         document.getElementById('recipe_id').value = data.new_id;
-        alertSuccess(data.message);
+        alertSuccess(resolveApiMessage(data));
       } else {
-        alertSuccess('手动规划配方保存成功');
+        alertSuccess(t('success_manual_recipe_saved'));
       }
     }).catch(function (error) {
       console.error('保存手动规划配方失败:', error.message);
-      alertError('保存手动规划配方失败: ' + error.message);
+      alertError(t('error_save_manual_recipe_failed', {
+        error: formatAppError(error)
+      }));
     });
     return; // 提前返回，不执行智能规划配方的保存逻辑
   }
@@ -2821,7 +2737,7 @@ function saveRecipeData(recipeName, recipeId) {
   }).then(function (response) {
     if (!response.ok) {
       return response.json().then(function (err) {
-        throw new Error(err.error || '保存配方失败');
+        throwApiError(err, 'error_request_failed');
       });
     }
     return response.json();
@@ -2830,13 +2746,15 @@ function saveRecipeData(recipeName, recipeId) {
     if (data.id_reassigned) {
       // 如果有ID重新分配，更新界面上的配方ID显示
       document.getElementById('recipe_id').value = data.new_id;
-      alertSuccess(data.message);
+      alertSuccess(resolveApiMessage(data));
     } else {
-      alertSuccess('配方保存成功');
+      alertSuccess(t('success_recipe_saved'));
     }
   }).catch(function (error) {
     console.error('保存配方失败:', error.message);
-    alertError('保存配方失败: ' + error.message);
+    alertError(t('error_save_recipe_failed', {
+      error: formatAppError(error)
+    }));
   });
 }
 
@@ -3370,7 +3288,7 @@ function fillDataListTableFromRecipe(tableData) {
 }
 
 // 删除配方
-function deleteRecipe(_x5) {
+function deleteRecipe(_x4) {
   return _deleteRecipe.apply(this, arguments);
 } // 读取配方到智能规划页面
 function _deleteRecipe() {
@@ -3380,7 +3298,9 @@ function _deleteRecipe() {
       while (1) switch (_context7.prev = _context7.next) {
         case 0:
           _context7.next = 2;
-          return myConfirm("\u786E\u5B9A\u8981\u5220\u9664\u914D\u65B9 \"".concat(recipeName, "\" \u5417\uFF1F"));
+          return myConfirm(t('confirm_delete_recipe', {
+            name: recipeName
+          }));
         case 2:
           confirmDelete = _context7.sent;
           if (confirmDelete) {
@@ -3398,7 +3318,7 @@ function _deleteRecipe() {
               if (data.success) {
                 loadRecipeList(); // 重新加载配方列表
               } else {
-                alertError('删除配方失败');
+                alertError(t('error_delete_recipe_failed'));
               }
             }).catch(function (error) {
               return console.error('删除配方失败:', error);
@@ -3702,9 +3622,9 @@ function triggerFinishSignal() {
   }).then(function (data) {
     if (data.success) {
       console.log("DO".concat(finishSignal, "\u4FE1\u53F7\u8BBE\u7F6E\u4E3A1\u6210\u529F"));
-      updateStatusDisplay("DO".concat(finishSignal, "\u4FE1\u53F7\u5DF2\u8BBE\u7F6E\u4E3A1\uFF0C1\u79D2\u540E\u5C06\u91CD\u7F6E\u4E3A0"), 'processing');
-
-      // 1秒后将DO信号设为0
+      updateStatusDisplay(t('success_do_set_pending', {
+        do: finishSignal
+      }), 'processing');
       setTimeout(function () {
         fetch('/set_do_signal', {
           method: 'POST',
@@ -3717,26 +3637,42 @@ function triggerFinishSignal() {
           })
         }).then(function (response) {
           return response.json();
-        }).then(function (data) {
-          if (data.success) {
+        }).then(function (resetData) {
+          if (resetData.success) {
             console.log("DO".concat(finishSignal, "\u4FE1\u53F7\u91CD\u7F6E\u4E3A0\u6210\u529F"));
-            updateStatusDisplay("DO".concat(finishSignal, "\u4FE1\u53F7\u5DF2\u91CD\u7F6E\u4E3A0\uFF0C\u81EA\u52A8\u5199\u5165\u6D41\u7A0B\u5B8C\u6210"), 'success');
+            updateStatusDisplay(t('success_do_reset', {
+              do: finishSignal
+            }), 'success');
           } else {
-            console.error("DO".concat(finishSignal, "\u4FE1\u53F7\u91CD\u7F6E\u4E3A0\u5931\u8D25:"), data.error);
-            updateStatusDisplay("DO".concat(finishSignal, "\u4FE1\u53F7\u91CD\u7F6E\u5931\u8D25: ").concat(data.error), 'error');
+            var resetError = resolveApiError(resetData);
+            console.error("DO".concat(finishSignal, "\u4FE1\u53F7\u91CD\u7F6E\u4E3A0\u5931\u8D25:"), resetError);
+            updateStatusDisplay(t('error_do_reset_failed', {
+              do: finishSignal,
+              error: resetError
+            }), 'error');
           }
         }).catch(function (error) {
           console.error("DO".concat(finishSignal, "\u4FE1\u53F7\u91CD\u7F6E\u4E3A0\u8BF7\u6C42\u5931\u8D25:"), error);
-          updateStatusDisplay("DO".concat(finishSignal, "\u4FE1\u53F7\u91CD\u7F6E\u8BF7\u6C42\u5931\u8D25: ").concat(error.message), 'error');
+          updateStatusDisplay(t('error_do_request_failed', {
+            do: finishSignal,
+            error: formatAppError(error)
+          }), 'error');
         });
-      }, 1000); // 1秒延迟
+      }, 1000);
     } else {
-      console.error("DO".concat(finishSignal, "\u4FE1\u53F7\u8BBE\u7F6E\u4E3A1\u5931\u8D25:"), data.error);
-      updateStatusDisplay("DO".concat(finishSignal, "\u4FE1\u53F7\u8BBE\u7F6E\u5931\u8D25: ").concat(data.error), 'error');
+      var setError = resolveApiError(data);
+      console.error("DO".concat(finishSignal, "\u4FE1\u53F7\u8BBE\u7F6E\u4E3A1\u5931\u8D25:"), setError);
+      updateStatusDisplay(t('error_do_set_failed', {
+        do: finishSignal,
+        error: setError
+      }), 'error');
     }
   }).catch(function (error) {
     console.error("DO".concat(finishSignal, "\u4FE1\u53F7\u8BBE\u7F6E\u4E3A1\u8BF7\u6C42\u5931\u8D25:"), error);
-    updateStatusDisplay("DO".concat(finishSignal, "\u4FE1\u53F7\u8BBE\u7F6E\u8BF7\u6C42\u5931\u8D25: ").concat(error.message), 'error');
+    updateStatusDisplay(t('error_do_request_failed', {
+      do: finishSignal,
+      error: formatAppError(error)
+    }), 'error');
   });
 }
 
@@ -3793,7 +3729,7 @@ function getSelectedRecipes() {
 function exportSelectedRecipes() {
   var selectedRecipes = getSelectedRecipes();
   if (selectedRecipes.length === 0) {
-    alertError('请选择要导出的配方');
+    alertError(t('error_select_export_recipes'));
     return;
   }
   console.log(selectedRecipes);
@@ -3808,15 +3744,19 @@ function exportSelectedRecipes() {
   }).then(function (response) {
     return response.json();
   }).then(function (data) {
-    if (data.error) {
-      alertError("\u5BFC\u51FA\u914D\u65B9\u5931\u8D25: ".concat(data.error));
+    if (hasApiError(data)) {
+      alertError(t('error_export_recipes_failed', {
+        error: resolveApiError(data)
+      }));
       return;
     }
-
-    // 导出成功
-    alertSuccess(data.message || "\u6210\u529F\u5BFC\u51FA ".concat(selectedRecipes.length, " \u4E2A\u914D\u65B9\u5230U\u76D8"));
+    alertSuccess(resolveApiMessage(data) || t('success_export_recipes', {
+      count: selectedRecipes.length
+    }));
   }).catch(function (error) {
-    alertError("\u5BFC\u51FA\u914D\u65B9\u5931\u8D25: ".concat(error.message));
+    alertError(t('error_export_recipes_failed', {
+      error: formatAppError(error)
+    }));
   });
 }
 
@@ -3831,19 +3771,23 @@ function importRecipes() {
   }).then(function (response) {
     return response.json();
   }).then(function (data) {
-    if (data.error) {
-      alertError("\u8BFB\u53D6U\u76D8\u5907\u4EFD\u76EE\u5F55\u5931\u8D25: ".concat(data.error));
+    if (hasApiError(data)) {
+      alertError(t('error_read_usb_backup_failed', {
+        error: resolveApiError(data)
+      }));
       return;
     }
     if (data.count === 0) {
-      alertInfo('U盘中没有找到配方备份目录');
+      alertInfo(t('info_no_usb_backup'));
       return;
     }
 
     // 显示时间目录选择对话框
     showTimestampSelectionDialog(data.timestamps);
   }).catch(function (error) {
-    alertError("\u8BFB\u53D6U\u76D8\u5907\u4EFD\u76EE\u5F55\u5931\u8D25: ".concat(error.message));
+    alertError(t('error_read_usb_backup_failed', {
+      error: formatAppError(error)
+    }));
   });
 }
 
@@ -3877,12 +3821,14 @@ function selectTimestamp(timestamp) {
   }).then(function (response) {
     return response.json();
   }).then(function (data) {
-    if (data.error) {
-      alertError("\u8BFB\u53D6\u914D\u65B9\u5931\u8D25: ".concat(data.error));
+    if (hasApiError(data)) {
+      alertError(t('error_read_recipes_failed', {
+        error: resolveApiError(data)
+      }));
       return;
     }
     if (data.count === 0) {
-      alertInfo('该时间目录中没有找到配方文件');
+      alertInfo(t('info_no_recipe_files_in_dir'));
       return;
     }
 
@@ -3890,7 +3836,9 @@ function selectTimestamp(timestamp) {
     closeImportDialog();
     showImportDialog(data.recipes, timestamp);
   }).catch(function (error) {
-    alertError("\u8BFB\u53D6\u914D\u65B9\u5931\u8D25: ".concat(error.message));
+    alertError(t('error_read_recipes_failed', {
+      error: formatAppError(error)
+    }));
   });
 }
 
@@ -3941,7 +3889,7 @@ function updateImportSelectAllState() {
 }
 
 // 确认导入配方
-function confirmImportRecipes(_x6) {
+function confirmImportRecipes(_x5) {
   return _confirmImportRecipes.apply(this, arguments);
 } // 执行导入操作
 function _confirmImportRecipes() {
@@ -3958,11 +3906,13 @@ function _confirmImportRecipes() {
             _context8.next = 5;
             break;
           }
-          alertError('请选择要导入的配方');
+          alertError(t('error_select_import_recipes'));
           return _context8.abrupt("return");
         case 5:
           _context8.next = 7;
-          return myConfirm("\u786E\u8BA4\u5BFC\u5165 ".concat(selectedFilenames.length, " \u4E2A\u914D\u65B9\uFF1F"));
+          return myConfirm(t('confirm_import_recipes', {
+            count: selectedFilenames.length
+          }));
         case 7:
           confirmed = _context8.sent;
           if (confirmed) {
@@ -3976,12 +3926,12 @@ function _confirmImportRecipes() {
   }));
   return _confirmImportRecipes.apply(this, arguments);
 }
-function executeImport(_x7, _x8) {
+function executeImport(_x6, _x7) {
   return _executeImport.apply(this, arguments);
 } // 检查导入冲突
 function _executeImport() {
   _executeImport = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee9(filenames, timestamp) {
-    var conflictResult, conflictAction, continueImport, resolvedConflicts, originalFileCount, skippedConflicts, response, data, message, parts;
+    var conflictResult, conflictAction, continueImport, resolvedConflicts, originalFileCount, skippedConflicts, response, data, message;
     return _regeneratorRuntime().wrap(function _callee9$(_context9) {
       while (1) switch (_context9.prev = _context9.next) {
         case 0:
@@ -4039,7 +3989,7 @@ function _executeImport() {
             _context9.next = 24;
             break;
           }
-          alertInfo('所有配方都被跳过，导入已取消');
+          alertInfo(t('info_all_recipes_skipped'));
           return _context9.abrupt("return");
         case 24:
           conflictAction = 'overwrite'; // 剩余的文件都是要覆盖的
@@ -4065,50 +4015,47 @@ function _executeImport() {
           return response.json();
         case 31:
           data = _context9.sent;
-          if (!data.error) {
+          if (!hasApiError(data)) {
             _context9.next = 35;
             break;
           }
-          alertError("\u5BFC\u5165\u5931\u8D25: ".concat(data.error));
+          alertError(t('error_import_failed', {
+            error: resolveApiError(data)
+          }));
           return _context9.abrupt("return");
         case 35:
           // 显示导入结果
-          message = data.message; // 添加手动跳过的重名配方信息
-          if (window.manuallySkippedCount && window.manuallySkippedCount > 0) {
-            parts = message.split('成功导入');
-            if (parts.length === 2) {
-              message = parts[0] + "\u6210\u529F\u5BFC\u5165".concat(parts[1].split('个配方')[0], "\u4E2A\u914D\u65B9\uFF0C\u624B\u52A8\u8DF3\u8FC7 ").concat(window.manuallySkippedCount, " \u4E2A\u91CD\u540D\u914D\u65B9").concat(parts[1].substring(parts[1].indexOf('个配方') + 3));
-            }
-            delete window.manuallySkippedCount; // 清理全局变量
-          }
-
-          // 添加重新分配的配方号信息
+          message = resolveApiMessage(data); // 添加重新分配的配方号信息
           if (data.reassigned_list && data.reassigned_list.length > 0) {
-            message += '\n\n配方号自动重新分配详情:\n' + data.reassigned_list.join('\n');
+            message += '\n\n' + t('import_reassigned_details') + '\n' + data.reassigned_list.join('\n');
           }
           if (data.errors && data.errors.length > 0) {
-            message += '\n\n错误详情:\n' + data.errors.join('\n');
+            message += '\n\n' + t('import_error_details') + '\n' + data.errors.map(function (item) {
+              return translateServerMessage(item) || item;
+            }).join('\n');
           }
           alertSuccess(message);
           closeImportDialog();
 
           // 刷新配方列表
           loadRecipeList();
-          _context9.next = 47;
+          _context9.next = 46;
           break;
-        case 44:
-          _context9.prev = 44;
+        case 43:
+          _context9.prev = 43;
           _context9.t0 = _context9["catch"](0);
-          alertError("\u5BFC\u5165\u5931\u8D25: ".concat(_context9.t0.message));
-        case 47:
+          alertError(t('error_import_failed', {
+            error: formatAppError(_context9.t0)
+          }));
+        case 46:
         case "end":
           return _context9.stop();
       }
-    }, _callee9, null, [[0, 44]]);
+    }, _callee9, null, [[0, 43]]);
   }));
   return _executeImport.apply(this, arguments);
 }
-function checkImportConflicts(_x9, _x10) {
+function checkImportConflicts(_x8, _x9) {
   return _checkImportConflicts.apply(this, arguments);
 } // 显示配方号重新分配确认对话框
 function _checkImportConflicts() {
@@ -4135,20 +4082,17 @@ function _checkImportConflicts() {
           return response.json();
         case 6:
           data = _context10.sent;
-          if (!data.error) {
-            _context10.next = 9;
-            break;
+          if (hasApiError(data)) {
+            throwApiError(data);
           }
-          throw new Error(data.error);
-        case 9:
           return _context10.abrupt("return", {
             hasNameConflicts: data.hasNameConflicts,
             hasIdReassignments: data.hasIdReassignments,
             nameConflicts: data.nameConflicts,
             idReassignments: data.idReassignments
           });
-        case 12:
-          _context10.prev = 12;
+        case 11:
+          _context10.prev = 11;
           _context10.t0 = _context10["catch"](0);
           console.error('检查导入冲突失败:', _context10.t0);
           return _context10.abrupt("return", {
@@ -4157,15 +4101,15 @@ function _checkImportConflicts() {
             nameConflicts: [],
             idReassignments: []
           });
-        case 16:
+        case 15:
         case "end":
           return _context10.stop();
       }
-    }, _callee10, null, [[0, 12]]);
+    }, _callee10, null, [[0, 11]]);
   }));
   return _checkImportConflicts.apply(this, arguments);
 }
-function showIdReassignmentDialog(_x11) {
+function showIdReassignmentDialog(_x10) {
   return _showIdReassignmentDialog.apply(this, arguments);
 } // 逐个解决重名冲突
 function _showIdReassignmentDialog() {
@@ -4195,7 +4139,7 @@ function _showIdReassignmentDialog() {
   }));
   return _showIdReassignmentDialog.apply(this, arguments);
 }
-function resolveNameConflictsOneByOne(_x12) {
+function resolveNameConflictsOneByOne(_x11) {
   return _resolveNameConflictsOneByOne.apply(this, arguments);
 } // 显示单个重名冲突确认对话框
 function _resolveNameConflictsOneByOne() {
@@ -4272,7 +4216,7 @@ function _resolveNameConflictsOneByOne() {
   }));
   return _resolveNameConflictsOneByOne.apply(this, arguments);
 }
-function showSingleNameConflictDialog(_x13, _x14, _x15) {
+function showSingleNameConflictDialog(_x12, _x13, _x14) {
   return _showSingleNameConflictDialog.apply(this, arguments);
 } // 生成单个重名冲突信息HTML
 function _showSingleNameConflictDialog() {
@@ -4316,7 +4260,7 @@ function generateIdReassignmentList(idReassignments) {
 }
 
 // 显示配方名冲突对话框（用于保存配方时）
-function showNameConflictDialog(_x16) {
+function showNameConflictDialog(_x15) {
   return _showNameConflictDialog.apply(this, arguments);
 } // 显示ID冲突对话框（用于保存配方时）
 function _showNameConflictDialog() {
@@ -4371,7 +4315,7 @@ function _showNameConflictDialog() {
   }));
   return _showNameConflictDialog.apply(this, arguments);
 }
-function showIdConflictDialog(_x17) {
+function showIdConflictDialog(_x16) {
   return _showIdConflictDialog.apply(this, arguments);
 } // 关闭导入对话框
 function _showIdConflictDialog() {

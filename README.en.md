@@ -1,6 +1,6 @@
 # Agilebot Intelligent Palletizing Planning System
 
-**Version v7.5.6 | Updated: June 15, 2026**
+**Version v7.5.7 | Updated: June 16, 2026**
 
 ---
 
@@ -268,4 +268,4 @@ The system provides the following 5 main feature modules:
 
 ---
 
-**Agilebot Intelligent Palletizing Planning System | Version v7.5.6 | Updated: June 15, 2026 | © 2026**
+**Agilebot Intelligent Palletizing Planning System | Version v7.5.7 | Updated: June 16, 2026 | © 2026**

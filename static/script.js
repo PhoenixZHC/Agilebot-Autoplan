@@ -7,151 +7,15 @@ function getActiveLanguage() {
     return typeof getCurrentLanguage === 'function' ? getCurrentLanguage() : 'zh';
 }
 
-const notificationTranslations = {
-    en: {
-        exact: {
-            '请输入机器人IP地址': 'Please enter the robot IP address',
-            '请输入程序名称': 'Please enter the program name',
-            '请输入有效的PR寄存器ID': 'Please enter a valid PR register ID',
-            '没有可用的数据': 'No data is available',
-            'P点数据写入成功': 'P point data written successfully',
-            '手动规划R寄存器写入成功': 'Manual planning R registers written successfully',
-            '智能规划R寄存器写入成功': 'Smart planning R registers written successfully',
-            'TF数据更新成功': 'TF data updated successfully',
-            '请先读取参考点': 'Please read the reference points first',
-            '请输入有效的行数和列数': 'Please enter valid row and column counts',
-            '参考点坐标无效，请重新读取参考点': 'Reference point coordinates are invalid. Please read them again',
-            '参考点1和参考点2重合，无法计算行方向': 'Reference point 1 and 2 overlap; row direction cannot be calculated',
-            '参考点1和参考点3重合，无法计算列方向': 'Reference point 1 and 3 overlap; column direction cannot be calculated',
-            '请输入有效的行号/列号、补偿值和角度补偿值': 'Please enter a valid row/column number, compensation value, and angle compensation',
-            '补偿值更新成功': 'Compensation updated successfully',
-            '请选择要导出的配方': 'Please select recipes to export',
-            'U盘中没有找到配方备份目录': 'No recipe backup folder was found on the USB drive',
-            '请选择要导入的配方': 'Please select recipes to import',
-            '所有配方都被跳过，导入已取消': 'All recipes were skipped. Import was cancelled'
-        },
-        prefixes: {
-            '写入完成：': 'Write complete: ',
-            '写入失败: ': 'Write failed: ',
-            '写入P点数据失败: ': 'Failed to write P point data: ',
-            '获取P点数据失败: ': 'Failed to get P point data: ',
-            '手动规划R寄存器写入失败: ': 'Failed to write manual planning R registers: ',
-            '智能规划R寄存器写入失败: ': 'Failed to write smart planning R registers: ',
-            '更新TF数据失败: ': 'Failed to update TF data: ',
-            '读取参考点失败: ': 'Failed to read reference points: ',
-            '计算完成！共生成 ': 'Calculation complete. Generated ',
-            '导出配方失败: ': 'Failed to export recipes: ',
-            '读取U盘备份目录失败: ': 'Failed to read USB backup folder: ',
-            '读取配方失败: ': 'Failed to read recipes: ',
-            '导入失败: ': 'Import failed: ',
-            '确认导入 ': 'Confirm import of '
-        }
-    },
-    vi: {
-        exact: {
-            '请输入机器人IP地址': 'Vui lòng nhập địa chỉ IP robot',
-            '请输入程序名称': 'Vui lòng nhập tên chương trình',
-            '请输入有效的PR寄存器ID': 'Vui lòng nhập ID thanh ghi PR hợp lệ',
-            '没有可用的数据': 'Không có dữ liệu khả dụng',
-            'P点数据写入成功': 'Ghi dữ liệu điểm P thành công',
-            '手动规划R寄存器写入成功': 'Ghi thanh ghi R cho lập kế hoạch thủ công thành công',
-            '智能规划R寄存器写入成功': 'Ghi thanh ghi R cho lập kế hoạch thông minh thành công',
-            'TF数据更新成功': 'Cập nhật dữ liệu TF thành công',
-            '请先读取参考点': 'Vui lòng đọc điểm tham chiếu trước',
-            '请输入有效的行数和列数': 'Vui lòng nhập số hàng và số cột hợp lệ',
-            '参考点坐标无效，请重新读取参考点': 'Tọa độ điểm tham chiếu không hợp lệ. Vui lòng đọc lại',
-            '补偿值更新成功': 'Cập nhật giá trị bù thành công'
-        },
-        prefixes: {
-            '写入完成：': 'Ghi hoàn tất: ',
-            '写入失败: ': 'Ghi thất bại: ',
-            '写入P点数据失败: ': 'Ghi dữ liệu điểm P thất bại: ',
-            '读取参考点失败: ': 'Đọc điểm tham chiếu thất bại: ',
-            '计算完成！共生成 ': 'Tính toán hoàn tất. Đã tạo '
-        }
-    },
-    ja: {
-        exact: {
-            '请输入机器人IP地址': 'ロボットIPアドレスを入力してください',
-            '请输入程序名称': 'プログラム名を入力してください',
-            '请输入有效的PR寄存器ID': '有効なPRレジスタIDを入力してください',
-            '没有可用的数据': '利用可能なデータがありません',
-            'P点数据写入成功': 'P点データの書き込みに成功しました',
-            '手动规划R寄存器写入成功': '手動計画のRレジスタ書き込みに成功しました',
-            '智能规划R寄存器写入成功': 'スマート計画のRレジスタ書き込みに成功しました',
-            'TF数据更新成功': 'TFデータの更新に成功しました',
-            '请先读取参考点': '先に参照点を読み取ってください',
-            '请输入有效的行数和列数': '有効な行数と列数を入力してください',
-            '参考点坐标无效，请重新读取参考点': '参照点座標が無効です。再度読み取ってください',
-            '补偿值更新成功': '補正値の更新に成功しました'
-        },
-        prefixes: {
-            '写入完成：': '書き込み完了: ',
-            '写入失败: ': '書き込み失敗: ',
-            '写入P点数据失败: ': 'P点データの書き込みに失敗しました: ',
-            '读取参考点失败: ': '参照点の読み取りに失敗しました: ',
-            '计算完成！共生成 ': '計算完了。生成数: '
-        }
-    },
-    ko: {
-        exact: {
-            '请输入机器人IP地址': '로봇 IP 주소를 입력하세요',
-            '请输入程序名称': '프로그램 이름을 입력하세요',
-            '请输入有效的PR寄存器ID': '올바른 PR 레지스터 ID를 입력하세요',
-            '没有可用的数据': '사용 가능한 데이터가 없습니다',
-            'P点数据写入成功': 'P 포인트 데이터 쓰기 성공',
-            '手动规划R寄存器写入成功': '수동 계획 R 레지스터 쓰기 성공',
-            '智能规划R寄存器写入成功': '스마트 계획 R 레지스터 쓰기 성공',
-            'TF数据更新成功': 'TF 데이터 업데이트 성공',
-            '请先读取参考点': '먼저 기준점을 읽어 주세요',
-            '请输入有效的行数和列数': '올바른 행 수와 열 수를 입력하세요',
-            '参考点坐标无效，请重新读取参考点': '기준점 좌표가 올바르지 않습니다. 다시 읽어 주세요',
-            '补偿值更新成功': '보정값 업데이트 성공'
-        },
-        prefixes: {
-            '写入完成：': '쓰기 완료: ',
-            '写入失败: ': '쓰기 실패: ',
-            '写入P点数据失败: ': 'P 포인트 데이터 쓰기 실패: ',
-            '读取参考点失败: ': '기준점 읽기 실패: ',
-            '计算完成！共生成 ': '계산 완료. 생성된 포인트: '
-        }
-    }
-};
-
 function translateNotificationMessage(message) {
     if (typeof message !== 'string') {
         return message;
     }
-    const lang = getActiveLanguage();
-    const pack = notificationTranslations[lang];
-    if (!pack) {
-        return message;
-    }
-    if (pack.exact[message]) {
-        return pack.exact[message];
-    }
-    const pointCountMatch = message.match(/^计算完成！共生成\s+(\d+)\s+个点位$/);
-    if (pointCountMatch) {
-        const pointCountText = {
-            en: `Calculation complete. Generated ${pointCountMatch[1]} points`,
-            vi: `Tính toán hoàn tất. Đã tạo ${pointCountMatch[1]} điểm`,
-            ja: `計算完了。${pointCountMatch[1]} 点を生成しました`,
-            ko: `계산 완료. ${pointCountMatch[1]}개 포인트를 생성했습니다`
-        };
-        return pointCountText[lang] || message;
-    }
-    const importCountMatch = message.match(/^确认导入\s+(\d+)\s+个配方？$/);
-    if (importCountMatch) {
-        const importCountText = {
-            en: `Import ${importCountMatch[1]} recipes?`,
-            vi: `Nhập ${importCountMatch[1]} công thức?`,
-            ja: `${importCountMatch[1]} 件のレシピをインポートしますか？`,
-            ko: `${importCountMatch[1]}개 레시피를 가져올까요?`
-        };
-        return importCountText[lang] || message;
-    }
-    const prefix = Object.keys(pack.prefixes).find(item => message.startsWith(item));
-    return prefix ? pack.prefixes[prefix] + message.slice(prefix.length) : message;
+    return message;
+}
+
+function throwApiError(data, fallbackKey = 'error_request_failed') {
+    throw appError(data?.error_code || fallbackKey, data?.params || {});
 }
 
 function createNotification(method) {
@@ -412,9 +276,9 @@ function checkExternalCall() {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.error) {
-            console.error('外部调用监控错误:', data.error);
-            updateStatusDisplay(t('error_monitoring_failed', { error: data.error }), 'error');
+        if (hasApiError(data)) {
+            console.error('外部调用监控错误:', resolveApiError(data));
+            updateStatusDisplay(t('error_monitoring_failed', { error: resolveApiError(data) }), 'error');
             stopExternalCallMonitor();
             return;
         }
@@ -456,7 +320,7 @@ function checkExternalCall() {
     })
     .catch(error => {
         console.error('外部调用监控请求失败:', error);
-        updateStatusDisplay(t('error_monitoring_failed', { error: error.message }), 'error');
+        updateStatusDisplay(t('error_monitoring_failed', { error: formatAppError(error) }), 'error');
         stopExternalCallMonitor();
     });
 }
@@ -471,9 +335,9 @@ function loadRecipeByMHValue(mhValue) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.error) {
-            console.error('获取配方列表失败:', data.error);
-            updateStatusDisplay(`获取配方列表失败: ${data.error}`, 'error');
+        if (hasApiError(data)) {
+            console.error('获取配方列表失败:', resolveApiError(data));
+            updateStatusDisplay(t('error_get_recipe_list_failed') + resolveApiError(data), 'error');
             return;
         }
 
@@ -520,7 +384,7 @@ function loadRecipeByMHValue(mhValue) {
     })
     .catch(error => {
         console.error('根据MH值加载配方失败:', error);
-        updateStatusDisplay(t('error_load_recipe_failed', { error: error.message }), 'error');
+        updateStatusDisplay(t('error_load_recipe_failed', { error: formatAppError(error) }), 'error');
     });
 }
 
@@ -562,21 +426,21 @@ function performAutoWrite(recipeName) {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.error) {
-                console.error('检查机器人状态失败:', data.error);
-                updateStatusDisplay(t('error_robot_status_check_failed') + data.error, 'error');
-                alertError(t('error_robot_status_check_failed') + data.error);
+            if (hasApiError(data)) {
+                console.error('检查机器人状态失败:', resolveApiError(data));
+                updateStatusDisplay(t('error_robot_status_check_failed') + resolveApiError(data), 'error');
+                alertError(t('error_robot_status_check_failed') + (resolveApiError(data)));
                 isAutoWriting = false; // 重置写入状态
-                throw new Error(data.error);
+                throwApiError(data);
             }
 
             console.log('机器人状态:', data.status, '是否空闲:', data.is_idle);
 
             if (!data.is_idle) {
                 updateStatusDisplay(`机器人当前状态: ${data.status}，无法自动写入`, 'error');
-                alertError(`机器人当前状态: ${data.status}，无法自动写入`);
+                alertError(t('error_robot_status_cannot_auto_write', { status: data.status }));
                 isAutoWriting = false; // 重置写入状态
-                throw new Error(`机器人当前状态: ${data.status}，无法自动写入`);
+                throw appError('error_robot_status_cannot_auto_write', { status: data.status });
             }
 
             // 3. 检查运行中的程序
@@ -591,21 +455,21 @@ function performAutoWrite(recipeName) {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.error) {
-                console.error('检查运行程序失败:', data.error);
-                updateStatusDisplay(t('error_check_running_program_failed') + data.error, 'error');
-                alertError(t('error_check_running_program_failed') + data.error);
+            if (hasApiError(data)) {
+                console.error('检查运行程序失败:', resolveApiError(data));
+                updateStatusDisplay(t('error_check_running_program_failed') + resolveApiError(data), 'error');
+                alertError(t('error_check_running_program_failed') + (resolveApiError(data)));
                 isAutoWriting = false; // 重置写入状态
-                throw new Error(data.error);
+                throwApiError(data);
             }
 
             console.log('运行中的程序:', data.running_programs, '是否有程序运行:', data.has_running_programs);
 
             if (data.has_running_programs) {
                 updateStatusDisplay(`当前有程序在运行: ${data.running_programs.join(', ')}，无法自动写入`, 'error');
-                alertError(`当前有程序在运行: ${data.running_programs.join(', ')}，无法自动写入`);
+                alertError(t('error_program_running_cannot_auto_write', { programs: data.running_programs.join(', ') }));
                 isAutoWriting = false; // 重置写入状态
-                throw new Error(`当前有程序在运行: ${data.running_programs.join(', ')}，无法自动写入`);
+                throw appError('error_program_running_cannot_auto_write', { programs: data.running_programs.join(', ') });
             }
 
             // 4. 状态检查通过，开始写入P点操作
@@ -630,8 +494,8 @@ function performAutoWrite(recipeName) {
         })
         .catch(error => {
             console.error('自动写入过程出错:', error);
-            updateStatusDisplay(t('monitoring_status_auto_write_failed') + error.message, 'error');
-            alertError(t('error_auto_write_failed') + error.message);
+            updateStatusDisplay(t('monitoring_status_auto_write_failed') + formatAppError(error), 'error');
+            alertError(t('error_auto_write_failed') + (formatAppError(error)));
             isAutoWriting = false; // 重置写入状态
         });
     }, 1000); // 等待1秒，确保页面加载完成
@@ -832,7 +696,7 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
     .then(response => {
         if (!response.ok) {
             return response.json().then(err => {
-                throw new Error(err.error || '请求失败');
+                throwApiError(err, 'error_request_failed');
             });
         }
         // 获取填充的图形数量和中心位置数据
@@ -901,7 +765,7 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('读取PR寄存器失败');
+            throw appError('error_read_pr_failed');
         }
         return response.json();
     })
@@ -996,7 +860,7 @@ document.getElementById('inputForm').addEventListener('submit', function (event)
         setActiveButton('data-list-btn');
     })
     .catch(error => {
-        alertError(error.message);
+        alertError(formatAppError(error));
     });
 });
 
@@ -1080,7 +944,7 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
         .then(response => {
             if (!response.ok) {
                 return response.json().then(err => {
-                    throw new Error(err.error || '断开连接失败');
+                    throwApiError(err, 'error_request_failed');
                 });
             }
             return response.json();
@@ -1103,12 +967,12 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
         })
         .catch(error => {
             console.error('断开连接失败:', error.message);
-            alertError(t('error_disconnect_failed') + error.message);
+            alertError(t('error_disconnect_failed') + (formatAppError(error)));
         });
     } else {
         // 如果当前是"连接"状态，则发送连接请求
         if (!robotIp) {
-            alertError('请输入机器人IP地址');
+            alertError(t('error_enter_robot_ip'));
             return;
         }
 
@@ -1126,7 +990,7 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
             // 连接失败时，重置按钮状态
             connectButton.textContent = t('connect');
                 return response.json().then(err => {
-                    throw new Error(err.error || '连接失败');
+                    throwApiError(err, 'error_request_failed');
                 });
             }
             return response.json();
@@ -1169,10 +1033,10 @@ document.getElementById('robot_connect_button').addEventListener('click', functi
             }
             
             // 然后根据错误类型显示不同的提示
-            if (error.message === '请求超时' || error.message.includes('timeout')) {
+            if (error.message === t('error_request_timeout') || error.message === '请求超时' || error.message.includes('timeout')) {
                 alertError(t('error_timeout'));
             } else {
-                alertError(t('error_connect_failed') + error.message);
+                alertError(t('error_connect_failed') + (formatAppError(error)));
             }
         });
     }
@@ -1184,7 +1048,7 @@ document.getElementById('read_p_data_button').addEventListener('click', function
     // 如果用户没有输入，则使用默认值 'PUT'
 
     if (!programName) {
-        alertError('请输入程序名称');
+        alertError(t('error_enter_program_name'));
         return;
     }
 
@@ -1201,7 +1065,7 @@ document.getElementById('read_p_data_button').addEventListener('click', function
     .then(response => {
         if (!response.ok) {
             return response.json().then(err => {
-                throw new Error(err.error || '获取P点数据失败');
+                throwApiError(err, 'error_request_failed');
             });
         }
         return response.json();
@@ -1319,7 +1183,7 @@ document.getElementById('read_p_data_button').addEventListener('click', function
     })
     .catch(error => {
         console.error('获取P点数据失败:', error.message);
-        alertError('获取P点数据失败: ' + error.message);
+        alertError(t('error_get_p_data_failed', { error: formatAppError(error) }));
     });
 });
 
@@ -1335,12 +1199,12 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     const left_right = parseInt(document.getElementById('left_right').value, 10); // 获取工具数量
 
     if (!programName) {
-        alertError('请输入程序名称');
+        alertError(t('error_enter_program_name'));
         return;
     }
 
     if (isNaN(prRegisterId)) { // 检查PR寄存器ID是否为有效数字
-        alertError('请输入有效的PR寄存器ID');
+        alertError(t('error_invalid_pr_register_id'));
         return;
     }
     if (isNaN(startPPoint) || startPPoint < 1) {
@@ -1353,7 +1217,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     const rows = tableBody.querySelectorAll('tr');
 
     if (rows.length === 0) {
-        alertError('没有可用的数据');
+        alertError(t('error_no_data_available'));
         return;
     }
 
@@ -1408,7 +1272,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .then(response => {
         if (!response.ok) {
             return response.json().then(err => {
-                throw new Error(err.error || '读取PR寄存器失败');
+                throwApiError(err, 'error_request_failed');
             });
         }
         return response.json();
@@ -1440,27 +1304,27 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .then(response => {
         if (!response.ok) {
             return response.json().then(err => {
-                throw new Error(err.error || '写入P点数据失败');
+                throwApiError(err, 'error_request_failed');
             });
         }
         return response.json();
     })
     .then(data => {
         console.log('P点数据写入成功');
-        alertSuccess('P点数据写入成功');
+        alertSuccess(t('success_p_data_written'));
 
         // 如果有自动写入的回调函数，调用它
         if (window.onWriteOperationComplete) {
-            window.onWriteOperationComplete(true, 'P点数据写入成功', 'P点写入');
+            window.onWriteOperationComplete(true, t('success_p_data_written'), t('write_op_p_point'));
         }
     })
     .catch(error => {
         console.error('写入P点数据失败:', error.message);
-        alertError('写入P点数据失败: ' + error.message);
+        alertError(t('error_write_p_data_failed', { error: formatAppError(error) }));
 
         // 如果有自动写入的回调函数，调用它
         if (window.onWriteOperationComplete) {
-            window.onWriteOperationComplete(false, '写入P点数据失败: ' + error.message, 'P点写入');
+            window.onWriteOperationComplete(false, t('error_write_p_data_failed', { error: formatAppError(error) }), t('write_op_p_point'));
         }
     });
 });
@@ -1527,27 +1391,27 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         .then(response => {
             if (!response.ok) {
                 return response.json().then(err => {
-                    throw new Error(err.error || '写入R寄存器失败');
+                    throwApiError(err, 'error_request_failed');
                 });
             }
             return response.json();
         })
         .then(data => {
             console.log('手动规划R寄存器写入成功');
-            alertSuccess('手动规划R寄存器写入成功');
+            alertSuccess(t('success_manual_r_written'));
 
             // 如果有自动写入的回调函数，调用它
             if (window.onWriteOperationComplete) {
-                window.onWriteOperationComplete(true, '手动规划R寄存器写入成功', 'R寄存器写入');
+                window.onWriteOperationComplete(true, t('success_manual_r_written'), t('write_op_r_register'));
             }
         })
         .catch(error => {
             console.error('手动规划R寄存器写入失败:', error.message);
-            alertError('手动规划R寄存器写入失败: ' + error.message);
+            alertError(t('error_manual_r_write_failed', { error: formatAppError(error) }));
 
             // 如果有自动写入的回调函数，调用它
             if (window.onWriteOperationComplete) {
-                window.onWriteOperationComplete(false, '手动规划R寄存器写入失败: ' + error.message, 'R寄存器写入');
+                window.onWriteOperationComplete(false, t('error_manual_r_write_failed', { error: formatAppError(error) }), t('write_op_r_register'));
             }
         });
         
@@ -1568,7 +1432,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
 
     // 检查填充数量和工具数量是否有效
     if (!shapeCountValue || !toolCount) {
-        alertError('请先进行计算并确保工具数量已选择');
+        alertError(t('error_calculate_tool_count_first'));
         return;
     }
 
@@ -1597,27 +1461,27 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .then(response => {
         if (!response.ok) {
             return response.json().then(err => {
-                throw new Error(err.error || '写入R寄存器失败');
+                throwApiError(err, 'error_request_failed');
             });
         }
         return response.json();
     })
     .then(data => {
         console.log('智能规划R寄存器写入成功');
-        alertSuccess('智能规划R寄存器写入成功');
+        alertSuccess(t('success_smart_r_written'));
 
         // 如果有自动写入的回调函数，调用它
         if (window.onWriteOperationComplete) {
-            window.onWriteOperationComplete(true, '智能规划R寄存器写入成功', 'R寄存器写入');
+            window.onWriteOperationComplete(true, t('success_smart_r_written'), t('write_op_r_register'));
         }
     })
     .catch(error => {
         console.error('智能规划R寄存器写入失败:', error.message);
-        alertError('智能规划R寄存器写入失败: ' + error.message);
+        alertError(t('error_smart_r_write_failed', { error: formatAppError(error) }));
 
         // 如果有自动写入的回调函数，调用它
         if (window.onWriteOperationComplete) {
-            window.onWriteOperationComplete(false, '智能规划R寄存器写入失败: ' + error.message, 'R寄存器写入');
+            window.onWriteOperationComplete(false, t('error_smart_r_write_failed', { error: formatAppError(error) }), t('write_op_r_register'));
         }
     });
 });
@@ -1637,7 +1501,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     }
 
     if (isNaN(toolSpacing)) { // 检查工具间距是否为有效数字
-        alertError('请输入有效的工具间距');
+        alertError(t('error_invalid_tool_spacing'));
         return;
     }
 
@@ -1666,7 +1530,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .then(response => {
         if (!response.ok) {
             return response.json().then(err => {
-                throw new Error(err.error || '读取TF1数据失败');
+                throwApiError(err, 'error_request_failed');
             });
         }
         return response.json();
@@ -1679,7 +1543,7 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
         if (toolLayout === 'double') {
             // 双向布局时，工具数量只能为2
             if (toolCount !== 2) {
-                alertError('双向布局时，工具数量必须为2');
+                alertError(t('error_double_layout_requires_two_tools'));
                 return;
             }
 
@@ -1766,33 +1630,33 @@ document.getElementById('write_p_data_button').addEventListener('click', functio
     .then(response => {
         if (!response.ok) {
             return response.json().then(err => {
-                throw new Error(err.error || '更新TF数据失败');
+                throwApiError(err, 'error_request_failed');
             });
         }
         return response.json();
     })
     .then(data => {
         console.log('TF数据更新成功');
-        alertSuccess('TF数据更新成功');
+        alertSuccess(t('success_tf_updated'));
 
         // 如果有自动写入的回调函数且自动TF功能开启，调用它
         if (window.onWriteOperationComplete && autoTF === 1) {
-            window.onWriteOperationComplete(true, 'TF数据更新成功', 'TF写入');
+            window.onWriteOperationComplete(true, t('success_tf_updated'), t('write_op_tf'));
         }
     })
     .catch(error => {
         console.error('更新TF数据失败:', error.message);
-        alertError('更新TF数据失败: ' + error.message);
+        alertError(t('error_tf_update_failed', { error: formatAppError(error) }));
 
         // 如果有自动写入的回调函数且自动TF功能开启，调用它
         if (window.onWriteOperationComplete && autoTF === 1) {
-            window.onWriteOperationComplete(false, '更新TF数据失败: ' + error.message, 'TF写入');
+            window.onWriteOperationComplete(false, t('error_tf_update_failed', { error: formatAppError(error) }), t('write_op_tf'));
         }
     });
 });
 }
 
-async function postWriteJson(url, body, fallbackMessage) {
+async function postWriteJson(url, body, fallbackKey = 'error_request_failed') {
     const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -1803,7 +1667,10 @@ async function postWriteJson(url, body, fallbackMessage) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-        throw new Error(data.error || fallbackMessage);
+        if (data.error_code) {
+            throw appError(data.error_code, data.params || {});
+        }
+        throw appError(fallbackKey, data.params || {});
     }
 
     return data;
@@ -1822,7 +1689,7 @@ function finiteNumberOrNull(value) {
 function requireFiniteRegisterAxis(registerData, axisName, sourceName) {
     const value = Number(registerData?.[axisName]);
     if (!Number.isFinite(value)) {
-        throw new Error(`${sourceName}${axisName.toUpperCase()}值无效`);
+        throw appError('error_invalid_axis_value', { source: sourceName, axis: axisName.toUpperCase() });
     }
     return value;
 }
@@ -1865,18 +1732,18 @@ async function runPPointWriteStep() {
     const leftRight = parseInt(document.getElementById('left_right').value, 10);
 
     if (!programName) {
-        throw new Error('请输入程序名称');
+        throw appError('error_enter_program_name');
     }
     if (isNaN(prRegisterId)) {
-        throw new Error('请输入有效的PR寄存器ID');
+        throw appError('error_invalid_pr_register_id');
     }
     if (isNaN(startPPoint) || startPPoint < 1) {
-        throw new Error(t('error_invalid_start_p_point'));
+        throw appError('error_invalid_start_p_point');
     }
 
     const rows = getTableRowsForWriting();
     if (rows.length === 0) {
-        throw new Error('没有可用的数据');
+        throw appError('error_no_data_available');
     }
 
     const pData = [];
@@ -1891,7 +1758,7 @@ async function runPPointWriteStep() {
         const cCompensation = finiteNumberOrNull(row.cells[9].textContent) ?? 0;
 
         if (x === null || y === null || c === null) {
-            throw new Error(`第 ${index + 1} 行数据清单坐标无效`);
+            throw appError('error_data_list_row_invalid', { row: index + 1 });
         }
 
         pData.push({
@@ -1912,7 +1779,7 @@ async function runPPointWriteStep() {
 
     const currentRecipeType = window.currentRecipeType || 'smart';
     let angleSource = currentRecipeType === 'manual' ? window.referencePoints?.pr1 : prData;
-    const angleSourceName = currentRecipeType === 'manual' ? '参考点1' : 'Z&C参考寄存器';
+    const angleSourceName = currentRecipeType === 'manual' ? t('manual_planning_ref1_label') : t('smart_planning_zc_ref_label');
 
     if (currentRecipeType === 'manual' && !Number.isFinite(Number(angleSource?.a))) {
         const pr1Id = window.referencePoints?.pr1Id
@@ -1920,7 +1787,7 @@ async function runPPointWriteStep() {
         if (Number.isFinite(pr1Id) && pr1Id >= 1) {
             angleSource = await postWriteJson('/read_pr_register', {
                 pr_register_id: pr1Id
-            }, '读取参考点1失败');
+            }, 'error_read_reference1_failed');
         }
     }
 
@@ -1938,9 +1805,9 @@ async function runPPointWriteStep() {
     await postWriteJson('/write_p_data', {
         program_name: programName,
         p_data: pData
-    }, '写入P点数据失败');
+    }, 'error_write_p_data_failed');
 
-    return 'P点数据写入成功';
+    return t('success_p_data_written');
 }
 
 async function runRRegisterWriteStep() {
@@ -1962,15 +1829,15 @@ async function runRRegisterWriteStep() {
             col_count: colCount,
             tool_count: toolCount,
             single_row_or_col_count: singleRowOrColCount
-        }, '写入R寄存器失败');
+        }, 'error_write_r_register_failed');
 
-        return '手动规划R寄存器写入成功';
+        return t('success_manual_r_written');
     }
 
     const shapeCountValue = document.getElementById('shape-count-value').textContent;
     const toolCount = document.getElementById('tool_count').value;
     if (!shapeCountValue || !toolCount) {
-        throw new Error('请先进行计算并确保工具数量已选择');
+        throw appError('error_calculate_tool_count_first');
     }
 
     await postWriteJson('/write_r_registers', {
@@ -1987,9 +1854,9 @@ async function runRRegisterWriteStep() {
         numofsingle_row_or_col_value: document.getElementById('shapes-per-row-or-col-value').textContent,
         rows: rows,
         cols: cols
-    }, '写入R寄存器失败');
+    }, 'error_write_r_register_failed');
 
-    return '智能规划R寄存器写入成功';
+    return t('success_smart_r_written');
 }
 
 async function runTFWriteStep() {
@@ -2000,19 +1867,19 @@ async function runTFWriteStep() {
     const toolDirection = document.getElementById('tool_direction').value;
 
     if (isNaN(toolSpacing)) {
-        throw new Error('请输入有效的工具间距');
+        throw appError('error_invalid_tool_spacing');
     }
     if (toolCount <= 1 || autoTF === 0) {
         return null;
     }
 
-    const data = await postWriteJson('/get_tf_data', { tf_id: 1 }, '读取TF1数据失败');
+    const data = await postWriteJson('/get_tf_data', { tf_id: 1 }, 'error_read_tf1_failed');
     const tf1 = data.tf;
     const tfUpdates = [];
 
     if (toolLayout === 'double') {
         if (toolCount !== 2) {
-            throw new Error('双向布局时，工具数量必须为2');
+            throw appError('error_double_layout_requires_two_tools');
         }
         const offset = toolSpacing / 2;
         tfUpdates.push({
@@ -2039,13 +1906,13 @@ async function runTFWriteStep() {
         }
     }
 
-    await postWriteJson('/update_tf_data', { tf_updates: tfUpdates }, '更新TF数据失败');
-    return 'TF数据更新成功';
+    await postWriteJson('/update_tf_data', { tf_updates: tfUpdates }, 'error_tf_update_failed');
+    return t('success_tf_updated');
 }
 
 async function runWriteSequence({ showAlerts = true } = {}) {
     if (isWriteOperationInProgress) {
-        throw new Error('写入操作正在进行中，请稍候');
+        throw appError('error_write_in_progress');
     }
 
     isWriteOperationInProgress = true;
@@ -2065,13 +1932,13 @@ async function runWriteSequence({ showAlerts = true } = {}) {
 
         const message = results.join('；');
         if (showAlerts) {
-            alertSuccess(`写入完成：${message}`);
+            alertSuccess(t('success_write_complete', { message }));
         }
         return message;
     } catch (error) {
         console.error('写入流程失败:', error.message);
         if (showAlerts) {
-            alertError('写入失败: ' + error.message);
+            alertError(t('error_write_failed', { error: formatAppError(error) }));
         }
         throw error;
     } finally {
@@ -2098,7 +1965,7 @@ document.getElementById('read_reference_points').addEventListener('click', funct
     const pr3Id = parseInt(document.getElementById('manual_pr3_id').value, 10);
 
     if (isNaN(rowCount) || isNaN(colCount) || rowCount < 1 || colCount < 1) {
-        alertError('请输入有效的行数和列数（必须大于0）');
+        alertError(t('error_invalid_row_col_positive'));
         return;
     }
     if ([pr1Id, pr2Id, pr3Id].some(id => isNaN(id) || id < 1)) {
@@ -2147,7 +2014,7 @@ document.getElementById('read_reference_points').addEventListener('click', funct
     })
     .catch(error => {
         console.error('读取参考点失败:', error);
-        alertError('读取参考点失败: ' + error.message);
+        alertError(t('error_read_reference_failed', { error: formatAppError(error) }));
         document.getElementById('calculation-status').style.display = 'none';
     });
 });
@@ -2155,7 +2022,7 @@ document.getElementById('read_reference_points').addEventListener('click', funct
 // 计算所有点位按钮事件
 document.getElementById('calculate_points').addEventListener('click', function () {
     if (!window.referencePoints) {
-        alertError('请先读取参考点');
+        alertError(t('error_read_reference_first'));
         return;
     }
 
@@ -2165,7 +2032,7 @@ document.getElementById('calculate_points').addEventListener('click', function (
     
     // 验证输入值
     if (!currentRowCount || !currentColCount || currentRowCount < 1 || currentColCount < 1) {
-        alertError('请输入有效的行数和列数');
+        alertError(t('error_invalid_row_col'));
         return;
     }
     
@@ -2190,7 +2057,7 @@ document.getElementById('calculate_points').addEventListener('click', function (
         allPoints = calculateAllPoints(pr1, pr2, pr3, currentRowCount, currentColCount, calculationMethod);
     } catch (error) {
         document.getElementById('calculation-status').style.display = 'none';
-        alertError(error.message);
+        alertError(formatAppError(error));
         return;
     }
     
@@ -2210,7 +2077,7 @@ document.getElementById('calculate_points').addEventListener('click', function (
     showSection('data-list-content');
     setActiveButton('data-list-btn');
     
-    alertSuccess(`计算完成！共生成 ${allPoints.length} 个点位`);
+    alertSuccess(t('success_calculation_complete', { count: allPoints.length }));
 });
 
 // 读取PR寄存器的函数
@@ -2227,7 +2094,7 @@ function readPRRegister(prId) {
     .then(response => {
         if (!response.ok) {
             return response.json().then(err => {
-                throw new Error(err.error || '读取PR寄存器失败');
+                throwApiError(err, 'error_request_failed');
             });
         }
         return response.json();
@@ -2263,13 +2130,13 @@ function calculateAllPoints(pr1, pr2, pr3, rowCount, colCount, calculationMethod
     };
 
     if (![startPoint.x, startPoint.y, rowEndPoint.x, rowEndPoint.y, colEndPoint.x, colEndPoint.y].every(Number.isFinite)) {
-        throw new Error('参考点坐标无效，请重新读取参考点');
+        throw appError('error_reference_coords_invalid');
     }
     if (rowCount > 1 && startPoint.x === rowEndPoint.x && startPoint.y === rowEndPoint.y) {
-        throw new Error('参考点1和参考点2重合，无法计算行方向');
+        throw appError('error_reference_points_overlap_row');
     }
     if (colCount > 1 && startPoint.x === colEndPoint.x && startPoint.y === colEndPoint.y) {
-        throw new Error('参考点1和参考点3重合，无法计算列方向');
+        throw appError('error_reference_points_overlap_col');
     }
 
     const rowDivisor = Math.max(rowCount - 1, 1);
@@ -2405,7 +2272,7 @@ document.getElementById('update-compensation').addEventListener('click', functio
     const angleCompensation = parseFloat(document.getElementById('angle-compensation').value);
 
     if (isNaN(rowColNumber) || isNaN(compensationValue) || isNaN(angleCompensation)) {
-        alertError('请输入有效的行号/列号、补偿值和角度补偿值');
+        alertError(t('error_invalid_compensation_input'));
         return;
     }
 
@@ -2430,7 +2297,7 @@ document.getElementById('update-compensation').addEventListener('click', functio
         }
     });
 
-    alertSuccess('补偿值更新成功');
+    alertSuccess(t('success_compensation_updated'));
 });
 
 document.getElementById('save_recipe_button').addEventListener('click', function () {
@@ -2438,7 +2305,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
     const recipeId = document.getElementById('recipe_id').value; // 获取配方编号
 
     if (!recipeName || !recipeId) {
-        alertError('请输入配方名和配方编号');
+        alertError(t('error_enter_recipe_name_id'));
         return;
     }
 
@@ -2449,7 +2316,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
         const table = document.querySelector('#data-list-content table');
         const rows = table.getElementsByTagName('tr');
         if (rows.length <= 1) { // 只有表头，没有数据
-            alertError('请先计算手动规划点位数据');
+            alertError(t('error_calculate_manual_points_first'));
             return;
         }
         // 手动规划配方可以继续保存，不需要预览图片
@@ -2457,7 +2324,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
         // 智能规划配方：检查图片是否已经生成
         const plotImg = document.getElementById('plot');
         if (!plotImg || !plotImg.getAttribute('data-base64')) {
-            alertError('请先生成规划结果图片');
+            alertError(t('error_generate_plot_first'));
             return;
         }
     }
@@ -2476,7 +2343,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
     .then(response => {
         if (!response.ok) {
             return response.json().then(err => {
-                throw new Error(err.error || '检查配方失败');
+                throwApiError(err, 'error_request_failed');
             });
         }
         return response.json();
@@ -2512,7 +2379,7 @@ document.getElementById('save_recipe_button').addEventListener('click', function
     })
     .catch(error => {
         console.error('检查配方失败:', error.message);
-        alertError('检查配方失败: ' + error.message);
+        alertError(t('error_check_recipe_failed', { error: formatAppError(error) }));
     });
 });
 
@@ -2566,7 +2433,7 @@ function saveRecipeData(recipeName, recipeId) {
         .then(response => {
             if (!response.ok) {
                 return response.json().then(err => {
-                    throw new Error(err.error || '保存配方失败');
+                    throwApiError(err, 'error_request_failed');
                 });
             }
             return response.json();
@@ -2575,14 +2442,14 @@ function saveRecipeData(recipeName, recipeId) {
             console.log('手动规划配方保存成功');
             if (data.id_reassigned) {
                 document.getElementById('recipe_id').value = data.new_id;
-                alertSuccess(data.message);
+                alertSuccess(resolveApiMessage(data));
             } else {
-                alertSuccess('手动规划配方保存成功');
+                alertSuccess(t('success_manual_recipe_saved'));
             }
         })
         .catch(error => {
             console.error('保存手动规划配方失败:', error.message);
-            alertError('保存手动规划配方失败: ' + error.message);
+            alertError(t('error_save_manual_recipe_failed', { error: formatAppError(error) }));
         });
         
         return; // 提前返回，不执行智能规划配方的保存逻辑
@@ -2673,7 +2540,7 @@ function saveRecipeData(recipeName, recipeId) {
     .then(response => {
         if (!response.ok) {
             return response.json().then(err => {
-                throw new Error(err.error || '保存配方失败');
+                throwApiError(err, 'error_request_failed');
             });
         }
         return response.json();
@@ -2683,14 +2550,14 @@ function saveRecipeData(recipeName, recipeId) {
         if (data.id_reassigned) {
             // 如果有ID重新分配，更新界面上的配方ID显示
             document.getElementById('recipe_id').value = data.new_id;
-            alertSuccess(data.message);
+            alertSuccess(resolveApiMessage(data));
         } else {
-            alertSuccess('配方保存成功');
+            alertSuccess(t('success_recipe_saved'));
         }
     })
     .catch(error => {
         console.error('保存配方失败:', error.message);
-        alertError('保存配方失败: ' + error.message);
+        alertError(t('error_save_recipe_failed', { error: formatAppError(error) }));
     });
 }
 
@@ -3276,7 +3143,7 @@ function fillDataListTableFromRecipe(tableData) {
 
 // 删除配方
 async function deleteRecipe(recipeName) {
-    const confirmDelete = await myConfirm(`确定要删除配方 "${recipeName}" 吗？`);
+    const confirmDelete = await myConfirm(t('confirm_delete_recipe', { name: recipeName }));
     if (confirmDelete) {
         fetch('/delete_recipe', {
             method: 'POST',
@@ -3290,7 +3157,7 @@ async function deleteRecipe(recipeName) {
                 if (data.success) {
                     loadRecipeList(); // 重新加载配方列表
                 } else {
-                    alertError('删除配方失败');
+                    alertError(t('error_delete_recipe_failed'));
                 }
             })
             .catch(error => console.error('删除配方失败:', error));
@@ -3592,9 +3459,8 @@ function triggerFinishSignal() {
     .then(data => {
         if (data.success) {
             console.log(`DO${finishSignal}信号设置为1成功`);
-            updateStatusDisplay(`DO${finishSignal}信号已设置为1，1秒后将重置为0`, 'processing');
+            updateStatusDisplay(t('success_do_set_pending', { do: finishSignal }), 'processing');
 
-            // 1秒后将DO信号设为0
             setTimeout(() => {
                 fetch('/set_do_signal', {
                     method: 'POST',
@@ -3607,29 +3473,30 @@ function triggerFinishSignal() {
                     }),
                 })
                 .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
+                .then(resetData => {
+                    if (resetData.success) {
                         console.log(`DO${finishSignal}信号重置为0成功`);
-                        updateStatusDisplay(`DO${finishSignal}信号已重置为0，自动写入流程完成`, 'success');
+                        updateStatusDisplay(t('success_do_reset', { do: finishSignal }), 'success');
                     } else {
-                        console.error(`DO${finishSignal}信号重置为0失败:`, data.error);
-                        updateStatusDisplay(`DO${finishSignal}信号重置失败: ${data.error}`, 'error');
+                        const resetError = resolveApiError(resetData);
+                        console.error(`DO${finishSignal}信号重置为0失败:`, resetError);
+                        updateStatusDisplay(t('error_do_reset_failed', { do: finishSignal, error: resetError }), 'error');
                     }
                 })
                 .catch(error => {
                     console.error(`DO${finishSignal}信号重置为0请求失败:`, error);
-                    updateStatusDisplay(`DO${finishSignal}信号重置请求失败: ${error.message}`, 'error');
+                    updateStatusDisplay(t('error_do_request_failed', { do: finishSignal, error: formatAppError(error) }), 'error');
                 });
-            }, 1000); // 1秒延迟
-
+            }, 1000);
         } else {
-            console.error(`DO${finishSignal}信号设置为1失败:`, data.error);
-            updateStatusDisplay(`DO${finishSignal}信号设置失败: ${data.error}`, 'error');
+            const setError = resolveApiError(data);
+            console.error(`DO${finishSignal}信号设置为1失败:`, setError);
+            updateStatusDisplay(t('error_do_set_failed', { do: finishSignal, error: setError }), 'error');
         }
     })
     .catch(error => {
         console.error(`DO${finishSignal}信号设置为1请求失败:`, error);
-        updateStatusDisplay(`DO${finishSignal}信号设置请求失败: ${error.message}`, 'error');
+        updateStatusDisplay(t('error_do_request_failed', { do: finishSignal, error: formatAppError(error) }), 'error');
     });
 }
 
@@ -3686,7 +3553,7 @@ function exportSelectedRecipes() {
     const selectedRecipes = getSelectedRecipes();
 
     if (selectedRecipes.length === 0) {
-        alertError('请选择要导出的配方');
+        alertError(t('error_select_export_recipes'));
         return;
     }
 
@@ -3702,16 +3569,15 @@ function exportSelectedRecipes() {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.error) {
-            alertError(`导出配方失败: ${data.error}`);
+        if (hasApiError(data)) {
+            alertError(t('error_export_recipes_failed', { error: resolveApiError(data) }));
             return;
         }
 
-        // 导出成功
-        alertSuccess(data.message || `成功导出 ${selectedRecipes.length} 个配方到U盘`);
+        alertSuccess(resolveApiMessage(data) || t('success_export_recipes', { count: selectedRecipes.length }));
     })
     .catch(error => {
-        alertError(`导出配方失败: ${error.message}`);
+        alertError(t('error_export_recipes_failed', { error: formatAppError(error) }));
     });
 }
 
@@ -3726,13 +3592,13 @@ function importRecipes() {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.error) {
-            alertError(`读取U盘备份目录失败: ${data.error}`);
+        if (hasApiError(data)) {
+            alertError(t('error_read_usb_backup_failed', { error: resolveApiError(data) }));
             return;
         }
 
         if (data.count === 0) {
-            alertInfo('U盘中没有找到配方备份目录');
+            alertInfo(t('info_no_usb_backup'));
             return;
         }
 
@@ -3740,7 +3606,7 @@ function importRecipes() {
         showTimestampSelectionDialog(data.timestamps);
     })
     .catch(error => {
-        alertError(`读取U盘备份目录失败: ${error.message}`);
+        alertError(t('error_read_usb_backup_failed', { error: formatAppError(error) }));
     });
 }
 
@@ -3801,13 +3667,13 @@ function selectTimestamp(timestamp) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.error) {
-            alertError(`读取配方失败: ${data.error}`);
+        if (hasApiError(data)) {
+            alertError(t('error_read_recipes_failed', { error: resolveApiError(data) }));
             return;
         }
 
         if (data.count === 0) {
-            alertInfo('该时间目录中没有找到配方文件');
+            alertInfo(t('info_no_recipe_files_in_dir'));
             return;
         }
 
@@ -3816,7 +3682,7 @@ function selectTimestamp(timestamp) {
         showImportDialog(data.recipes, timestamp);
     })
     .catch(error => {
-        alertError(`读取配方失败: ${error.message}`);
+        alertError(t('error_read_recipes_failed', { error: formatAppError(error) }));
     });
 }
 
@@ -3914,12 +3780,12 @@ async function confirmImportRecipes(timestamp) {
     const selectedFilenames = Array.from(selectedCheckboxes).map(cb => cb.value);
 
     if (selectedFilenames.length === 0) {
-        alertError('请选择要导入的配方');
+        alertError(t('error_select_import_recipes'));
         return;
     }
 
     // 确认导入
-    const confirmed = await myConfirm(`确认导入 ${selectedFilenames.length} 个配方？`);
+    const confirmed = await myConfirm(t('confirm_import_recipes', { count: selectedFilenames.length }));
     if (confirmed) {
         executeImport(selectedFilenames, timestamp);
     }
@@ -3962,7 +3828,7 @@ async function executeImport(filenames, timestamp) {
             });
 
             if (filenames.length === 0) {
-                alertInfo('所有配方都被跳过，导入已取消');
+                alertInfo(t('info_all_recipes_skipped'));
                 return;
             }
 
@@ -3987,30 +3853,21 @@ async function executeImport(filenames, timestamp) {
 
         const data = await response.json();
 
-        if (data.error) {
-            alertError(`导入失败: ${data.error}`);
+        if (hasApiError(data)) {
+            alertError(t('error_import_failed', { error: resolveApiError(data) }));
             return;
         }
 
         // 显示导入结果
-        let message = data.message;
-
-        // 添加手动跳过的重名配方信息
-        if (window.manuallySkippedCount && window.manuallySkippedCount > 0) {
-            const parts = message.split('成功导入');
-            if (parts.length === 2) {
-                message = parts[0] + `成功导入${parts[1].split('个配方')[0]}个配方，手动跳过 ${window.manuallySkippedCount} 个重名配方${parts[1].substring(parts[1].indexOf('个配方') + 3)}`;
-            }
-            delete window.manuallySkippedCount; // 清理全局变量
-        }
+        let message = resolveApiMessage(data);
 
         // 添加重新分配的配方号信息
         if (data.reassigned_list && data.reassigned_list.length > 0) {
-            message += '\n\n配方号自动重新分配详情:\n' + data.reassigned_list.join('\n');
+            message += '\n\n' + t('import_reassigned_details') + '\n' + data.reassigned_list.join('\n');
         }
 
         if (data.errors && data.errors.length > 0) {
-            message += '\n\n错误详情:\n' + data.errors.join('\n');
+            message += '\n\n' + t('import_error_details') + '\n' + data.errors.map(item => translateServerMessage(item) || item).join('\n');
         }
 
         alertSuccess(message);
@@ -4020,7 +3877,7 @@ async function executeImport(filenames, timestamp) {
         loadRecipeList();
 
     } catch (error) {
-        alertError(`导入失败: ${error.message}`);
+        alertError(t('error_import_failed', { error: formatAppError(error) }));
     }
 }
 
@@ -4040,8 +3897,8 @@ async function checkImportConflicts(filenames, timestamp) {
 
         const data = await response.json();
 
-        if (data.error) {
-            throw new Error(data.error);
+        if (hasApiError(data)) {
+            throwApiError(data);
         }
 
         return {

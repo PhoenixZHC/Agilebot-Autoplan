@@ -772,9 +772,10 @@
         // 从HTML data属性获取TP状态
         window.isTP = document.body.dataset.isTp === 'true';
     </script>
-    <script src="{{ url_for('static', path='i18n.js')  }}?v={{ version }}"></script>
-    <script src="{{ url_for('static', path='language-switcher.js')  }}?v={{ version }}"></script>
     <script src="{{ url_for('static', path='extension-runtime.js')  }}?v={{ version }}"></script>
+    <script src="{{ url_for('static', path='i18n.js')  }}?v={{ version }}"></script>
+    <script src="{{ url_for('static', path='api-i18n-keys.js')  }}?v={{ version }}"></script>
+    <script src="{{ url_for('static', path='language-switcher.js')  }}?v={{ version }}"></script>
     <script src="{{ url_for('static', path='script-compiled.js')  }}?v={{ version }}"></script>
 </body>
 </html>

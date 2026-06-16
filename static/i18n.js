@@ -215,6 +215,79 @@ const translations = {
         'name_conflict_option_rename': '重命名（添加后缀）',
         'cancel': '取消',
         'confirm': '确认',
+        'error_enter_robot_ip': '请输入机器人IP地址',
+        'error_enter_program_name': '请输入程序名称',
+        'error_get_p_data_failed': '获取P点数据失败: {error}',
+        'error_invalid_pr_register_id': '请输入有效的PR寄存器ID',
+        'error_no_data_available': '没有可用的数据',
+        'success_p_data_written': 'P点数据写入成功',
+        'error_write_p_data_failed': '写入P点数据失败: {error}',
+        'success_manual_r_written': '手动规划R寄存器写入成功',
+        'error_manual_r_write_failed': '手动规划R寄存器写入失败: {error}',
+        'error_calculate_tool_count_first': '请先进行计算并确保工具数量已选择',
+        'success_smart_r_written': '智能规划R寄存器写入成功',
+        'error_smart_r_write_failed': '智能规划R寄存器写入失败: {error}',
+        'error_invalid_tool_spacing': '请输入有效的工具间距',
+        'error_double_layout_requires_two_tools': '双向布局时，工具数量必须为2',
+        'success_tf_updated': 'TF数据更新成功',
+        'error_tf_update_failed': '更新TF数据失败: {error}',
+        'success_write_complete': '写入完成：{message}',
+        'error_write_failed': '写入失败: {error}',
+        'error_invalid_row_col_positive': '请输入有效的行数和列数（必须大于0）',
+        'error_read_reference_failed': '读取参考点失败: {error}',
+        'error_read_reference_first': '请先读取参考点',
+        'error_invalid_row_col': '请输入有效的行数和列数',
+        'success_calculation_complete': '计算完成！共生成 {count} 个点位',
+        'error_invalid_compensation_input': '请输入有效的行号/列号、补偿值和角度补偿值',
+        'success_compensation_updated': '补偿值更新成功',
+        'error_enter_recipe_name_id': '请输入配方名和配方编号',
+        'error_calculate_manual_points_first': '请先计算手动规划点位数据',
+        'error_generate_plot_first': '请先生成规划结果图片',
+        'error_check_recipe_failed': '检查配方失败: {error}',
+        'success_manual_recipe_saved': '手动规划配方保存成功',
+        'error_save_manual_recipe_failed': '保存手动规划配方失败: {error}',
+        'success_recipe_saved': '配方保存成功',
+        'success_recipe_saved_reassigned': '配方保存成功，配方ID已从 {original_id} 重新分配为 {recipe_id}',
+        'error_save_recipe_failed': '保存配方失败: {error}',
+        'confirm_delete_recipe': '确定要删除配方 "{name}" 吗？',
+        'error_delete_recipe_failed': '删除配方失败',
+        'error_select_export_recipes': '请选择要导出的配方',
+        'error_export_recipes_failed': '导出配方失败: {error}',
+        'success_export_recipes': '成功导出 {count} 个配方到U盘',
+        'success_export_recipes_with_time': '成功导出 {count} 个配方到U盘 ({time})',
+        'error_read_usb_backup_failed': '读取U盘备份目录失败: {error}',
+        'info_no_usb_backup': 'U盘中没有找到配方备份目录',
+        'info_no_recipe_files_in_dir': '该时间目录中没有找到配方文件',
+        'error_select_import_recipes': '请选择要导入的配方',
+        'confirm_import_recipes': '确认导入 {count} 个配方？',
+        'info_all_recipes_skipped': '所有配方都被跳过，导入已取消',
+        'error_import_failed': '导入失败: {error}',
+        'error_robot_status_cannot_auto_write': '机器人当前状态: {status}，无法自动写入',
+        'error_program_running_cannot_auto_write': '当前有程序在运行: {programs}，无法自动写入',
+        'error_not_connected': '未连接机器人',
+        'error_invalid_request': '无效的请求数据',
+        'error_missing_robot_ip': '缺少机器人IP地址',
+        'error_missing_program_name': '缺少程序名称',
+        'error_read_p_data_failed': '读取P点数据失败',
+        'error_robot_disconnected': '机器人连接已断开',
+        'error_get_robot_status_failed': '获取机器人状态失败',
+        'error_robot_not_idle': '机器人当前不处于空闲状态（实际状态：{status}），无法写入P点',
+        'error_read_p_point_failed': '读取P点 {id} 数据失败',
+        'error_write_p_point_failed': '写入P点 {id} 数据失败',
+        'error_missing_pr_id': '缺少PR寄存器ID',
+        'error_pr_id_must_be_int': 'PR寄存器ID必须是整数',
+        'error_connect_invalid_ip': '连接失败: IP 地址无效',
+        'error_connect_timeout': '连接失败: 连接超时',
+        'error_connect_controller': '连接失败: 控制器错误，详情请联系开发人员',
+        'success_disconnected': '已断开连接',
+        'error_request_timeout': '请求超时',
+        'error_read_recipes_failed': '读取配方失败: {error}',
+        'import_reassigned_details': '配方号自动重新分配详情:',
+        'import_error_details': '错误详情:',
+        'success_import_base': '成功导入 {count} 个配方',
+        'success_import_skipped_suffix': '，跳过 {count} 个重名配方',
+        'success_import_reassigned_suffix': '，{count} 个配方重新分配了配方号',
+        'success_import_failed_suffix': '，{count} 个配方导入失败',
         
         // 语言切换
         'language': '语言',
@@ -437,6 +510,79 @@ const translations = {
         'name_conflict_option_rename': 'Rename (Add suffix)',
         'cancel': 'Cancel',
         'confirm': 'Confirm',
+        'error_enter_robot_ip': 'Please enter the robot IP address',
+        'error_enter_program_name': 'Please enter the program name',
+        'error_get_p_data_failed': 'Failed to get P point data: {error}',
+        'error_invalid_pr_register_id': 'Please enter a valid PR register ID',
+        'error_no_data_available': 'No data is available',
+        'success_p_data_written': 'P point data written successfully',
+        'error_write_p_data_failed': 'Failed to write P point data: {error}',
+        'success_manual_r_written': 'Manual planning R registers written successfully',
+        'error_manual_r_write_failed': 'Failed to write manual planning R registers: {error}',
+        'error_calculate_tool_count_first': 'Please calculate first and ensure tool count is selected',
+        'success_smart_r_written': 'Smart planning R registers written successfully',
+        'error_smart_r_write_failed': 'Failed to write smart planning R registers: {error}',
+        'error_invalid_tool_spacing': 'Please enter a valid tool spacing',
+        'error_double_layout_requires_two_tools': 'Tool count must be 2 for double-sided layout',
+        'success_tf_updated': 'TF data updated successfully',
+        'error_tf_update_failed': 'Failed to update TF data: {error}',
+        'success_write_complete': 'Write complete: {message}',
+        'error_write_failed': 'Write failed: {error}',
+        'error_invalid_row_col_positive': 'Please enter valid row and column counts (must be greater than 0)',
+        'error_read_reference_failed': 'Failed to read reference points: {error}',
+        'error_read_reference_first': 'Please read the reference points first',
+        'error_invalid_row_col': 'Please enter valid row and column counts',
+        'success_calculation_complete': 'Calculation complete. Generated {count} points',
+        'error_invalid_compensation_input': 'Please enter a valid row/column number, compensation value, and angle compensation',
+        'success_compensation_updated': 'Compensation updated successfully',
+        'error_enter_recipe_name_id': 'Please enter recipe name and recipe number',
+        'error_calculate_manual_points_first': 'Please calculate manual planning points first',
+        'error_generate_plot_first': 'Please generate the planning result image first',
+        'error_check_recipe_failed': 'Failed to check recipe: {error}',
+        'success_manual_recipe_saved': 'Manual planning recipe saved successfully',
+        'error_save_manual_recipe_failed': 'Failed to save manual planning recipe: {error}',
+        'success_recipe_saved': 'Recipe saved successfully',
+        'success_recipe_saved_reassigned': 'Recipe saved successfully. Recipe ID reassigned from {original_id} to {recipe_id}',
+        'error_save_recipe_failed': 'Failed to save recipe: {error}',
+        'confirm_delete_recipe': 'Are you sure you want to delete recipe "{name}"?',
+        'error_delete_recipe_failed': 'Failed to delete recipe',
+        'error_select_export_recipes': 'Please select recipes to export',
+        'error_export_recipes_failed': 'Failed to export recipes: {error}',
+        'success_export_recipes': 'Successfully exported {count} recipes to USB drive',
+        'success_export_recipes_with_time': 'Successfully exported {count} recipes to USB drive ({time})',
+        'error_read_usb_backup_failed': 'Failed to read USB backup folder: {error}',
+        'info_no_usb_backup': 'No recipe backup folder was found on the USB drive',
+        'info_no_recipe_files_in_dir': 'No recipe files found in this time directory',
+        'error_select_import_recipes': 'Please select recipes to import',
+        'confirm_import_recipes': 'Import {count} recipes?',
+        'info_all_recipes_skipped': 'All recipes were skipped. Import was cancelled',
+        'error_import_failed': 'Import failed: {error}',
+        'error_robot_status_cannot_auto_write': 'Robot status: {status}. Auto write is not allowed',
+        'error_program_running_cannot_auto_write': 'Programs are running: {programs}. Auto write is not allowed',
+        'error_not_connected': 'Robot is not connected',
+        'error_invalid_request': 'Invalid request data',
+        'error_missing_robot_ip': 'Robot IP address is missing',
+        'error_missing_program_name': 'Program name is missing',
+        'error_read_p_data_failed': 'Failed to read P point data',
+        'error_robot_disconnected': 'Robot connection lost',
+        'error_get_robot_status_failed': 'Failed to get robot status',
+        'error_robot_not_idle': 'Robot is not idle (current status: {status}). Cannot write P points',
+        'error_read_p_point_failed': 'Failed to read P point {id} data',
+        'error_write_p_point_failed': 'Failed to write P point {id} data',
+        'error_missing_pr_id': 'PR register ID is missing',
+        'error_pr_id_must_be_int': 'PR register ID must be an integer',
+        'error_connect_invalid_ip': 'Connection failed: invalid IP address',
+        'error_connect_timeout': 'Connection failed: connection timeout',
+        'error_connect_controller': 'Connection failed: controller error. Please contact developers',
+        'success_disconnected': 'Disconnected',
+        'error_request_timeout': 'Request timeout',
+        'error_read_recipes_failed': 'Failed to read recipes: {error}',
+        'import_reassigned_details': 'Recipe number reassignment details:',
+        'import_error_details': 'Error details:',
+        'success_import_base': 'Successfully imported {count} recipes',
+        'success_import_skipped_suffix': ', skipped {count} duplicate recipes',
+        'success_import_reassigned_suffix': ', {count} recipes had recipe numbers reassigned',
+        'success_import_failed_suffix': ', {count} recipes failed to import',
         
         // Language Switch
         'language': 'Language',
@@ -660,6 +806,75 @@ const translations = {
         'name_conflict_option_rename': 'Đổi Tên (Thêm hậu tố)',
         'cancel': 'Hủy',
         'confirm': 'Xác Nhận',
+        'error_enter_robot_ip': 'Vui lòng nhập địa chỉ IP robot',
+        'error_enter_program_name': 'Vui lòng nhập tên chương trình',
+        'error_get_p_data_failed': 'Lấy dữ liệu điểm P thất bại: {error}',
+        'error_invalid_pr_register_id': 'Vui lòng nhập ID thanh ghi PR hợp lệ',
+        'error_no_data_available': 'Không có dữ liệu khả dụng',
+        'success_p_data_written': 'Ghi dữ liệu điểm P thành công',
+        'error_write_p_data_failed': 'Ghi dữ liệu điểm P thất bại: {error}',
+        'success_manual_r_written': 'Ghi thanh ghi R cho lập kế hoạch thủ công thành công',
+        'error_manual_r_write_failed': 'Ghi thanh ghi R cho lập kế hoạch thủ công thất bại: {error}',
+        'error_calculate_tool_count_first': 'Vui lòng tính toán trước và đảm bảo đã chọn số lượng công cụ',
+        'success_smart_r_written': 'Ghi thanh ghi R cho lập kế hoạch thông minh thành công',
+        'error_smart_r_write_failed': 'Ghi thanh ghi R cho lập kế hoạch thông minh thất bại: {error}',
+        'error_invalid_tool_spacing': 'Vui lòng nhập khoảng cách công cụ hợp lệ',
+        'error_double_layout_requires_two_tools': 'Số lượng công cụ phải là 2 khi bố trí hai chiều',
+        'success_tf_updated': 'Cập nhật dữ liệu TF thành công',
+        'error_tf_update_failed': 'Cập nhật dữ liệu TF thất bại: {error}',
+        'success_write_complete': 'Ghi hoàn tất: {message}',
+        'error_write_failed': 'Ghi thất bại: {error}',
+        'error_invalid_row_col_positive': 'Vui lòng nhập số hàng và số cột hợp lệ (phải lớn hơn 0)',
+        'error_read_reference_failed': 'Đọc điểm tham chiếu thất bại: {error}',
+        'error_read_reference_first': 'Vui lòng đọc điểm tham chiếu trước',
+        'error_invalid_row_col': 'Vui lòng nhập số hàng và số cột hợp lệ',
+        'success_calculation_complete': 'Tính toán hoàn tất. Đã tạo {count} điểm',
+        'error_invalid_compensation_input': 'Vui lòng nhập số hàng/cột, giá trị bù và bù góc hợp lệ',
+        'success_compensation_updated': 'Cập nhật giá trị bù thành công',
+        'error_enter_recipe_name_id': 'Vui lòng nhập tên và số công thức',
+        'error_calculate_manual_points_first': 'Vui lòng tính toán điểm lập kế hoạch thủ công trước',
+        'error_generate_plot_first': 'Vui lòng tạo hình ảnh kết quả lập kế hoạch trước',
+        'error_check_recipe_failed': 'Kiểm tra công thức thất bại: {error}',
+        'success_manual_recipe_saved': 'Lưu công thức lập kế hoạch thủ công thành công',
+        'error_save_manual_recipe_failed': 'Lưu công thức lập kế hoạch thủ công thất bại: {error}',
+        'success_recipe_saved': 'Lưu công thức thành công',
+        'success_recipe_saved_reassigned': 'Lưu công thức thành công. Số công thức đã được phân bổ lại từ {original_id} thành {recipe_id}',
+        'error_save_recipe_failed': 'Lưu công thức thất bại: {error}',
+        'confirm_delete_recipe': 'Bạn có chắc muốn xóa công thức "{name}" không?',
+        'error_delete_recipe_failed': 'Xóa công thức thất bại',
+        'error_select_export_recipes': 'Vui lòng chọn công thức để xuất',
+        'error_export_recipes_failed': 'Xuất công thức thất bại: {error}',
+        'success_export_recipes': 'Đã xuất thành công {count} công thức ra USB',
+        'success_export_recipes_with_time': 'Đã xuất thành công {count} công thức ra USB ({time})',
+        'error_read_usb_backup_failed': 'Đọc thư mục sao lưu USB thất bại: {error}',
+        'info_no_usb_backup': 'Không tìm thấy thư mục sao lưu công thức trên USB',
+        'info_no_recipe_files_in_dir': 'Không tìm thấy tệp công thức trong thư mục thời gian này',
+        'error_select_import_recipes': 'Vui lòng chọn công thức để nhập',
+        'confirm_import_recipes': 'Nhập {count} công thức?',
+        'info_all_recipes_skipped': 'Tất cả công thức đã bị bỏ qua. Nhập đã bị hủy',
+        'error_import_failed': 'Nhập thất bại: {error}',
+        'error_robot_status_cannot_auto_write': 'Trạng thái robot: {status}. Không thể ghi tự động',
+        'error_program_running_cannot_auto_write': 'Có chương trình đang chạy: {programs}. Không thể ghi tự động',
+        'error_not_connected': 'Robot chưa được kết nối',
+        'error_invalid_request': 'Dữ liệu yêu cầu không hợp lệ',
+        'error_missing_robot_ip': 'Thiếu địa chỉ IP robot',
+        'error_missing_program_name': 'Thiếu tên chương trình',
+        'error_read_p_data_failed': 'Đọc dữ liệu điểm P thất bại',
+        'error_robot_disconnected': 'Kết nối robot đã bị ngắt',
+        'error_get_robot_status_failed': 'Lấy trạng thái robot thất bại',
+        'error_robot_not_idle': 'Robot không ở trạng thái rảnh (trạng thái hiện tại: {status}). Không thể ghi điểm P',
+        'error_read_p_point_failed': 'Đọc dữ liệu điểm P {id} thất bại',
+        'error_write_p_point_failed': 'Ghi dữ liệu điểm P {id} thất bại',
+        'error_missing_pr_id': 'Thiếu ID thanh ghi PR',
+        'error_pr_id_must_be_int': 'ID thanh ghi PR phải là số nguyên',
+        'error_connect_invalid_ip': 'Kết nối thất bại: địa chỉ IP không hợp lệ',
+        'error_connect_timeout': 'Kết nối thất bại: hết thời gian chờ',
+        'error_connect_controller': 'Kết nối thất bại: lỗi bộ điều khiển. Vui lòng liên hệ nhà phát triển',
+        'success_disconnected': 'Đã ngắt kết nối',
+        'error_request_timeout': 'Hết thời gian chờ yêu cầu',
+        'error_read_recipes_failed': 'Đọc công thức thất bại: {error}',
+        'import_reassigned_details': 'Chi tiết phân bổ lại số công thức:',
+        'import_error_details': 'Chi tiết lỗi:',
         
         // Language Switch
         'language': 'Ngôn Ngữ',
@@ -883,6 +1098,75 @@ const translations = {
         'name_conflict_option_rename': '名前変更（サフィックスを追加）',
         'cancel': 'キャンセル',
         'confirm': '確認',
+        'error_enter_robot_ip': 'ロボットIPアドレスを入力してください',
+        'error_enter_program_name': 'プログラム名を入力してください',
+        'error_get_p_data_failed': 'P点データの取得に失敗しました: {error}',
+        'error_invalid_pr_register_id': '有効なPRレジスタIDを入力してください',
+        'error_no_data_available': '利用可能なデータがありません',
+        'success_p_data_written': 'P点データの書き込みに成功しました',
+        'error_write_p_data_failed': 'P点データの書き込みに失敗しました: {error}',
+        'success_manual_r_written': '手動計画のRレジスタ書き込みに成功しました',
+        'error_manual_r_write_failed': '手動計画のRレジスタ書き込みに失敗しました: {error}',
+        'error_calculate_tool_count_first': '先に計算を行い、ツール数が選択されていることを確認してください',
+        'success_smart_r_written': 'スマート計画のRレジスタ書き込みに成功しました',
+        'error_smart_r_write_failed': 'スマート計画のRレジスタ書き込みに失敗しました: {error}',
+        'error_invalid_tool_spacing': '有効なツール間隔を入力してください',
+        'error_double_layout_requires_two_tools': '両側レイアウトではツール数は2である必要があります',
+        'success_tf_updated': 'TFデータの更新に成功しました',
+        'error_tf_update_failed': 'TFデータの更新に失敗しました: {error}',
+        'success_write_complete': '書き込み完了: {message}',
+        'error_write_failed': '書き込み失敗: {error}',
+        'error_invalid_row_col_positive': '有効な行数と列数を入力してください（0より大きい必要があります）',
+        'error_read_reference_failed': '参照点の読み取りに失敗しました: {error}',
+        'error_read_reference_first': '先に参照点を読み取ってください',
+        'error_invalid_row_col': '有効な行数と列数を入力してください',
+        'success_calculation_complete': '計算完了。{count} 点を生成しました',
+        'error_invalid_compensation_input': '有効な行/列番号、補正値、角度補正を入力してください',
+        'success_compensation_updated': '補正値の更新に成功しました',
+        'error_enter_recipe_name_id': 'レシピ名とレシピ番号を入力してください',
+        'error_calculate_manual_points_first': '先に手動計画のポイントを計算してください',
+        'error_generate_plot_first': '先に計画結果画像を生成してください',
+        'error_check_recipe_failed': 'レシピの確認に失敗しました: {error}',
+        'success_manual_recipe_saved': '手動計画レシピの保存に成功しました',
+        'error_save_manual_recipe_failed': '手動計画レシピの保存に失敗しました: {error}',
+        'success_recipe_saved': 'レシピの保存に成功しました',
+        'success_recipe_saved_reassigned': 'レシピの保存に成功しました。レシピIDを {original_id} から {recipe_id} に再割り当てしました',
+        'error_save_recipe_failed': 'レシピの保存に失敗しました: {error}',
+        'confirm_delete_recipe': 'レシピ "{name}" を削除してもよろしいですか？',
+        'error_delete_recipe_failed': 'レシピの削除に失敗しました',
+        'error_select_export_recipes': 'エクスポートするレシピを選択してください',
+        'error_export_recipes_failed': 'レシピのエクスポートに失敗しました: {error}',
+        'success_export_recipes': 'USBドライブに {count} 件のレシピをエクスポートしました',
+        'success_export_recipes_with_time': 'USBドライブに {count} 件のレシピをエクスポートしました ({time})',
+        'error_read_usb_backup_failed': 'USBバックアップフォルダの読み取りに失敗しました: {error}',
+        'info_no_usb_backup': 'USBドライブにレシピバックアップフォルダが見つかりません',
+        'info_no_recipe_files_in_dir': 'この時間ディレクトリにレシピファイルが見つかりません',
+        'error_select_import_recipes': 'インポートするレシピを選択してください',
+        'confirm_import_recipes': '{count} 件のレシピをインポートしますか？',
+        'info_all_recipes_skipped': 'すべてのレシピがスキップされました。インポートはキャンセルされました',
+        'error_import_failed': 'インポートに失敗しました: {error}',
+        'error_robot_status_cannot_auto_write': 'ロボット状態: {status}。自動書き込みはできません',
+        'error_program_running_cannot_auto_write': '実行中のプログラム: {programs}。自動書き込みはできません',
+        'error_not_connected': 'ロボットが接続されていません',
+        'error_invalid_request': '無効なリクエストデータ',
+        'error_missing_robot_ip': 'ロボットIPアドレスがありません',
+        'error_missing_program_name': 'プログラム名がありません',
+        'error_read_p_data_failed': 'P点データの読み取りに失敗しました',
+        'error_robot_disconnected': 'ロボット接続が切断されました',
+        'error_get_robot_status_failed': 'ロボット状態の取得に失敗しました',
+        'error_robot_not_idle': 'ロボットがアイドル状態ではありません（現在の状態: {status}）。P点を書き込めません',
+        'error_read_p_point_failed': 'P点 {id} データの読み取りに失敗しました',
+        'error_write_p_point_failed': 'P点 {id} データの書き込みに失敗しました',
+        'error_missing_pr_id': 'PRレジスタIDがありません',
+        'error_pr_id_must_be_int': 'PRレジスタIDは整数である必要があります',
+        'error_connect_invalid_ip': '接続失敗: IPアドレスが無効です',
+        'error_connect_timeout': '接続失敗: 接続タイムアウト',
+        'error_connect_controller': '接続失敗: コントローラーエラー。開発者にお問い合わせください',
+        'success_disconnected': '切断しました',
+        'error_request_timeout': 'リクエストタイムアウト',
+        'error_read_recipes_failed': 'レシピの読み取りに失敗しました: {error}',
+        'import_reassigned_details': 'レシピ番号の再割り当て詳細:',
+        'import_error_details': 'エラー詳細:',
         
         // 言語切り替え
         'language': '言語',
@@ -1108,6 +1392,75 @@ translations.ko = {
     'name_conflict_option_rename': '이름 변경 (접미사 추가)',
     'cancel': '취소',
     'confirm': '확인',
+    'error_enter_robot_ip': '로봇 IP 주소를 입력하세요',
+    'error_enter_program_name': '프로그램 이름을 입력하세요',
+    'error_get_p_data_failed': 'P 포인트 데이터 가져오기 실패: {error}',
+    'error_invalid_pr_register_id': '올바른 PR 레지스터 ID를 입력하세요',
+    'error_no_data_available': '사용 가능한 데이터가 없습니다',
+    'success_p_data_written': 'P 포인트 데이터 쓰기 성공',
+    'error_write_p_data_failed': 'P 포인트 데이터 쓰기 실패: {error}',
+    'success_manual_r_written': '수동 계획 R 레지스터 쓰기 성공',
+    'error_manual_r_write_failed': '수동 계획 R 레지스터 쓰기 실패: {error}',
+    'error_calculate_tool_count_first': '먼저 계산을 수행하고 공구 수가 선택되었는지 확인하세요',
+    'success_smart_r_written': '스마트 계획 R 레지스터 쓰기 성공',
+    'error_smart_r_write_failed': '스마트 계획 R 레지스터 쓰기 실패: {error}',
+    'error_invalid_tool_spacing': '올바른 공구 간격을 입력하세요',
+    'error_double_layout_requires_two_tools': '양측 레이아웃에서는 공구 수가 2여야 합니다',
+    'success_tf_updated': 'TF 데이터 업데이트 성공',
+    'error_tf_update_failed': 'TF 데이터 업데이트 실패: {error}',
+    'success_write_complete': '쓰기 완료: {message}',
+    'error_write_failed': '쓰기 실패: {error}',
+    'error_invalid_row_col_positive': '올바른 행 수와 열 수를 입력하세요 (0보다 커야 함)',
+    'error_read_reference_failed': '기준점 읽기 실패: {error}',
+    'error_read_reference_first': '먼저 기준점을 읽어 주세요',
+    'error_invalid_row_col': '올바른 행 수와 열 수를 입력하세요',
+    'success_calculation_complete': '계산 완료. {count}개 포인트를 생성했습니다',
+    'error_invalid_compensation_input': '올바른 행/열 번호, 보정값, 각도 보정을 입력하세요',
+    'success_compensation_updated': '보정값 업데이트 성공',
+    'error_enter_recipe_name_id': '레시피 이름과 번호를 입력하세요',
+    'error_calculate_manual_points_first': '먼저 수동 계획 포인트를 계산하세요',
+    'error_generate_plot_first': '먼저 계획 결과 이미지를 생성하세요',
+    'error_check_recipe_failed': '레시피 확인 실패: {error}',
+    'success_manual_recipe_saved': '수동 계획 레시피 저장 성공',
+    'error_save_manual_recipe_failed': '수동 계획 레시피 저장 실패: {error}',
+    'success_recipe_saved': '레시피 저장 성공',
+    'success_recipe_saved_reassigned': '레시피 저장 성공. 레시피 ID가 {original_id}에서 {recipe_id}로 재할당되었습니다',
+    'error_save_recipe_failed': '레시피 저장 실패: {error}',
+    'confirm_delete_recipe': '레시피 "{name}"을(를) 삭제하시겠습니까?',
+    'error_delete_recipe_failed': '레시피 삭제 실패',
+    'error_select_export_recipes': '보낼 레시피를 선택하세요',
+    'error_export_recipes_failed': '레시피보내기 실패: {error}',
+    'success_export_recipes': 'USB 드라이브에 {count}개 레시피를보냈습니다',
+    'success_export_recipes_with_time': 'USB 드라이브에 {count}개 레시피를보냈습니다 ({time})',
+    'error_read_usb_backup_failed': 'USB 백업 폴더 읽기 실패: {error}',
+    'info_no_usb_backup': 'USB 드라이브에서 레시피 백업 폴더를 찾을 수 없습니다',
+    'info_no_recipe_files_in_dir': '이 시간 디렉터리에서 레시피 파일을 찾을 수 없습니다',
+    'error_select_import_recipes': '가져올 레시피를 선택하세요',
+    'confirm_import_recipes': '{count}개 레시피를 가져올까요?',
+    'info_all_recipes_skipped': '모든 레시피가 건너뛰어졌습니다. 가져오기가 취소되었습니다',
+    'error_import_failed': '가져오기 실패: {error}',
+    'error_robot_status_cannot_auto_write': '로봇 상태: {status}. 자동 쓰기를 할 수 없습니다',
+    'error_program_running_cannot_auto_write': '실행 중인 프로그램: {programs}. 자동 쓰기를 할 수 없습니다',
+    'error_not_connected': '로봇이 연결되지 않았습니다',
+    'error_invalid_request': '잘못된 요청 데이터',
+    'error_missing_robot_ip': '로봇 IP 주소가 없습니다',
+    'error_missing_program_name': '프로그램 이름이 없습니다',
+    'error_read_p_data_failed': 'P 포인트 데이터 읽기 실패',
+    'error_robot_disconnected': '로봇 연결이 끊어졌습니다',
+    'error_get_robot_status_failed': '로봇 상태 가져오기 실패',
+    'error_robot_not_idle': '로봇이 유휴 상태가 아닙니다 (현재 상태: {status}). P 포인트를 쓸 수 없습니다',
+    'error_read_p_point_failed': 'P 포인트 {id} 데이터 읽기 실패',
+    'error_write_p_point_failed': 'P 포인트 {id} 데이터 쓰기 실패',
+    'error_missing_pr_id': 'PR 레지스터 ID가 없습니다',
+    'error_pr_id_must_be_int': 'PR 레지스터 ID는 정수여야 합니다',
+    'error_connect_invalid_ip': '연결 실패: IP 주소가 올바르지 않습니다',
+    'error_connect_timeout': '연결 실패: 연결 시간 초과',
+    'error_connect_controller': '연결 실패: 컨트롤러 오류. 개발자에게 문의하세요',
+    'success_disconnected': '연결 해제됨',
+    'error_request_timeout': '요청 시간 초과',
+    'error_read_recipes_failed': '레시피 읽기 실패: {error}',
+    'import_reassigned_details': '레시피 번호 재할당 상세:',
+    'import_error_details': '오류 상세:',
 
     // Language Switch
     'language': '언어',
@@ -1118,15 +1471,253 @@ translations.ko = {
     'language_ko': '한국어'
 };
 
+const SUPPORTED_LANGUAGES = ['zh', 'en', 'vi', 'ja', 'ko'];
+
+const serverMessageKeyMap = {
+    '未连接机器人': 'error_not_connected',
+    '无效的请求数据': 'error_invalid_request',
+    '缺少机器人IP地址': 'error_missing_robot_ip',
+    '缺少程序名称': 'error_missing_program_name',
+    '读取P点数据失败': 'error_read_p_data_failed',
+    'P点数据写入成功': 'success_p_data_written',
+    '手动规划R寄存器写入成功': 'success_manual_r_written',
+    '智能规划R寄存器写入成功': 'success_smart_r_written',
+    'TF数据更新成功': 'success_tf_updated',
+    '配方保存成功': 'success_recipe_saved',
+    '手动规划配方保存成功': 'success_manual_recipe_saved',
+    '已断开连接': 'success_disconnected',
+    '连接失败: IP 地址无效': 'error_connect_invalid_ip',
+    '连接失败: 连接超时': 'error_connect_timeout',
+    '连接失败: 控制器错误，详情请联系开发人员': 'error_connect_controller',
+    '机器人连接已断开': 'error_robot_disconnected',
+    '获取机器人状态失败': 'error_get_robot_status_failed',
+    '缺少PR寄存器ID': 'error_missing_pr_id',
+    'PR寄存器ID必须是整数': 'error_pr_id_must_be_int',
+    '请求超时': 'error_request_timeout'
+};
+
+function normalizeLanguageCode(lang) {
+    if (!lang) {
+        return 'zh';
+    }
+    const code = String(lang).toLowerCase().replace('_', '-');
+    if (SUPPORTED_LANGUAGES.includes(code)) {
+        return code;
+    }
+    const primary = code.split('-')[0];
+    if (SUPPORTED_LANGUAGES.includes(primary)) {
+        return primary;
+    }
+    const aliasMap = { cn: 'zh', jp: 'ja', kr: 'ko' };
+    return aliasMap[primary] || 'zh';
+}
+
 // 获取当前语言，默认中文
 function getCurrentLanguage() {
     const savedLang = localStorage.getItem('language');
-    return savedLang || 'zh';
+    return normalizeLanguageCode(savedLang || 'zh');
+}
+
+async function initLanguageFromApp() {
+    try {
+        if (typeof gbtExtension !== 'undefined' && typeof gbtExtension.getLanguage === 'function') {
+            const appLang = await gbtExtension.getLanguage();
+            const normalized = normalizeLanguageCode(appLang);
+            localStorage.setItem('language', normalized);
+            lastSyncedLanguage = normalized;
+            applyLanguage(normalized);
+            watchAppLanguage();
+            return normalized;
+        }
+    } catch (error) {
+        console.warn('Failed to sync language from app:', error);
+    }
+    const currentLang = getCurrentLanguage();
+    lastSyncedLanguage = currentLang;
+    applyLanguage(currentLang);
+    watchAppLanguage();
+    return currentLang;
+}
+
+let lastSyncedLanguage = 'zh';
+let languageWatchStarted = false;
+
+async function syncLanguageFromAppIfChanged() {
+    if (typeof gbtExtension === 'undefined' || typeof gbtExtension.getLanguage !== 'function') {
+        return;
+    }
+    try {
+        const appLang = normalizeLanguageCode(await gbtExtension.getLanguage());
+        if (appLang !== lastSyncedLanguage) {
+            lastSyncedLanguage = appLang;
+            localStorage.setItem('language', appLang);
+            applyLanguage(appLang);
+        }
+    } catch (error) {
+        console.warn('Failed to sync language from app:', error);
+    }
+}
+
+function watchAppLanguage() {
+    if (languageWatchStarted) {
+        return;
+    }
+    languageWatchStarted = true;
+    lastSyncedLanguage = getCurrentLanguage();
+
+    window.addEventListener('languagechange', syncLanguageFromAppIfChanged);
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+            syncLanguageFromAppIfChanged();
+        }
+    });
+    window.addEventListener('focus', syncLanguageFromAppIfChanged);
+
+    if (typeof gbtExtension !== 'undefined' && typeof gbtExtension.getLanguage === 'function') {
+        setInterval(syncLanguageFromAppIfChanged, 3000);
+    }
+}
+
+function resolveApiError(data) {
+    if (!data) {
+        return '';
+    }
+    if (data.error_code) {
+        return t(data.error_code, data.params || {});
+    }
+    if (data.error) {
+        return translateServerMessage(data.error) || data.error;
+    }
+    return '';
+}
+
+function hasApiError(data) {
+    return !!(data && (data.error_code || data.error));
+}
+
+function resolveApiMessage(data) {
+    if (!data) {
+        return '';
+    }
+    if (data.message_code === 'success_import_result') {
+        const importedCount = data.imported_count ?? data.params?.imported_count ?? 0;
+        const skippedCount = data.skipped_count ?? data.params?.skipped_count ?? 0;
+        const reassignedCount = data.id_reassigned_count ?? data.params?.id_reassigned_count ?? 0;
+        const errorCount = data.error_count ?? data.params?.error_count ?? 0;
+        let message = t('success_import_base', { count: importedCount });
+        if (skippedCount > 0) {
+            message += t('success_import_skipped_suffix', { count: skippedCount });
+        }
+        if (reassignedCount > 0) {
+            message += t('success_import_reassigned_suffix', { count: reassignedCount });
+        }
+        if (errorCount > 0) {
+            message += t('success_import_failed_suffix', { count: errorCount });
+        }
+        return message;
+    }
+    if (data.message_code) {
+        return t(data.message_code, data.params || {});
+    }
+    if (data.message) {
+        return translateServerMessage(data.message) || data.message;
+    }
+    return '';
+}
+
+function formatAppError(error) {
+    if (!error) {
+        return '';
+    }
+    if (error.i18nKey) {
+        return t(error.i18nKey, error.i18nParams || {});
+    }
+    if (error.error_code) {
+        return t(error.error_code, error.errorParams || error.params || {});
+    }
+    return translateServerMessage(error.message) || error.message || '';
+}
+
+function appError(key, params = {}) {
+    const error = new Error(t(key, params));
+    error.i18nKey = key;
+    error.i18nParams = params;
+    return error;
+}
+
+function translateImportResultMessage(message) {
+    const match = message.match(/^成功导入 (\d+) 个配方(.*)$/);
+    if (!match) {
+        return null;
+    }
+    let result = t('success_import_base', { count: match[1] });
+    const suffix = match[2] || '';
+    const skipMatch = suffix.match(/，跳过 (\d+) 个重名配方/);
+    if (skipMatch) {
+        result += t('success_import_skipped_suffix', { count: skipMatch[1] });
+    }
+    const reassignedMatch = suffix.match(/，(\d+) 个配方重新分配了配方号/);
+    if (reassignedMatch) {
+        result += t('success_import_reassigned_suffix', { count: reassignedMatch[1] });
+    }
+    const failedMatch = suffix.match(/，(\d+) 个配方导入失败/);
+    if (failedMatch) {
+        result += t('success_import_failed_suffix', { count: failedMatch[1] });
+    }
+    return result;
+}
+
+function translateServerMessage(message) {
+    if (!message || typeof message !== 'string') {
+        return message;
+    }
+    const lang = getCurrentLanguage();
+    if (lang === 'zh') {
+        return message;
+    }
+
+    const importMessage = translateImportResultMessage(message);
+    if (importMessage) {
+        return importMessage;
+    }
+
+    const exactKey = serverMessageKeyMap[message];
+    if (exactKey) {
+        return t(exactKey);
+    }
+
+    const patterns = [
+        [/^连接失败: (.+)$/, 'error_connect_failed', { error: 1 }],
+        [/^获取型号失败: (.+)$/, 'error_connect_failed', { error: 1 }],
+        [/^获取控制柜版本失败: (.+)$/, 'error_connect_failed', { error: 1 }],
+        [/^机器人当前不处于空闲状态（实际状态：(.+)），无法写入P点$/, 'error_robot_not_idle', { status: 1 }],
+        [/^读取P点 (\d+) 数据失败$/, 'error_read_p_point_failed', { id: 1 }],
+        [/^写入P点 (\d+) 数据失败$/, 'error_write_p_point_failed', { id: 1 }],
+        [/^配方保存成功，配方ID已从 (.+) 重新分配为 (.+)$/, 'success_recipe_saved_reassigned', { original_id: 1, recipe_id: 2 }],
+        [/^成功导出 (\d+) 个配方到U盘 \((.+)\)$/, 'success_export_recipes_with_time', { count: 1, time: 2 }],
+        [/^成功导出 (\d+) 个配方到U盘$/, 'success_export_recipes', { count: 1 }],
+        [/^配方 (.+) 自动写入成功$/, 'success_recipe_auto_write', { name: 1 }]
+    ];
+
+    for (const [regex, key, paramMap] of patterns) {
+        const match = message.match(regex);
+        if (!match) {
+            continue;
+        }
+        const params = {};
+        Object.entries(paramMap).forEach(([paramName, groupIndex]) => {
+            params[paramName] = match[groupIndex];
+        });
+        return t(key, params);
+    }
+
+    return message;
 }
 
 // 设置语言
 function setLanguage(lang) {
     localStorage.setItem('language', lang);
+    lastSyncedLanguage = normalizeLanguageCode(lang);
     applyLanguage(lang);
 }
 
@@ -1240,3 +1831,15 @@ function t(key, params = {}) {
 
 // 将t函数暴露到全局作用域，以便在其他脚本中使用
 window.t = t;
+window.getCurrentLanguage = getCurrentLanguage;
+window.setLanguage = setLanguage;
+window.applyLanguage = applyLanguage;
+window.initLanguageFromApp = initLanguageFromApp;
+window.normalizeLanguageCode = normalizeLanguageCode;
+window.translateServerMessage = translateServerMessage;
+window.resolveApiError = resolveApiError;
+window.resolveApiMessage = resolveApiMessage;
+window.hasApiError = hasApiError;
+window.formatAppError = formatAppError;
+window.appError = appError;
+window.watchAppLanguage = watchAppLanguage;
