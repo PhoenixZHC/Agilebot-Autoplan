@@ -25,15 +25,15 @@ if defined PORT_PID (
 
 :after_kill_port
 
-set "EXE_PATH=.\dist\AutoPlan_V7.5.7.exe"
+set "EXE_PATH=.\dist\AutoPlan_V7.5.8.exe"
 if not exist "%EXE_PATH%" (
-    set "EXE_PATH=.\AutoPlan_V7.5.7.exe"
+    set "EXE_PATH=.\AutoPlan_V7.5.8.exe"
 )
 
 REM Check executable
 if not exist "%EXE_PATH%" (
     echo [ERROR] EXE not found.
-    echo Expected: .\dist\AutoPlan_V7.5.7.exe or .\AutoPlan_V7.5.7.exe
+    echo Expected: .\dist\AutoPlan_V7.5.8.exe or .\AutoPlan_V7.5.8.exe
     echo Please build first or check file name.
     pause
     exit /b 1

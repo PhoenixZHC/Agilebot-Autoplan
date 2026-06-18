@@ -1,6 +1,6 @@
 # Agilebot Intelligent Palletizing Planning System
 
-**Version v7.5.7 | Updated: June 16, 2026**
+**Version v7.5.8 | Updated: June 18, 2026**
 
 ---
 
@@ -215,6 +215,12 @@ The system provides the following 5 main feature modules:
 
 ## Version History
 
+### v7.5.8 (June 18, 2026)
+- Transpiled every first-party script loaded by the TP plugin page with Babel, fixing initialization failures, unresponsive buttons, and missing text in legacy WebViews that cannot parse modern JavaScript syntax
+- Fixed the TP notification adapter to display complete messages through the notification API's detail argument
+- Added automated frontend compatibility and version consistency tests covering compiled asset references, build scope, and notification argument conventions
+- Added frontend build rules to `AGENTS.md` to prevent untranspiled application scripts from being loaded in future changes
+
 ### v7.5.6 (June 15, 2026)
 - Fixed alert and confirm messages staying in Chinese after switching languages
 - Added A/B angle fields when writing P-points: manual planning reads them from reference point 1, smart planning reads them from the Z&C reference register
@@ -268,4 +274,4 @@ The system provides the following 5 main feature modules:
 
 ---
 
-**Agilebot Intelligent Palletizing Planning System | Version v7.5.7 | Updated: June 16, 2026 | © 2026**
+**Agilebot Intelligent Palletizing Planning System | Version v7.5.8 | Updated: June 18, 2026 | © 2026**
