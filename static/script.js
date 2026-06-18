@@ -25,9 +25,9 @@ function createNotification(method) {
 }
 
 // TP插件环境中，alert无法使用
-const alertSuccess = createNotification(!isExtension ? alert : message => gbtExtension.rtmNotification.success(message));
-const alertError = createNotification(!isExtension ? alert : message => gbtExtension.rtmNotification.error(message));
-const alertInfo = createNotification(!isExtension ? alert : message => gbtExtension.rtmNotification.info(message));
+const alertSuccess = createNotification(!isExtension ? alert : message => gbtExtension.rtmNotification.success('', message));
+const alertError = createNotification(!isExtension ? alert : message => gbtExtension.rtmNotification.error('', message));
+const alertInfo = createNotification(!isExtension ? alert : message => gbtExtension.rtmNotification.info('', message));
 // TP插件环境中，confirm无法使用
 const myConfirm = function(message) {
     const translatedMessage = translateNotificationMessage(message);

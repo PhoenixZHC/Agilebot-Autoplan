@@ -33,13 +33,13 @@ function createNotification(method) {
 
 // TP插件环境中，alert无法使用
 var alertSuccess = createNotification(!isExtension ? alert : function (message) {
-  return gbtExtension.rtmNotification.success(message);
+  return gbtExtension.rtmNotification.success('', message);
 });
 var alertError = createNotification(!isExtension ? alert : function (message) {
-  return gbtExtension.rtmNotification.error(message);
+  return gbtExtension.rtmNotification.error('', message);
 });
 var alertInfo = createNotification(!isExtension ? alert : function (message) {
-  return gbtExtension.rtmNotification.info(message);
+  return gbtExtension.rtmNotification.info('', message);
 });
 // TP插件环境中，confirm无法使用
 var myConfirm = function myConfirm(message) {
