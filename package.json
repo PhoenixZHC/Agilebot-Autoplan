@@ -4,8 +4,10 @@
   "packageManager": "pnpm@9.15.4",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
+    "test": "node --test tests/*.test.js",
     "copy": "shx cp ./node_modules/@agilebot/extension-runtime/dist/browser.js ./static/extension-runtime.js",
-    "build": "nr copy && babel ./static/script.js --out-file=./static/script-compiled.js",
+    "build:frontend": "babel static/i18n.js --out-file=static/i18n-compiled.js && babel static/api-i18n-keys.js --out-file=static/api-i18n-keys-compiled.js && babel static/language-switcher.js --out-file=static/language-switcher-compiled.js && babel static/script.js --out-file=static/script-compiled.js",
+    "build": "nr copy && nr build:frontend",
     "watch": "nr build --watch"
   },
   "dependencies": {
@@ -26,8 +28,7 @@
         {
           "modules": false,
           "targets": {
-            "android": "13",
-            "chrome": "80"
+            "ie": "11"
           }
         }
       ]
