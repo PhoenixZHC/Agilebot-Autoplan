@@ -48,23 +48,23 @@ test('TP notifications send application text as the detail argument', () => {
     }
 });
 
-test('release surfaces consistently report version 7.5.8', () => {
+test('release surfaces consistently report version 7.5.9', () => {
     const config = JSON.parse(read('config.json'));
     const app = read('app.py');
     const launcher = read('start_autoplan.bat');
     const readmeZh = read('README.md');
     const readmeEn = read('README.en.md');
 
-    assert.equal(config.version, '7.5.8');
-    assert.match(app, /--name AutoPlan_V7\.5\.8\b/);
-    assert.match(launcher, /AutoPlan_V7\.5\.8\.exe/g);
-    assert.doesNotMatch(launcher, /AutoPlan_V7\.5\.7\.exe/);
+    assert.equal(config.version, '7.5.9');
+    assert.match(app, /--name AutoPlan_V7\.5\.9\b/);
+    assert.match(launcher, /AutoPlan_V7\.5\.9\.exe/g);
+    assert.doesNotMatch(launcher, /AutoPlan_V7\.5\.8\.exe/);
 
-    assert.match(readmeZh, /\*\*版本 v7\.5\.8 \| 更新日期：2026年6月18日\*\*/);
-    assert.match(readmeZh, /### v7\.5\.8 \(2026年6月18日\)/);
-    assert.match(readmeZh, /版本 v7\.5\.8 \| 更新日期：2026年6月18日/);
+    assert.match(readmeZh, /\*\*版本 v7\.5\.9 \| 更新日期：2026年6月23日\*\*/);
+    assert.match(readmeZh, /### v7\.5\.9 \(2026年6月23日\)/);
+    assert.match(readmeZh, /版本 v7\.5\.9 \| 更新日期：2026年6月23日/);
 
-    assert.match(readmeEn, /\*\*Version v7\.5\.8 \| Updated: June 18, 2026\*\*/);
-    assert.match(readmeEn, /### v7\.5\.8 \(June 18, 2026\)/);
-    assert.match(readmeEn, /Version v7\.5\.8 \| Updated: June 18, 2026/);
+    assert.match(readmeEn, /\*\*Version v7\.5\.9 \| Updated: June 23, 2026\*\*/);
+    assert.match(readmeEn, /### v7\.5\.9 \(June 23, 2026\)/);
+    assert.match(readmeEn, /Version v7\.5\.9 \| Updated: June 23, 2026/);
 });
